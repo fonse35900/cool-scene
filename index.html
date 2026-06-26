@@ -26,7 +26,7 @@
         }
 
         header .logo {
-            max-width: 200px;
+            max-width: 280px;
             margin-bottom: 20px;
         }
 
@@ -233,14 +233,35 @@
 <body>
     <div class="container">
         <header>
-            <svg class="logo" viewBox="0 0 340 100" xmlns="http://www.w3.org/2000/svg">
-                <rect x="10" y="10" width="80" height="80" rx="8" fill="none" stroke="#0D1B2A" stroke-width="2.5"/>
-                <text x="30" y="62" font-family="Georgia, serif" font-size="40" font-weight="700" fill="#0D1B2A">J</text>
-                <text x="52" y="62" font-family="Georgia, serif" font-size="40" font-weight="700" fill="#F26C21">F</text>
-                <text x="105" y="38" font-family="'Segoe UI', sans-serif" font-size="22" font-weight="700" letter-spacing="3" fill="#0D1B2A">JORGE FOLGADO</text>
-                <text x="105" y="58" font-family="'Segoe UI', sans-serif" font-size="10" letter-spacing="2" fill="#7a7a7a">DOCUMENTA&#199;&#195;O AUTOM&#211;VEL</text>
-                <line x1="105" y1="66" x2="310" y2="66" stroke="#F26C21" stroke-width="1"/>
-                <text x="105" y="80" font-family="'Segoe UI', sans-serif" font-size="9" letter-spacing="1.5" fill="#999">DESDE 1991</text>
+            <svg class="logo" viewBox="0 0 330 320" xmlns="http://www.w3.org/2000/svg">
+                <!-- Orange swoosh lines -->
+                <path d="M75,45 Q120,5 200,25 Q240,33 270,28" stroke="#F26C21" stroke-width="5" fill="none" stroke-linecap="round"/>
+                <path d="M90,58 Q130,22 200,40 Q235,48 265,42" stroke="#F26C21" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+
+                <!-- J letter -->
+                <path d="M105,70 L105,155 Q105,185 80,185 Q65,185 58,175" stroke="#0D1B2A" stroke-width="12" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+
+                <!-- F letter -->
+                <path d="M125,70 L125,185" stroke="#0D1B2A" stroke-width="12" fill="none" stroke-linecap="round"/>
+                <path d="M125,70 L195,70" stroke="#0D1B2A" stroke-width="12" fill="none" stroke-linecap="round"/>
+                <path d="M125,120 L180,120" stroke="#0D1B2A" stroke-width="10" fill="none" stroke-linecap="round"/>
+
+                <!-- JORGE FOLGADO text -->
+                <text x="165" y="230" font-family="'Segoe UI', Arial, sans-serif" font-size="30" font-weight="700" letter-spacing="6" fill="#0D1B2A" text-anchor="middle">JORGE FOLGADO</text>
+
+                <!-- Decorative line left -->
+                <line x1="15" y1="252" x2="42" y2="252" stroke="#0D1B2A" stroke-width="1.5"/>
+                <!-- DOCUMENTA&Ccedil;&Atilde;O AUTOM&Oacute;VEL text -->
+                <text x="165" y="257" font-family="'Segoe UI', Arial, sans-serif" font-size="14" letter-spacing="3" fill="#F26C21" text-anchor="middle">DOCUMENTA&#199;&#195;O AUTOM&#211;VEL</text>
+                <!-- Decorative line right -->
+                <line x1="288" y1="252" x2="315" y2="252" stroke="#0D1B2A" stroke-width="1.5"/>
+
+                <!-- Decorative line left -->
+                <line x1="50" y1="282" x2="100" y2="282" stroke="#0D1B2A" stroke-width="1.5"/>
+                <!-- DESDE 1991 text -->
+                <text x="165" y="287" font-family="'Segoe UI', Arial, sans-serif" font-size="18" font-weight="700" letter-spacing="4" fill="#0D1B2A" text-anchor="middle">DESDE 1991</text>
+                <!-- Decorative line right -->
+                <line x1="230" y1="282" x2="280" y2="282" stroke="#0D1B2A" stroke-width="1.5"/>
             </svg>
             <h1>Simulador de Importa&#231;&#227;o de Viaturas</h1>
             <p>Calcule os custos de importa&#231;&#227;o de ve&#237;culos para Portugal</p>
