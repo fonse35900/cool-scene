@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simulador de Importação de Viaturas - Portugal</title>
+    <title>Simulador de Importa&ccedil;&atilde;o de Viaturas - Portugal</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -247,29 +247,29 @@
         </header>
 
         <div class="card">
-            <h2>Dados do Veículo</h2>
+            <h2>Dados do Ve&iacute;culo</h2>
             <div class="form-grid">
                 <div class="form-group full-width">
-                    <label>Origem da importação</label>
+                    <label>Origem da importa&ccedil;&atilde;o</label>
                     <div class="toggle-group" id="origemToggle">
-                        <button class="active" data-value="ue" onclick="setOrigem('ue')">União Europeia</button>
+                        <button class="active" data-value="ue" onclick="setOrigem('ue')">Uni&atilde;o Europeia</button>
                         <button data-value="fora_ue" onclick="setOrigem('fora_ue')">Fora da UE</button>
                     </div>
                 </div>
 
                 <div class="form-group">
-                    <label>Tipo de combustível</label>
+                    <label>Tipo de combust&iacute;vel</label>
                     <select id="combustivel">
                         <option value="gasolina">Gasolina</option>
-                        <option value="diesel">Gasóleo (Diesel)</option>
-                        <option value="hibrido_gasolina">Híbrido (Gasolina)</option>
-                        <option value="hibrido_diesel">Híbrido (Gasóleo)</option>
-                        <option value="eletrico">Elétrico</option>
+                        <option value="diesel">Gas&oacute;leo (Diesel)</option>
+                        <option value="hibrido_gasolina">H&iacute;brido (Gasolina)</option>
+                        <option value="hibrido_diesel">H&iacute;brido (Gas&oacute;leo)</option>
+                        <option value="eletrico">El&eacute;trico</option>
                     </select>
                 </div>
 
                 <div class="form-group">
-                    <label>Tipo de veículo</label>
+                    <label>Tipo de ve&iacute;culo</label>
                     <select id="tipoVeiculo">
                         <option value="ligeiro_passageiros">Ligeiro de passageiros</option>
                         <option value="ligeiro_mercadorias">Ligeiro de mercadorias</option>
@@ -277,48 +277,48 @@
                 </div>
 
                 <div class="form-group" id="cilindradaGroup">
-                    <label>Cilindrada (cm³)</label>
+                    <label>Cilindrada (cm&sup3;)</label>
                     <input type="number" id="cilindrada" placeholder="Ex: 1598" min="0" max="20000">
                 </div>
 
                 <div class="form-group" id="co2Group">
-                    <label>Emissões CO2 (g/km) — NEDC</label>
+                    <label>Emiss&otilde;es CO2 (g/km) &mdash; NEDC</label>
                     <input type="number" id="co2" placeholder="Ex: 120" min="0" max="500">
                 </div>
 
                 <div class="form-group">
-                    <label>Ano da 1ª matrícula</label>
+                    <label>Ano da 1&ordf; matr&iacute;cula</label>
                     <select id="anoMatricula"></select>
                 </div>
 
                 <div class="form-group">
-                    <label>Valor de aquisição (€)</label>
+                    <label>Valor de aquisi&ccedil;&atilde;o (&euro;)</label>
                     <input type="number" id="valorAquisicao" placeholder="Ex: 15000" min="0">
                 </div>
 
                 <div class="form-group" id="wltpGroup" style="display:none;">
-                    <label>Emissões WLTP? (veículos desde 2020)</label>
+                    <label>Emiss&otilde;es WLTP? (ve&iacute;culos desde 2020)</label>
                     <select id="wltp">
-                        <option value="nao">Não (NEDC)</option>
+                        <option value="nao">N&atilde;o (NEDC)</option>
                         <option value="sim">Sim (WLTP)</option>
                     </select>
                 </div>
             </div>
 
-            <button class="btn-calcular" onclick="calcular()">Calcular custos de importação</button>
+            <button class="btn-calcular" onclick="calcular()">Calcular custos de importa&ccedil;&atilde;o</button>
         </div>
 
         <div class="card" id="resultados">
-            <h2>Resultados da Simulação</h2>
+            <h2>Resultados da Simula&ccedil;&atilde;o</h2>
             <div class="resultado-header">
-                <div class="total-label">Custo total estimado de importação</div>
-                <div class="total" id="totalGeral">€ 0</div>
+                <div class="total-label">Custo total estimado de importa&ccedil;&atilde;o</div>
+                <div class="total" id="totalGeral">&euro; 0</div>
             </div>
             <div class="resultado-linhas" id="linhasResultado"></div>
             <div class="nota">
-                <strong>Nota:</strong> Os valores apresentados são estimativas baseadas nas tabelas do ISV e IUC em vigor.
-                Os valores reais podem variar consoante a avaliação da Autoridade Tributária e Aduaneira.
-                Para veículos usados, o ISV beneficia de uma redução conforme a idade do veículo.
+                <strong>Nota:</strong> Os valores apresentados s&atilde;o estimativas baseadas nas tabelas do ISV e IUC em vigor.
+                Os valores reais podem variar consoante a avalia&ccedil;&atilde;o da Autoridade Tribut&aacute;ria e Aduaneira.
+                Para ve&iacute;culos usados, o ISV beneficia de uma redu&ccedil;&atilde;o conforme a idade do ve&iacute;culo.
                 Consulte sempre um despachante oficial para valores definitivos.
             </div>
         </div>
@@ -351,7 +351,7 @@
         document.getElementById('co2Group').style.display = isEletrico ? 'none' : '';
     });
 
-    // Tabela ISV 2024 — Componente Cilindrada (gasolina)
+    // Tabela ISV 2024 &mdash; Componente Cilindrada (gasolina)
     function isvCilindradaGasolina(cc) {
         if (cc <= 1000) return cc * 1.00;
         if (cc <= 1250) return 1000 * 1.00 + (cc - 1000) * 1.07;
@@ -362,12 +362,12 @@
         return 1000 * 1.00 + 250 * 1.07 + 250 * 1.14 + 250 * 4.87 + 250 * 6.44 + 500 * 10.32 + (cc - 2500) * 16.62;
     }
 
-    // Tabela ISV 2024 — Componente Cilindrada (diesel) — agravamento
+    // Tabela ISV 2024 &mdash; Componente Cilindrada (diesel) &mdash; agravamento
     function isvCilindradaDiesel(cc) {
         return isvCilindradaGasolina(cc) * 1.10;
     }
 
-    // Tabela ISV 2024 — Componente Ambiental CO2 (gasolina, NEDC)
+    // Tabela ISV 2024 &mdash; Componente Ambiental CO2 (gasolina, NEDC)
     function isvCO2Gasolina(co2) {
         if (co2 <= 99) return co2 * 4.34;
         if (co2 <= 115) return 99 * 4.34 + (co2 - 99) * 7.57;
@@ -377,12 +377,12 @@
         return 99 * 4.34 + 16 * 7.57 + 30 * 49.16 + 30 * 55.34 + 20 * 143.44 + (co2 - 195) * 199.28;
     }
 
-    // Componente ambiental diesel — agravamento
+    // Componente ambiental diesel &mdash; agravamento
     function isvCO2Diesel(co2) {
         return isvCO2Gasolina(co2) * 1.10;
     }
 
-    // Redução por idade do veículo (percentagem do ISV a pagar)
+    // Redu&ccedil;&atilde;o por idade do ve&iacute;culo (percentagem do ISV a pagar)
     function reducaoIdade(anoMatricula) {
         const anoAtual = new Date().getFullYear();
         const idade = anoAtual - anoMatricula;
@@ -403,7 +403,7 @@
     function calcularIUC(cc, co2, combustivel, anoMatricula) {
         if (combustivel === 'eletrico') return 0;
         if (anoMatricula < 2007) {
-            // Tabela A — por cilindrada
+            // Tabela A &mdash; por cilindrada
             if (cc <= 1000) return 19.90;
             if (cc <= 1300) return 39.55;
             if (cc <= 1750) return 62.40;
@@ -411,7 +411,7 @@
             if (cc <= 3500) return 287.49;
             return 512.23;
         }
-        // Tabela B — cilindrada + CO2 + idade
+        // Tabela B &mdash; cilindrada + CO2 + idade
         let parcCil = 0;
         if (cc <= 1250) parcCil = 28.43;
         else if (cc <= 1750) parcCil = 56.98;
@@ -443,17 +443,17 @@
         const linhas = [];
         let totalImportacao = 0;
 
-        // Valor de aquisição
-        linhas.push({ nome: 'Valor de aquisição do veículo', valor: valorAquisicao });
+        // Valor de aquisi&ccedil;&atilde;o
+        linhas.push({ nome: 'Valor de aquisi&ccedil;&atilde;o do ve&iacute;culo', valor: valorAquisicao });
 
-        // Direitos aduaneiros (só fora da UE)
+        // Direitos aduaneiros (s&oacute; fora da UE)
         let direitosAduaneiros = 0;
         if (origem === 'fora_ue') {
             direitosAduaneiros = valorAquisicao * 0.065;
-            linhas.push({ nome: 'Direitos aduaneiros (6.5%)', valor: direitosAduaneiros, info: 'Aplicável a importações fora da UE' });
+            linhas.push({ nome: 'Direitos aduaneiros (6.5%)', valor: direitosAduaneiros, info: 'Aplic&aacute;vel a importa&ccedil;&otilde;es fora da UE' });
         }
 
-        // IVA (só fora da UE — dentro da UE já foi pago no país de origem para usados)
+        // IVA (s&oacute; fora da UE &mdash; dentro da UE j&aacute; foi pago no pa&iacute;s de origem para usados)
         let iva = 0;
         if (origem === 'fora_ue') {
             iva = (valorAquisicao + direitosAduaneiros) * 0.23;
@@ -474,7 +474,7 @@
                 compCO2 = isvCO2Gasolina(co2);
             }
 
-            // Híbridos plug-in: redução de 75% na componente ambiental
+            // H&iacute;bridos plug-in: redu&ccedil;&atilde;o de 75% na componente ambiental
             if (combustivel.startsWith('hibrido') && co2 <= 50) {
                 compCO2 *= 0.25;
             }
@@ -482,33 +482,33 @@
             isv = compCilindrada + compCO2;
             if (isv < 0) isv = 0;
 
-            // Redução por idade
+            // Redu&ccedil;&atilde;o por idade
             const fatorIdade = reducaoIdade(anoMatricula);
             isv = isv * fatorIdade;
 
-            linhas.push({ nome: 'ISV — Componente cilindrada', valor: compCilindrada * fatorIdade, info: cilindrada + ' cm³' });
-            linhas.push({ nome: 'ISV — Componente ambiental (CO2)', valor: compCO2 * fatorIdade, info: co2 + ' g/km' });
+            linhas.push({ nome: 'ISV &mdash; Componente cilindrada', valor: compCilindrada * fatorIdade, info: cilindrada + ' cm&sup3;' });
+            linhas.push({ nome: 'ISV &mdash; Componente ambiental (CO2)', valor: compCO2 * fatorIdade, info: co2 + ' g/km' });
             linhas.push({
-                nome: 'ISV Total (com redução ' + Math.round((1 - fatorIdade) * 100) + '% pela idade)',
+                nome: 'ISV Total (com redu&ccedil;&atilde;o ' + Math.round((1 - fatorIdade) * 100) + '% pela idade)',
                 valor: isv,
                 destaque: true,
-                info: 'Redução por veículo de ' + (new Date().getFullYear() - anoMatricula) + ' ano(s)'
+                info: 'Redu&ccedil;&atilde;o por ve&iacute;culo de ' + (new Date().getFullYear() - anoMatricula) + ' ano(s)'
             });
         } else {
-            linhas.push({ nome: 'ISV', valor: 0, info: 'Veículos elétricos isentos de ISV' });
+            linhas.push({ nome: 'ISV', valor: 0, info: 'Ve&iacute;culos el&eacute;tricos isentos de ISV' });
         }
 
         // Transporte estimado
         let transporte = origem === 'fora_ue' ? 1500 : 600;
         linhas.push({ nome: 'Transporte estimado', valor: transporte, info: origem === 'fora_ue' ? 'Estimativa fora da UE' : 'Estimativa dentro da UE' });
 
-        // Despachante / legalização
+        // Despachante / legaliza&ccedil;&atilde;o
         let despachante = 350;
-        linhas.push({ nome: 'Despachante / Legalização (estimativa)', valor: despachante });
+        linhas.push({ nome: 'Despachante / Legaliza&ccedil;&atilde;o (estimativa)', valor: despachante });
 
-        // Inspeção / Homologação
+        // Inspe&ccedil;&atilde;o / Homologa&ccedil;&atilde;o
         let inspecao = 120;
-        linhas.push({ nome: 'Inspeção e homologação (estimativa)', valor: inspecao });
+        linhas.push({ nome: 'Inspe&ccedil;&atilde;o e homologa&ccedil;&atilde;o (estimativa)', valor: inspecao });
 
         // IUC anual
         let iuc = calcularIUC(cilindrada, co2, combustivel, anoMatricula);
@@ -528,7 +528,7 @@
                     <div class="nome">${l.nome}</div>
                     ${l.info ? '<div class="info">' + l.info + '</div>' : ''}
                 </div>
-                <div class="valor">€ ${formatMoney(l.valor)}</div>
+                <div class="valor">&euro; ${formatMoney(l.valor)}</div>
             `;
             container.appendChild(div);
         });
@@ -544,13 +544,13 @@
         iucDiv.innerHTML = `
             <div>
                 <div class="nome">IUC anual estimado</div>
-                <div class="info">Imposto Único de Circulação (pago anualmente)</div>
+                <div class="info">Imposto &Uacute;nico de Circula&ccedil;&atilde;o (pago anualmente)</div>
             </div>
-            <div class="valor">€ ${formatMoney(iuc)}</div>
+            <div class="valor">&euro; ${formatMoney(iuc)}</div>
         `;
         container.appendChild(iucDiv);
 
-        document.getElementById('totalGeral').textContent = '€ ' + formatMoney(totalImportacao);
+        document.getElementById('totalGeral').textContent = '&euro; ' + formatMoney(totalImportacao);
         document.getElementById('resultados').style.display = 'block';
         document.getElementById('resultados').scrollIntoView({ behavior: 'smooth' });
     }
