@@ -9,8 +9,8 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #f0f2f5;
-            color: #1a1a2e;
+            background: #F6F1EA;
+            color: #0D1B2A;
             min-height: 100vh;
         }
 
@@ -25,14 +25,19 @@
             padding: 40px 0 30px;
         }
 
+        header .logo {
+            max-width: 200px;
+            margin-bottom: 20px;
+        }
+
         header h1 {
             font-size: 1.8rem;
-            color: #1a1a2e;
+            color: #0D1B2A;
             margin-bottom: 8px;
         }
 
         header p {
-            color: #555;
+            color: #4a5568;
             font-size: 0.95rem;
         }
 
@@ -48,8 +53,8 @@
             font-size: 1.15rem;
             margin-bottom: 20px;
             padding-bottom: 10px;
-            border-bottom: 2px solid #e8e8e8;
-            color: #1a1a2e;
+            border-bottom: 2px solid #e0ddd5;
+            color: #0D1B2A;
         }
 
         .form-grid {
@@ -71,7 +76,7 @@
             font-size: 0.85rem;
             font-weight: 600;
             margin-bottom: 6px;
-            color: #444;
+            color: #0D1B2A;
         }
 
         select, input {
@@ -85,7 +90,7 @@
 
         select:focus, input:focus {
             outline: none;
-            border-color: #2d6cdf;
+            border-color: #F26C21;
             background: #fff;
         }
 
@@ -109,7 +114,7 @@
         }
 
         .toggle-group button.active {
-            background: #2d6cdf;
+            background: #0D1B2A;
             color: #fff;
         }
 
@@ -120,7 +125,7 @@
         .btn-calcular {
             width: 100%;
             padding: 14px;
-            background: #2d6cdf;
+            background: #F26C21;
             color: #fff;
             border: none;
             border-radius: 10px;
@@ -132,7 +137,7 @@
         }
 
         .btn-calcular:hover {
-            background: #1b57c0;
+            background: #d95a15;
         }
 
         #resultados {
@@ -147,7 +152,7 @@
         .resultado-header .total {
             font-size: 2.2rem;
             font-weight: 700;
-            color: #2d6cdf;
+            color: #F26C21;
         }
 
         .resultado-header .total-label {
@@ -167,28 +172,28 @@
             justify-content: space-between;
             align-items: center;
             padding: 12px 16px;
-            background: #f7f8fc;
+            background: #faf7f2;
             border-radius: 8px;
         }
 
         .resultado-linha .nome {
             font-size: 0.9rem;
-            color: #444;
+            color: #0D1B2A;
         }
 
         .resultado-linha .valor {
             font-weight: 600;
             font-size: 0.95rem;
-            color: #1a1a2e;
+            color: #0D1B2A;
         }
 
         .resultado-linha.destaque {
-            background: #eef3fb;
-            border: 1.5px solid #c5d8f6;
+            background: #fef3ec;
+            border: 1.5px solid #f5c9a8;
         }
 
         .resultado-linha.destaque .valor {
-            color: #2d6cdf;
+            color: #F26C21;
         }
 
         .resultado-linha .info {
@@ -199,10 +204,10 @@
         .nota {
             margin-top: 16px;
             padding: 12px;
-            background: #fff8e6;
+            background: #eef1f5;
             border-radius: 8px;
             font-size: 0.8rem;
-            color: #8a7030;
+            color: #0D1B2A;
             line-height: 1.5;
         }
 
@@ -228,8 +233,17 @@
 <body>
     <div class="container">
         <header>
-            <h1>Simulador de Importação de Viaturas</h1>
-            <p>Calcule os custos de importação de veículos para Portugal</p>
+            <svg class="logo" viewBox="0 0 340 100" xmlns="http://www.w3.org/2000/svg">
+                <rect x="10" y="10" width="80" height="80" rx="8" fill="none" stroke="#0D1B2A" stroke-width="2.5"/>
+                <text x="30" y="62" font-family="Georgia, serif" font-size="40" font-weight="700" fill="#0D1B2A">J</text>
+                <text x="52" y="62" font-family="Georgia, serif" font-size="40" font-weight="700" fill="#F26C21">F</text>
+                <text x="105" y="38" font-family="'Segoe UI', sans-serif" font-size="22" font-weight="700" letter-spacing="3" fill="#0D1B2A">JORGE FOLGADO</text>
+                <text x="105" y="58" font-family="'Segoe UI', sans-serif" font-size="10" letter-spacing="2" fill="#7a7a7a">DOCUMENTA&#199;&#195;O AUTOM&#211;VEL</text>
+                <line x1="105" y1="66" x2="310" y2="66" stroke="#F26C21" stroke-width="1"/>
+                <text x="105" y="80" font-family="'Segoe UI', sans-serif" font-size="9" letter-spacing="1.5" fill="#999">DESDE 1993</text>
+            </svg>
+            <h1>Simulador de Importa&#231;&#227;o de Viaturas</h1>
+            <p>Calcule os custos de importa&#231;&#227;o de ve&#237;culos para Portugal</p>
         </header>
 
         <div class="card">
