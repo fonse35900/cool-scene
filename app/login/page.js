@@ -28,11 +28,8 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-octane-black">
       <div className="bg-octane-dark border border-octane-border p-10 rounded-2xl shadow-2xl w-full max-w-md">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold tracking-widest mb-1">
-            <span className="text-octane-white">OCTAN</span><span className="text-octane-gold">E</span>
-          </h1>
-          <p className="text-octane-gray text-xs tracking-[0.3em] uppercase">Car Dealer & Collector</p>
-          <div className="w-12 h-0.5 bg-octane-gold mx-auto mt-4"></div>
+          <img src="/logo-octane.jpeg" alt="OCTANE - Car Dealer & Collector" className="h-16 mx-auto mb-4" />
+          <div className="w-12 h-0.5 bg-octane-gold mx-auto"></div>
         </div>
         <form onSubmit={handleSubmit} className="space-y-5">
           {error && <div className="bg-octane-red/10 border border-octane-red/30 text-octane-red p-3 rounded text-sm">{error}</div>}

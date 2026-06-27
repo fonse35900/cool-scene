@@ -23,9 +23,8 @@ export default function Navbar({ user }) {
     <nav className="bg-octane-dark border-b border-octane-border">
       <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-8">
-          <a href="/dashboard" className="flex items-center gap-2">
-            <span className="text-xl font-bold tracking-widest text-octane-white">OCTAN</span>
-            <span className="text-xl font-bold tracking-widest text-octane-gold">E</span>
+          <a href="/dashboard">
+            <img src="/logo-octane.jpeg" alt="OCTANE" className="h-8" />
           </a>
           <div className="hidden md:flex gap-1">
             {links.map(l => (
