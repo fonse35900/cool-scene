@@ -20,30 +20,41 @@ export default function Navbar({ user }) {
   ];
 
   return (
-    <nav className="bg-slate-800 text-white shadow-lg">
+    <nav className="bg-octane-dark border-b border-octane-border">
       <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-6">
-          <span className="text-lg font-bold">🚗 Gestão Viaturas</span>
+        <div className="flex items-center gap-8">
+          <a href="/dashboard" className="flex items-center gap-2">
+            <span className="text-xl font-bold tracking-widest text-octane-white">OCTAN</span>
+            <span className="text-xl font-bold tracking-widest text-octane-gold">E</span>
+          </a>
           <div className="hidden md:flex gap-1">
             {links.map(l => (
               <a key={l.href} href={l.href}
-                className={`px-3 py-2 rounded text-sm ${pathname === l.href ? 'bg-slate-600' : 'hover:bg-slate-700'}`}>
+                className={`px-3 py-2 rounded text-sm font-medium tracking-wide transition-colors ${
+                  pathname === l.href
+                    ? 'text-octane-gold border-b-2 border-octane-gold'
+                    : 'text-octane-gray hover:text-octane-white'
+                }`}>
                 {l.label}
               </a>
             ))}
           </div>
         </div>
         <div className="flex items-center gap-4">
-          <span className="text-sm">
-            {user.name} <span className="text-slate-400">({roleLabels[user.role]})</span>
+          <span className="text-sm text-octane-gray">
+            {user.name} <span className="text-octane-gold">({roleLabels[user.role]})</span>
           </span>
-          <button onClick={logout} className="text-sm bg-red-600 hover:bg-red-700 px-3 py-1 rounded">Sair</button>
+          <button onClick={logout} className="text-sm border border-octane-gold text-octane-gold hover:bg-octane-gold hover:text-octane-black px-3 py-1 rounded transition-colors">
+            Sair
+          </button>
         </div>
       </div>
       <div className="md:hidden flex gap-1 px-4 pb-2">
         {links.map(l => (
           <a key={l.href} href={l.href}
-            className={`px-3 py-1 rounded text-xs ${pathname === l.href ? 'bg-slate-600' : 'hover:bg-slate-700'}`}>
+            className={`px-3 py-1 rounded text-xs font-medium ${
+              pathname === l.href ? 'text-octane-gold' : 'text-octane-gray hover:text-octane-white'
+            }`}>
             {l.label}
           </a>
         ))}

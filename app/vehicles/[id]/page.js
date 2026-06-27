@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 
 const costTypeLabels = { manutencao: 'Manutenção', revisao: 'Revisão', outro: 'Outro' };
+const inputClass = "w-full bg-octane-card border border-octane-border rounded px-3 py-2 text-sm text-octane-white focus:ring-2 focus:ring-octane-gold focus:outline-none";
 
 export default function VehicleDetailPage({ params }) {
   const { id } = use(params);
@@ -55,23 +56,23 @@ export default function VehicleDetailPage({ params }) {
   const marginPercent = margin !== null && totalCost > 0 ? (margin / totalCost * 100) : null;
 
   return (
-    <div>
+    <div className="min-h-screen bg-octane-black">
       <Navbar user={user} />
       <div className="max-w-4xl mx-auto p-6">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold">{vehicle.brand} {vehicle.model} ({vehicle.year})</h1>
+          <h1 className="text-2xl font-bold tracking-wide">{vehicle.brand} {vehicle.model} <span className="text-octane-gray">({vehicle.year})</span></h1>
           <div className="flex gap-2">
-            {!editing && <button onClick={() => setEditing(true)} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700">Editar</button>}
+            {!editing && <button onClick={() => setEditing(true)} className="bg-octane-gold text-octane-black px-4 py-2 rounded-lg text-sm font-semibold hover:bg-octane-gold-light transition-colors">Editar</button>}
             {user.role !== 'comercial' && (
               <button onClick={async () => { await fetch(`/api/vehicles/${id}`, { method: 'DELETE' }); router.push('/vehicles'); }}
-                className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-red-700">Eliminar</button>
+                className="border border-octane-red text-octane-red px-4 py-2 rounded-lg text-sm hover:bg-octane-red hover:text-white transition-colors">Eliminar</button>
             )}
           </div>
         </div>
 
         <div className="grid md:grid-cols-2 gap-6">
-          <div className="bg-white p-6 rounded-xl shadow">
-            <h2 className="font-semibold mb-4">Dados da Viatura</h2>
+          <div className="bg-octane-card border border-octane-border p-6 rounded-xl">
+            <h2 className="font-semibold mb-4 text-octane-gold text-sm uppercase tracking-wider">Dados da Viatura</h2>
             {editing ? (
               <div className="space-y-3">
                 {[
@@ -81,48 +82,46 @@ export default function VehicleDetailPage({ params }) {
                   { k: 'mileage', l: 'Quilometragem', type: 'number' },
                 ].map(f => (
                   <div key={f.k}>
-                    <label className="text-xs text-gray-500">{f.l}</label>
+                    <label className="text-xs text-octane-gray uppercase tracking-wider">{f.l}</label>
                     <input type={f.type || 'text'} value={form[f.k] || ''} onChange={e => set(f.k, e.target.value)}
-                      className="w-full border rounded px-2 py-1 text-sm" />
+                      className={inputClass} />
                   </div>
                 ))}
                 <div>
-                  <label className="text-xs text-gray-500">Combustível</label>
-                  <select value={form.fuel_type || ''} onChange={e => set('fuel_type', e.target.value)}
-                    className="w-full border rounded px-2 py-1 text-sm">
+                  <label className="text-xs text-octane-gray uppercase tracking-wider">Combustível</label>
+                  <select value={form.fuel_type || ''} onChange={e => set('fuel_type', e.target.value)} className={inputClass}>
                     {['Gasolina', 'Gasóleo', 'Híbrido', 'Elétrico', 'GPL'].map(f => <option key={f}>{f}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="text-xs text-gray-500">Estado</label>
-                  <select value={form.status || ''} onChange={e => set('status', e.target.value)}
-                    className="w-full border rounded px-2 py-1 text-sm">
+                  <label className="text-xs text-octane-gray uppercase tracking-wider">Estado</label>
+                  <select value={form.status || ''} onChange={e => set('status', e.target.value)} className={inputClass}>
                     <option value="em_stock">Em Stock</option>
                     <option value="vendido">Vendido</option>
                     <option value="reservado">Reservado</option>
                   </select>
                 </div>
                 <div>
-                  <label className="text-xs text-gray-500">Observações</label>
+                  <label className="text-xs text-octane-gray uppercase tracking-wider">Observações</label>
                   <textarea value={form.notes || ''} onChange={e => set('notes', e.target.value)}
-                    className="w-full border rounded px-2 py-1 text-sm" rows={2} />
+                    className={inputClass} rows={2} />
                 </div>
-                <div className="flex gap-2">
-                  <button onClick={handleSave} className="bg-blue-600 text-white px-4 py-1 rounded text-sm">Guardar</button>
-                  <button onClick={() => { setEditing(false); setForm(vehicle); }} className="border px-4 py-1 rounded text-sm">Cancelar</button>
+                <div className="flex gap-2 pt-2">
+                  <button onClick={handleSave} className="bg-octane-gold text-octane-black px-4 py-2 rounded text-sm font-semibold hover:bg-octane-gold-light transition-colors">Guardar</button>
+                  <button onClick={() => { setEditing(false); setForm(vehicle); }} className="border border-octane-border text-octane-gray px-4 py-2 rounded text-sm hover:text-octane-white transition-colors">Cancelar</button>
                 </div>
               </div>
             ) : (
-              <dl className="space-y-2 text-sm">
+              <dl className="space-y-3 text-sm">
                 {[
                   ['Matrícula', vehicle.license_plate], ['VIN', vehicle.vin], ['Cor', vehicle.color],
                   ['Quilometragem', vehicle.mileage ? `${vehicle.mileage.toLocaleString()} km` : null],
                   ['Combustível', vehicle.fuel_type], ['Estado', vehicle.status === 'em_stock' ? 'Em Stock' : vehicle.status === 'vendido' ? 'Vendido' : 'Reservado'],
                   ['Comercial', vehicle.created_by_name], ['Observações', vehicle.notes],
                 ].map(([l, v]) => v && (
-                  <div key={l} className="flex justify-between">
-                    <dt className="text-gray-500">{l}</dt>
-                    <dd className="font-medium">{v}</dd>
+                  <div key={l} className="flex justify-between border-b border-octane-border/50 pb-2">
+                    <dt className="text-octane-gray">{l}</dt>
+                    <dd className="font-medium text-octane-white">{v}</dd>
                   </div>
                 ))}
               </dl>
@@ -130,50 +129,50 @@ export default function VehicleDetailPage({ params }) {
           </div>
 
           <div className="space-y-6">
-            <div className="bg-white p-6 rounded-xl shadow">
-              <h2 className="font-semibold mb-4">Financeiro</h2>
+            <div className="bg-octane-card border border-octane-border p-6 rounded-xl">
+              <h2 className="font-semibold mb-4 text-octane-gold text-sm uppercase tracking-wider">Financeiro</h2>
               {editing ? (
                 <div className="space-y-3">
                   <div>
-                    <label className="text-xs text-gray-500">Preço Compra (€)</label>
+                    <label className="text-xs text-octane-gray uppercase tracking-wider">Preço Compra (€)</label>
                     <input type="number" step="0.01" value={form.purchase_price || ''} onChange={e => set('purchase_price', e.target.value)}
-                      className="w-full border rounded px-2 py-1 text-sm" />
+                      className={inputClass} />
                   </div>
                   <div>
-                    <label className="text-xs text-gray-500">Preço Venda (€)</label>
+                    <label className="text-xs text-octane-gray uppercase tracking-wider">Preço Venda (€)</label>
                     <input type="number" step="0.01" value={form.sale_price || ''} onChange={e => set('sale_price', e.target.value)}
-                      className="w-full border rounded px-2 py-1 text-sm" />
+                      className={inputClass} />
                   </div>
                 </div>
               ) : (
-                <dl className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <dt className="text-gray-500">Preço Compra</dt>
-                    <dd className="font-medium">€{vehicle.purchase_price?.toLocaleString()}</dd>
+                <dl className="space-y-3 text-sm">
+                  <div className="flex justify-between border-b border-octane-border/50 pb-2">
+                    <dt className="text-octane-gray">Preço Compra</dt>
+                    <dd className="font-medium text-octane-white">€{vehicle.purchase_price?.toLocaleString()}</dd>
                   </div>
                   {vehicle.sale_price && (
-                    <div className="flex justify-between">
-                      <dt className="text-gray-500">Preço Venda</dt>
-                      <dd className="font-medium">€{vehicle.sale_price?.toLocaleString()}</dd>
+                    <div className="flex justify-between border-b border-octane-border/50 pb-2">
+                      <dt className="text-octane-gray">Preço Venda</dt>
+                      <dd className="font-medium text-octane-gold">€{vehicle.sale_price?.toLocaleString()}</dd>
                     </div>
                   )}
-                  <div className="flex justify-between">
-                    <dt className="text-gray-500">Total Custos</dt>
-                    <dd className="font-medium">€{vehicle.total_costs?.toLocaleString()}</dd>
+                  <div className="flex justify-between border-b border-octane-border/50 pb-2">
+                    <dt className="text-octane-gray">Total Custos</dt>
+                    <dd className="font-medium text-octane-orange">€{vehicle.total_costs?.toLocaleString()}</dd>
                   </div>
-                  <div className="flex justify-between border-t pt-2">
-                    <dt className="text-gray-500">Custo Total</dt>
-                    <dd className="font-bold">€{totalCost.toLocaleString()}</dd>
+                  <div className="flex justify-between border-b border-octane-border/50 pb-2">
+                    <dt className="text-octane-gray">Custo Total</dt>
+                    <dd className="font-bold text-octane-white">€{totalCost.toLocaleString()}</dd>
                   </div>
                   {margin !== null && (
                     <>
-                      <div className="flex justify-between">
-                        <dt className="text-gray-500">Margem (€)</dt>
-                        <dd className={`font-bold ${margin >= 0 ? 'text-green-600' : 'text-red-600'}`}>€{margin.toLocaleString()}</dd>
+                      <div className="flex justify-between border-b border-octane-border/50 pb-2">
+                        <dt className="text-octane-gray">Margem (€)</dt>
+                        <dd className={`font-bold ${margin >= 0 ? 'text-octane-green' : 'text-octane-red'}`}>€{margin.toLocaleString()}</dd>
                       </div>
                       <div className="flex justify-between">
-                        <dt className="text-gray-500">Margem (%)</dt>
-                        <dd className={`font-bold ${marginPercent >= 0 ? 'text-green-600' : 'text-red-600'}`}>{marginPercent.toFixed(1)}%</dd>
+                        <dt className="text-octane-gray">Margem (%)</dt>
+                        <dd className={`font-bold ${marginPercent >= 0 ? 'text-octane-green' : 'text-octane-red'}`}>{marginPercent.toFixed(1)}%</dd>
                       </div>
                     </>
                   )}
@@ -181,45 +180,43 @@ export default function VehicleDetailPage({ params }) {
               )}
             </div>
 
-            <div className="bg-white p-6 rounded-xl shadow">
+            <div className="bg-octane-card border border-octane-border p-6 rounded-xl">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="font-semibold">Custos</h2>
-                <button onClick={() => setShowCostForm(true)} className="text-blue-600 text-sm hover:underline">+ Adicionar</button>
+                <h2 className="font-semibold text-octane-gold text-sm uppercase tracking-wider">Custos</h2>
+                <button onClick={() => setShowCostForm(true)} className="text-octane-gold text-sm hover:text-octane-gold-light transition-colors">+ Adicionar</button>
               </div>
               {showCostForm && (
-                <div className="bg-gray-50 p-3 rounded mb-4 space-y-2">
-                  <select value={newCost.type} onChange={e => setNewCost(c => ({ ...c, type: e.target.value }))}
-                    className="w-full border rounded px-2 py-1 text-sm">
+                <div className="bg-octane-dark border border-octane-border p-4 rounded-lg mb-4 space-y-3">
+                  <select value={newCost.type} onChange={e => setNewCost(c => ({ ...c, type: e.target.value }))} className={inputClass}>
                     <option value="manutencao">Manutenção</option>
                     <option value="revisao">Revisão</option>
                     <option value="outro">Outro</option>
                   </select>
                   <input type="number" step="0.01" placeholder="Valor (€)" value={newCost.amount}
-                    onChange={e => setNewCost(c => ({ ...c, amount: e.target.value }))}
-                    className="w-full border rounded px-2 py-1 text-sm" />
+                    onChange={e => setNewCost(c => ({ ...c, amount: e.target.value }))} className={inputClass} />
                   <textarea placeholder="Descrição / Observações" value={newCost.description}
                     onChange={e => setNewCost(c => ({ ...c, description: e.target.value }))}
-                    className="w-full border rounded px-2 py-1 text-sm" rows={2} />
+                    className={inputClass} rows={2} />
                   <div className="flex gap-2">
-                    <button onClick={addCost} className="bg-blue-600 text-white px-3 py-1 rounded text-sm">Adicionar</button>
-                    <button onClick={() => setShowCostForm(false)} className="border px-3 py-1 rounded text-sm">Cancelar</button>
+                    <button onClick={addCost} className="bg-octane-gold text-octane-black px-4 py-2 rounded text-sm font-semibold hover:bg-octane-gold-light transition-colors">Adicionar</button>
+                    <button onClick={() => setShowCostForm(false)} className="border border-octane-border text-octane-gray px-4 py-2 rounded text-sm hover:text-octane-white transition-colors">Cancelar</button>
                   </div>
                 </div>
               )}
               {vehicle.costs?.length > 0 ? (
-                <div className="space-y-2">
+                <div className="space-y-3">
                   {vehicle.costs.map(c => (
-                    <div key={c.id} className="border-b pb-2 text-sm">
+                    <div key={c.id} className="border-b border-octane-border/50 pb-3 text-sm">
                       <div className="flex justify-between">
-                        <span className="font-medium">{costTypeLabels[c.type]}</span>
-                        <span className="font-medium">€{c.amount.toLocaleString()}</span>
+                        <span className="font-medium text-octane-white">{costTypeLabels[c.type]}</span>
+                        <span className="font-medium text-octane-gold">€{c.amount.toLocaleString()}</span>
                       </div>
-                      {c.description && <p className="text-gray-500 text-xs mt-1">{c.description}</p>}
-                      <p className="text-gray-400 text-xs">{new Date(c.date).toLocaleDateString('pt-PT')}</p>
+                      {c.description && <p className="text-octane-gray text-xs mt-1">{c.description}</p>}
+                      <p className="text-octane-gray/50 text-xs mt-1">{new Date(c.date).toLocaleDateString('pt-PT')}</p>
                     </div>
                   ))}
                 </div>
-              ) : <p className="text-gray-400 text-sm">Sem custos registados</p>}
+              ) : <p className="text-octane-gray text-sm">Sem custos registados</p>}
             </div>
           </div>
         </div>

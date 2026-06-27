@@ -19,25 +19,27 @@ export default function DashboardPage() {
   if (!user) return null;
 
   return (
-    <div>
+    <div className="min-h-screen bg-octane-black">
       <Navbar user={user} />
       <div className="max-w-7xl mx-auto p-6">
-        <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
+        <h1 className="text-2xl font-bold mb-6 tracking-wide">Dashboard</h1>
         {stats && (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
-              { label: 'Total Viaturas', value: stats.totalVehicles, color: 'bg-blue-500' },
-              { label: 'Em Stock', value: stats.inStock, color: 'bg-green-500' },
-              { label: 'Vendidas', value: stats.sold, color: 'bg-purple-500' },
-              { label: 'Reservadas', value: stats.reserved, color: 'bg-yellow-500' },
-              { label: 'Total Compras', value: `€${stats.totalPurchase.toLocaleString()}`, color: 'bg-red-500' },
-              { label: 'Total Vendas', value: `€${stats.totalSales.toLocaleString()}`, color: 'bg-emerald-500' },
-              { label: 'Total Custos', value: `€${stats.totalCosts.toLocaleString()}`, color: 'bg-orange-500' },
-              { label: 'Margem Bruta', value: `€${stats.grossMargin.toLocaleString()}`, color: stats.grossMargin >= 0 ? 'bg-teal-500' : 'bg-red-600' },
+              { label: 'Total Viaturas', value: stats.totalVehicles, accent: false },
+              { label: 'Em Stock', value: stats.inStock, accent: false },
+              { label: 'Vendidas', value: stats.sold, accent: false },
+              { label: 'Reservadas', value: stats.reserved, accent: false },
+              { label: 'Total Compras', value: `€${stats.totalPurchase.toLocaleString()}`, accent: false },
+              { label: 'Total Vendas', value: `€${stats.totalSales.toLocaleString()}`, accent: true },
+              { label: 'Total Custos', value: `€${stats.totalCosts.toLocaleString()}`, accent: false },
+              { label: 'Margem Bruta', value: `€${stats.grossMargin.toLocaleString()}`, accent: true, negative: stats.grossMargin < 0 },
             ].map(s => (
-              <div key={s.label} className={`${s.color} text-white p-4 rounded-xl shadow`}>
-                <p className="text-sm opacity-80">{s.label}</p>
-                <p className="text-2xl font-bold">{s.value}</p>
+              <div key={s.label} className="bg-octane-card border border-octane-border p-5 rounded-xl">
+                <p className="text-xs text-octane-gray uppercase tracking-wider mb-2">{s.label}</p>
+                <p className={`text-2xl font-bold ${s.negative ? 'text-octane-red' : s.accent ? 'text-octane-gold' : 'text-octane-white'}`}>
+                  {s.value}
+                </p>
               </div>
             ))}
           </div>

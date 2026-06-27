@@ -3,6 +3,9 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 
+const inputClass = "w-full bg-octane-card border border-octane-border rounded-lg px-4 py-3 text-sm text-octane-white focus:ring-2 focus:ring-octane-gold focus:border-octane-gold focus:outline-none";
+const labelClass = "block text-xs font-medium text-octane-gray uppercase tracking-wider mb-2";
+
 export default function NewVehiclePage() {
   const [user, setUser] = useState(null);
   const [form, setForm] = useState({
@@ -33,12 +36,12 @@ export default function NewVehiclePage() {
   if (!user) return null;
 
   return (
-    <div>
+    <div className="min-h-screen bg-octane-black">
       <Navbar user={user} />
       <div className="max-w-3xl mx-auto p-6">
-        <h1 className="text-2xl font-bold mb-6">Nova Viatura</h1>
-        <form onSubmit={handleSubmit} className="bg-white p-6 rounded-xl shadow space-y-4">
-          {error && <div className="bg-red-50 text-red-600 p-3 rounded text-sm">{error}</div>}
+        <h1 className="text-2xl font-bold mb-6 tracking-wide">Nova Viatura</h1>
+        <form onSubmit={handleSubmit} className="bg-octane-card border border-octane-border p-6 rounded-xl space-y-5">
+          {error && <div className="bg-octane-red/10 border border-octane-red/30 text-octane-red p-3 rounded text-sm">{error}</div>}
           <div className="grid grid-cols-2 gap-4">
             {[
               { k: 'brand', l: 'Marca', required: true },
@@ -50,39 +53,36 @@ export default function NewVehiclePage() {
               { k: 'mileage', l: 'Quilometragem', type: 'number' },
             ].map(f => (
               <div key={f.k}>
-                <label className="block text-sm font-medium text-gray-700 mb-1">{f.l}</label>
+                <label className={labelClass}>{f.l}</label>
                 <input type={f.type || 'text'} value={form[f.k]} onChange={e => set(f.k, e.target.value)}
-                  required={f.required} className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+                  required={f.required} className={inputClass} />
               </div>
             ))}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Combustível</label>
-              <select value={form.fuel_type} onChange={e => set('fuel_type', e.target.value)}
-                className="w-full border rounded-lg px-3 py-2 text-sm">
-                {['Gasolina', 'Gasóleo', 'Híbrido', 'Elétrico', 'GPL'].map(f => (
-                  <option key={f} value={f}>{f}</option>
-                ))}
+              <label className={labelClass}>Combustível</label>
+              <select value={form.fuel_type} onChange={e => set('fuel_type', e.target.value)} className={inputClass}>
+                {['Gasolina', 'Gasóleo', 'Híbrido', 'Elétrico', 'GPL'].map(f => <option key={f} value={f}>{f}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Preço de Compra (€) *</label>
+              <label className={labelClass}>Preço de Compra (€) *</label>
               <input type="number" step="0.01" value={form.purchase_price} onChange={e => set('purchase_price', e.target.value)}
-                required className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+                required className={inputClass} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Preço de Venda (€)</label>
+              <label className={labelClass}>Preço de Venda (€)</label>
               <input type="number" step="0.01" value={form.sale_price} onChange={e => set('sale_price', e.target.value)}
-                className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+                className={inputClass} />
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Observações</label>
+            <label className={labelClass}>Observações</label>
             <textarea value={form.notes} onChange={e => set('notes', e.target.value)} rows={3}
-              className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+              className={inputClass} />
           </div>
           <div className="flex gap-3">
-            <button type="submit" className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">Guardar</button>
-            <button type="button" onClick={() => router.back()} className="border px-6 py-2 rounded-lg hover:bg-gray-50">Cancelar</button>
+            <button type="submit" className="bg-octane-gold text-octane-black px-6 py-2.5 rounded-lg hover:bg-octane-gold-light font-semibold transition-colors">Guardar</button>
+            <button type="button" onClick={() => router.back()} className="border border-octane-border text-octane-gray hover:text-octane-white px-6 py-2.5 rounded-lg transition-colors">Cancelar</button>
           </div>
         </form>
       </div>

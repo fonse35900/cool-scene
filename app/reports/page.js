@@ -34,25 +34,27 @@ export default function ReportsPage() {
   if (!user) return null;
 
   return (
-    <div>
+    <div className="min-h-screen bg-octane-black">
       <Navbar user={user} />
       <div className="max-w-7xl mx-auto p-6">
-        <h1 className="text-2xl font-bold mb-6">Relatórios</h1>
+        <h1 className="text-2xl font-bold mb-6 tracking-wide">Relatórios</h1>
 
         {user.role !== 'comercial' && users.length > 0 && (
-          <div className="bg-white p-4 rounded-xl shadow mb-6">
-            <h2 className="font-semibold mb-3 text-sm">Filtrar por utilizador:</h2>
+          <div className="bg-octane-card border border-octane-border p-4 rounded-xl mb-6">
+            <h2 className="font-semibold mb-3 text-xs text-octane-gray uppercase tracking-wider">Filtrar por utilizador</h2>
             <div className="flex flex-wrap gap-2">
               {users.filter(u => u.role !== 'admin' || user.role === 'admin').map(u => (
                 <button key={u.id} onClick={() => toggleUser(u.id)}
-                  className={`px-3 py-1 rounded-full text-sm border transition ${
-                    selectedUsers.includes(u.id) ? 'bg-blue-600 text-white border-blue-600' : 'hover:bg-gray-100'
+                  className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${
+                    selectedUsers.includes(u.id)
+                      ? 'bg-octane-gold text-octane-black border-octane-gold font-semibold'
+                      : 'border-octane-border text-octane-gray hover:border-octane-gold hover:text-octane-gold'
                   }`}>
                   {u.name}
                 </button>
               ))}
               {selectedUsers.length > 0 && (
-                <button onClick={() => setSelectedUsers([])} className="px-3 py-1 rounded-full text-sm text-red-600 hover:bg-red-50">
+                <button onClick={() => setSelectedUsers([])} className="px-3 py-1.5 rounded-full text-sm text-octane-red hover:bg-octane-red/10 transition-colors">
                   Limpar filtros
                 </button>
               )}
@@ -69,53 +71,46 @@ export default function ReportsPage() {
                 { l: 'Vendidas', v: report.summary.sold },
                 { l: 'Reservadas', v: report.summary.reserved },
               ].map(s => (
-                <div key={s.l} className="bg-white p-4 rounded-xl shadow">
-                  <p className="text-sm text-gray-500">{s.l}</p>
-                  <p className="text-2xl font-bold">{s.v}</p>
+                <div key={s.l} className="bg-octane-card border border-octane-border p-4 rounded-xl">
+                  <p className="text-xs text-octane-gray uppercase tracking-wider mb-1">{s.l}</p>
+                  <p className="text-2xl font-bold text-octane-white">{s.v}</p>
                 </div>
               ))}
             </div>
 
             <div className="grid md:grid-cols-4 gap-4 mb-6">
-              <div className="bg-white p-4 rounded-xl shadow">
-                <p className="text-sm text-gray-500">Total Compras</p>
-                <p className="text-xl font-bold">€{report.summary.totalPurchase.toLocaleString()}</p>
-              </div>
-              <div className="bg-white p-4 rounded-xl shadow">
-                <p className="text-sm text-gray-500">Total Vendas</p>
-                <p className="text-xl font-bold text-green-600">€{report.summary.totalSales.toLocaleString()}</p>
-              </div>
-              <div className="bg-white p-4 rounded-xl shadow">
-                <p className="text-sm text-gray-500">Total Custos</p>
-                <p className="text-xl font-bold text-orange-600">€{report.summary.totalCosts.toLocaleString()}</p>
-              </div>
-              <div className="bg-white p-4 rounded-xl shadow">
-                <p className="text-sm text-gray-500">Margem Bruta</p>
-                <p className={`text-xl font-bold ${report.summary.grossMargin >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  €{report.summary.grossMargin.toLocaleString()}
-                </p>
-              </div>
+              {[
+                { l: 'Total Compras', v: `€${report.summary.totalPurchase.toLocaleString()}`, c: 'text-octane-white' },
+                { l: 'Total Vendas', v: `€${report.summary.totalSales.toLocaleString()}`, c: 'text-octane-gold' },
+                { l: 'Total Custos', v: `€${report.summary.totalCosts.toLocaleString()}`, c: 'text-octane-orange' },
+                { l: 'Margem Bruta', v: `€${report.summary.grossMargin.toLocaleString()}`, c: report.summary.grossMargin >= 0 ? 'text-octane-green' : 'text-octane-red' },
+              ].map(s => (
+                <div key={s.l} className="bg-octane-card border border-octane-border p-4 rounded-xl">
+                  <p className="text-xs text-octane-gray uppercase tracking-wider mb-1">{s.l}</p>
+                  <p className={`text-xl font-bold ${s.c}`}>{s.v}</p>
+                </div>
+              ))}
             </div>
 
             {user.role !== 'comercial' && report.perUser.length > 0 && (
-              <div className="bg-white rounded-xl shadow mb-6">
-                <h2 className="font-semibold p-4 pb-0">Desempenho por Utilizador</h2>
+              <div className="bg-octane-card border border-octane-border rounded-xl mb-6">
+                <h2 className="font-semibold p-4 pb-0 text-octane-gold text-sm uppercase tracking-wider">Desempenho por Utilizador</h2>
                 <table className="w-full text-sm">
-                  <thead className="bg-gray-50">
-                    <tr>
+                  <thead>
+                    <tr className="border-b border-octane-border">
                       {['Nome', 'Papel', 'Total Viaturas', 'Vendidas', 'Receita'].map(h => (
-                        <th key={h} className="text-left p-3 font-medium text-gray-600">{h}</th>
+                        <th key={h} className="text-left p-3 font-medium text-octane-gray text-xs uppercase tracking-wider">{h}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
                     {report.perUser.map(u => (
-                      <tr key={u.id} className="border-t">
-                        <td className="p-3 font-medium">{u.name}</td>
-                        <td className="p-3">{u.role === 'director' ? 'Diretor' : 'Comercial'}</td>
-                        <td className="p-3">{u.total_vehicles}</td>
-                        <td className="p-3">{u.sold}</td>
-                        <td className="p-3 font-medium">€{u.revenue.toLocaleString()}</td>
+                      <tr key={u.id} className="border-t border-octane-border">
+                        <td className="p-3 font-medium text-octane-white">{u.name}</td>
+                        <td className="p-3 text-octane-gray">{u.role === 'director' ? 'Diretor' : 'Comercial'}</td>
+                        <td className="p-3 text-octane-white">{u.total_vehicles}</td>
+                        <td className="p-3 text-octane-white">{u.sold}</td>
+                        <td className="p-3 font-medium text-octane-gold">€{u.revenue.toLocaleString()}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -124,29 +119,29 @@ export default function ReportsPage() {
             )}
 
             {report.salesDetails.length > 0 && (
-              <div className="bg-white rounded-xl shadow">
-                <h2 className="font-semibold p-4 pb-0">Detalhe de Vendas</h2>
+              <div className="bg-octane-card border border-octane-border rounded-xl">
+                <h2 className="font-semibold p-4 pb-0 text-octane-gold text-sm uppercase tracking-wider">Detalhe de Vendas</h2>
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
-                    <thead className="bg-gray-50">
-                      <tr>
+                    <thead>
+                      <tr className="border-b border-octane-border">
                         {['Viatura', 'Comercial', 'Preço Compra', 'Custos', 'Preço Venda', 'Margem (€)', 'Margem (%)'].map(h => (
-                          <th key={h} className="text-left p-3 font-medium text-gray-600">{h}</th>
+                          <th key={h} className="text-left p-3 font-medium text-octane-gray text-xs uppercase tracking-wider">{h}</th>
                         ))}
                       </tr>
                     </thead>
                     <tbody>
                       {report.salesDetails.map(v => (
-                        <tr key={v.id} className="border-t">
-                          <td className="p-3 font-medium">{v.brand} {v.model} ({v.year})</td>
-                          <td className="p-3">{v.created_by_name}</td>
-                          <td className="p-3">€{v.purchase_price.toLocaleString()}</td>
-                          <td className="p-3">€{v.costs.toLocaleString()}</td>
-                          <td className="p-3">€{v.sale_price.toLocaleString()}</td>
-                          <td className={`p-3 font-medium ${v.margin >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        <tr key={v.id} className="border-t border-octane-border">
+                          <td className="p-3 font-medium text-octane-white">{v.brand} {v.model} ({v.year})</td>
+                          <td className="p-3 text-octane-gray">{v.created_by_name}</td>
+                          <td className="p-3 text-octane-white">€{v.purchase_price.toLocaleString()}</td>
+                          <td className="p-3 text-octane-orange">€{v.costs.toLocaleString()}</td>
+                          <td className="p-3 text-octane-gold">€{v.sale_price.toLocaleString()}</td>
+                          <td className={`p-3 font-medium ${v.margin >= 0 ? 'text-octane-green' : 'text-octane-red'}`}>
                             €{v.margin.toLocaleString()}
                           </td>
-                          <td className={`p-3 font-medium ${v.margin_percent >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          <td className={`p-3 font-medium ${v.margin_percent >= 0 ? 'text-octane-green' : 'text-octane-red'}`}>
                             {v.margin_percent.toFixed(1)}%
                           </td>
                         </tr>
