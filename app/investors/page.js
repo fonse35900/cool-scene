@@ -76,8 +76,9 @@ export default function InvestorsPage() {
 
   function loadContributions(investorId) {
     fetch(`/api/investor/contributions?investor_id=${investorId}`)
-      .then(r => r.json())
-      .then(data => setContributions(c => ({ ...c, [investorId]: data })));
+      .then(r => r.ok ? r.json() : [])
+      .then(data => setContributions(c => ({ ...c, [investorId]: Array.isArray(data) ? data : [] })))
+      .catch(() => setContributions(c => ({ ...c, [investorId]: [] })));
   }
 
   async function addContribution(investorId) {
