@@ -55,7 +55,11 @@ export default function InvestorPage() {
   }, [user]);
 
   if (!user || loading) return null;
-  if (!data) return <div className="min-h-screen bg-octane-black flex items-center justify-center text-octane-gray">Erro ao carregar dados</div>;
+  if (!data || !data.summary) return (
+    <div className="min-h-screen bg-octane-black flex items-center justify-center text-octane-gray">
+      Erro ao carregar dados. Verifica que o teu utilizador está associado a um investidor.
+    </div>
+  );
 
   const { summary, timeline, stockVehicles, investorVehicles } = data;
 
