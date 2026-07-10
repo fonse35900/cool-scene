@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import ReportsTabs from '@/components/ReportsTabs';
@@ -128,8 +128,8 @@ export default function VehicleReportsPage() {
                     {report.perUser.map(u => {
                       const isOpen = drilldown?.id === u.id;
                       return (
-                        <>
-                          <tr key={u.id}
+                        <React.Fragment key={u.id}>
+                          <tr
                             className={`border-t border-octane-border cursor-pointer transition-colors ${isOpen ? 'bg-octane-gold/5' : 'hover:bg-octane-dark/60'}`}
                             onClick={() => openDrilldown(u)}>
                             <td className="p-3 font-medium text-octane-white flex items-center gap-2">
@@ -189,7 +189,7 @@ export default function VehicleReportsPage() {
                               </td>
                             </tr>
                           )}
-                        </>
+                        </React.Fragment>
                       );
                     })}
                   </tbody>
