@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
+import VehiclesTabs from '@/components/VehiclesTabs';
 
 const statusLabels = { em_stock: 'Em Stock', vendido: 'Vendido', reservado: 'Reservado' };
 const statusColors = {
@@ -33,8 +34,10 @@ export default function VehiclesPage() {
     <div className="min-h-screen bg-octane-black">
       <Navbar user={user} />
       <div className="max-w-7xl mx-auto p-6">
+        <h1 className="text-2xl font-bold mb-6 tracking-wide">Viaturas</h1>
+        <VehiclesTabs userRole={user.role} />
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold tracking-wide">Viaturas</h1>
+          <div />
           <div className="flex gap-3">
             <select value={filter} onChange={e => setFilter(e.target.value)}
               className="bg-octane-card border border-octane-border rounded-lg px-3 py-2 text-sm text-octane-white">

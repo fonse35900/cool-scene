@@ -104,37 +104,66 @@ export default function InvestorReportsPage() {
             </div>
 
             {report.perInvestor.length > 0 && (
-              <div className="bg-octane-card border border-octane-border rounded-xl mb-6">
-                <h2 className="font-semibold p-4 pb-0 text-octane-gold text-sm uppercase tracking-wider">Resumo por Investidor</h2>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-octane-border">
-                        {['Investidor', 'Viaturas', 'Em Stock', 'Vendidas', 'Reservadas', 'Total Compras', 'Total Custos', 'Total Vendas', 'Margem'].map(h => (
-                          <th key={h} className="text-left p-3 font-medium text-octane-gray text-xs uppercase tracking-wider">{h}</th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {report.perInvestor.map(inv => (
-                        <tr key={inv.id} className="border-t border-octane-border">
-                          <td className="p-3 font-medium text-octane-white">{inv.name}</td>
-                          <td className="p-3 text-octane-white">{inv.total_vehicles}</td>
-                          <td className="p-3 text-octane-green">{inv.in_stock}</td>
-                          <td className="p-3 text-octane-purple">{inv.sold}</td>
-                          <td className="p-3 text-octane-gold">{inv.reserved}</td>
-                          <td className="p-3 text-octane-white">€{inv.total_purchase.toLocaleString()}</td>
-                          <td className="p-3 text-octane-orange">€{inv.total_costs.toLocaleString()}</td>
-                          <td className="p-3 text-octane-gold">€{inv.total_sales.toLocaleString()}</td>
-                          <td className={`p-3 font-bold ${inv.gross_margin >= 0 ? 'text-octane-green' : 'text-octane-red'}`}>
-                            €{inv.gross_margin.toLocaleString()}
-                          </td>
+              <>
+                <div className="bg-octane-card border border-octane-border rounded-xl mb-6">
+                  <h2 className="font-semibold p-4 pb-0 text-octane-gold text-sm uppercase tracking-wider">Resumo por Investidor — Stock Octane</h2>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-octane-border">
+                          {['Investidor', 'Viaturas', 'Em Stock', 'Vendidas', 'Reservadas', 'Total Compras', 'Custos', 'Total Vendas', 'Margem'].map(h => (
+                            <th key={h} className="text-left p-3 font-medium text-octane-gray text-xs uppercase tracking-wider">{h}</th>
+                          ))}
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {report.perInvestor.map(inv => (
+                          <tr key={inv.id} className="border-t border-octane-border">
+                            <td className="p-3 font-medium text-octane-white">{inv.name}</td>
+                            <td className="p-3 text-octane-white">{inv.total_vehicles}</td>
+                            <td className="p-3 text-octane-green">{inv.in_stock}</td>
+                            <td className="p-3 text-octane-white">{inv.sold}</td>
+                            <td className="p-3 text-octane-gold">{inv.reserved}</td>
+                            <td className="p-3 text-octane-white">€{inv.total_purchase.toLocaleString()}</td>
+                            <td className="p-3 text-octane-orange">€{inv.total_costs.toLocaleString()}</td>
+                            <td className="p-3 text-octane-gold">€{inv.total_sales.toLocaleString()}</td>
+                            <td className={`p-3 font-bold ${inv.gross_margin >= 0 ? 'text-octane-green' : 'text-octane-red'}`}>
+                              €{inv.gross_margin.toLocaleString()}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
-              </div>
+
+                {report.perInvestor.some(inv => inv.total_investor_vehicles > 0) && (
+                  <div className="bg-octane-card border border-octane-border rounded-xl mb-6">
+                    <h2 className="font-semibold p-4 pb-0 text-octane-gold text-sm uppercase tracking-wider">Despesas de Viaturas de Investidores</h2>
+                    <p className="text-octane-gray text-xs px-4 pb-3">Viaturas dos investidores geridas pela Octane — não entram no stock de venda</p>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b border-octane-border">
+                            {['Investidor', 'Viaturas', 'Total Despesas'].map(h => (
+                              <th key={h} className="text-left p-3 font-medium text-octane-gray text-xs uppercase tracking-wider">{h}</th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {report.perInvestor.filter(inv => inv.total_investor_vehicles > 0).map(inv => (
+                            <tr key={inv.id} className="border-t border-octane-border">
+                              <td className="p-3 font-medium text-octane-white">{inv.name}</td>
+                              <td className="p-3 text-octane-white">{inv.total_investor_vehicles}</td>
+                              <td className="p-3 font-bold text-octane-orange">€{inv.investor_vehicle_costs.toLocaleString()}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+              </>
             )}
 
             {report.salesDetails.length > 0 && (
