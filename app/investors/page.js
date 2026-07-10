@@ -101,10 +101,10 @@ export default function InvestorsPage() {
   }
 
   function loadInvitations(investorId) {
-    fetch('/api/invitations').then(r => r.json()).then(all => {
+    fetch('/api/invitations').then(r => r.ok ? r.json() : []).then(all => {
       const filtered = Array.isArray(all) ? all.filter(i => i.investor_id === investorId) : [];
       setInvitations(inv => ({ ...inv, [investorId]: filtered }));
-    });
+    }).catch(() => setInvitations(inv => ({ ...inv, [investorId]: [] })));
   }
 
   async function sendInvite(investorId) {
