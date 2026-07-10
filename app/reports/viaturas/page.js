@@ -4,11 +4,19 @@ import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import ReportsTabs from '@/components/ReportsTabs';
 
+const roleLabel = { director: 'Diretor', comercial: 'Comercial', admin: 'Administrador', investidor: 'Investidor' };
+
+function fmt(n) {
+  return new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(n ?? 0);
+}
+
 export default function VehicleReportsPage() {
   const [user, setUser] = useState(null);
   const [users, setUsers] = useState([]);
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [report, setReport] = useState(null);
+  const [drilldown, setDrilldown] = useState(null); // { uid, name, role, investor_id }
+  const [drillData, setDrillData] = useState(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -30,6 +38,17 @@ export default function VehicleReportsPage() {
 
   function toggleUser(id) {
     setSelectedUsers(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  }
+
+  async function openDrilldown(u) {
+    if (drilldown?.id === u.id) { setDrilldown(null); setDrillData(null); return; }
+    setDrilldown(u);
+    setDrillData(null);
+    const params = new URLSearchParams({ drilldown_user: u.id });
+    if (u.role === 'investidor' && u.investor_id) params.set('drilldown_investor', u.investor_id);
+    const res = await fetch(`/api/reports/drilldown?${params}`);
+    const data = await res.json();
+    setDrillData(data);
   }
 
   if (!user) return null;
@@ -107,17 +126,70 @@ export default function VehicleReportsPage() {
                   </thead>
                   <tbody>
                     {report.perUser.map(u => {
-                      const roleLabel = { director: 'Diretor', comercial: 'Comercial', admin: 'Administrador', investidor: 'Investidor' }[u.role] || u.role;
+                      const isOpen = drilldown?.id === u.id;
                       return (
-                        <tr key={u.id} className="border-t border-octane-border">
-                          <td className="p-3 font-medium text-octane-white">{u.name}</td>
-                          <td className="p-3 text-octane-gray">{roleLabel}</td>
-                          <td className="p-3 text-octane-white">{u.total_vehicles}</td>
-                          <td className="p-3 text-octane-white">{u.sold}</td>
-                          <td className="p-3 font-medium text-octane-gold">€{u.revenue.toLocaleString()}</td>
-                          <td className={`p-3 font-medium ${u.margin >= 0 ? 'text-octane-green' : 'text-octane-red'}`}>€{(u.margin ?? 0).toLocaleString()}</td>
-                          <td className={`p-3 font-medium ${u.margin_percent >= 0 ? 'text-octane-green' : 'text-octane-red'}`}>{(u.margin_percent ?? 0).toFixed(1)}%</td>
-                        </tr>
+                        <>
+                          <tr key={u.id}
+                            className={`border-t border-octane-border cursor-pointer transition-colors ${isOpen ? 'bg-octane-gold/5' : 'hover:bg-octane-dark/60'}`}
+                            onClick={() => openDrilldown(u)}>
+                            <td className="p-3 font-medium text-octane-white flex items-center gap-2">
+                              <span className="text-octane-gold text-xs">{isOpen ? '▼' : '▶'}</span>
+                              {u.name}
+                            </td>
+                            <td className="p-3 text-octane-gray">{roleLabel[u.role] || u.role}</td>
+                            <td className="p-3 text-octane-white">{u.total_vehicles}</td>
+                            <td className="p-3 text-octane-white">{u.sold}</td>
+                            <td className="p-3 font-medium text-octane-gold">{fmt(u.revenue)}</td>
+                            <td className={`p-3 font-medium ${u.margin >= 0 ? 'text-octane-green' : 'text-octane-red'}`}>{fmt(u.margin ?? 0)}</td>
+                            <td className={`p-3 font-medium ${u.margin_percent >= 0 ? 'text-octane-green' : 'text-octane-red'}`}>{(u.margin_percent ?? 0).toFixed(1)}%</td>
+                          </tr>
+                          {isOpen && (
+                            <tr key={`${u.id}-dd`} className="border-t border-octane-border bg-octane-dark/40">
+                              <td colSpan={7} className="p-4">
+                                {!drillData ? (
+                                  <p className="text-octane-gray text-sm">A carregar...</p>
+                                ) : drillData.vehicles.length === 0 ? (
+                                  <p className="text-octane-gray text-sm">Nenhuma viatura registada.</p>
+                                ) : (
+                                  <table className="w-full text-sm">
+                                    <thead>
+                                      <tr className="border-b border-octane-border/50">
+                                        {['Viatura', 'Matrícula', 'Estado', 'Data', 'Compra', 'Custos', 'Venda', 'Margem (€)', 'Margem (%)'].map(h => (
+                                          <th key={h} className="text-left pb-2 pr-3 font-medium text-octane-gray text-xs uppercase tracking-wider">{h}</th>
+                                        ))}
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      {drillData.vehicles.map(v => {
+                                        const cost = v.purchase_price + v.costs;
+                                        const margin = v.sale_price ? v.sale_price - cost : null;
+                                        const pct = margin !== null && cost > 0 ? (margin / cost * 100) : null;
+                                        return (
+                                          <tr key={v.id} className="border-t border-octane-border/30">
+                                            <td className="py-2 pr-3 font-medium text-octane-white">{v.brand} {v.model} <span className="text-octane-gray">({v.year})</span></td>
+                                            <td className="py-2 pr-3 text-octane-gray">{v.license_plate || '-'}</td>
+                                            <td className="py-2 pr-3">
+                                              <span className={`text-xs px-2 py-0.5 rounded font-medium ${
+                                                v.status === 'vendido' ? 'bg-octane-green/10 text-octane-green' :
+                                                v.status === 'reservado' ? 'bg-octane-gold/10 text-octane-gold' :
+                                                'bg-octane-gray/10 text-octane-gray'}`}>{v.status}</span>
+                                            </td>
+                                            <td className="py-2 pr-3 text-octane-gray whitespace-nowrap">{v.date ? new Date(v.date).toLocaleDateString('pt-PT') : '-'}</td>
+                                            <td className="py-2 pr-3 text-octane-white">{fmt(v.purchase_price)}</td>
+                                            <td className="py-2 pr-3 text-octane-red">{fmt(v.costs)}</td>
+                                            <td className="py-2 pr-3 text-octane-white">{v.sale_price ? fmt(v.sale_price) : '-'}</td>
+                                            <td className={`py-2 pr-3 font-medium ${margin === null ? 'text-octane-gray' : margin >= 0 ? 'text-octane-green' : 'text-octane-red'}`}>{margin === null ? '-' : fmt(margin)}</td>
+                                            <td className={`py-2 font-medium ${pct === null ? 'text-octane-gray' : pct >= 0 ? 'text-octane-green' : 'text-octane-red'}`}>{pct === null ? '-' : `${pct.toFixed(1)}%`}</td>
+                                          </tr>
+                                        );
+                                      })}
+                                    </tbody>
+                                  </table>
+                                )}
+                              </td>
+                            </tr>
+                          )}
+                        </>
                       );
                     })}
                   </tbody>

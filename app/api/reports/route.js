@@ -81,7 +81,7 @@ export async function GET(req) {
     }
     const margin = revenue - totalPurchase - totalCosts;
     const marginPercent = (totalPurchase + totalCosts) > 0 ? (margin / (totalPurchase + totalCosts) * 100) : 0;
-    return { id: uid, name: u.name, role: u.role, total_vehicles: count, sold: soldCount, revenue, margin, margin_percent: marginPercent };
+    return { id: uid, name: u.name, role: u.role, investor_id: u.investor_id || null, total_vehicles: count, sold: soldCount, revenue, margin, margin_percent: marginPercent };
   });
 
   // Per investor summary (only for director/admin)
