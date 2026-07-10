@@ -9,8 +9,10 @@ export async function GET(req, { params }) {
   const { id } = await params;
   const db = getDb();
   const vehicle = db.prepare(`
-    SELECT v.*, u.name as created_by_name FROM vehicles v
-    JOIN users u ON v.created_by = u.id WHERE v.id = ?
+    SELECT v.*, u.name as created_by_name, i.name as investor_name FROM vehicles v
+    JOIN users u ON v.created_by = u.id
+    LEFT JOIN investors i ON v.investor_id = i.id
+    WHERE v.id = ?
   `).get(id);
 
   if (!vehicle) return NextResponse.json({ error: 'Viatura não encontrada' }, { status: 404 });
@@ -29,16 +31,29 @@ export async function PUT(req, { params }) {
   const data = await req.json();
   const db = getDb();
 
-  db.prepare(`
-    UPDATE vehicles SET brand=?, model=?, year=?, license_plate=?, vin=?, color=?,
-    mileage=?, fuel_type=?, purchase_price=?, sale_price=?, status=?, notes=?,
-    updated_at=datetime('now') WHERE id=?
-  `).run(
-    data.brand, data.model, data.year, data.license_plate || null,
-    data.vin || null, data.color || null, data.mileage || null,
-    data.fuel_type || null, data.purchase_price, data.sale_price || null,
-    data.status || 'em_stock', data.notes || null, id
-  );
+  if (user.role !== 'comercial') {
+    db.prepare(`
+      UPDATE vehicles SET brand=?, model=?, year=?, license_plate=?, vin=?, color=?,
+      mileage=?, fuel_type=?, purchase_price=?, sale_price=?, status=?, notes=?, investor_id=?,
+      updated_at=datetime('now') WHERE id=?
+    `).run(
+      data.brand, data.model, data.year, data.license_plate || null,
+      data.vin || null, data.color || null, data.mileage || null,
+      data.fuel_type || null, data.purchase_price, data.sale_price || null,
+      data.status || 'em_stock', data.notes || null, data.investor_id || null, id
+    );
+  } else {
+    db.prepare(`
+      UPDATE vehicles SET brand=?, model=?, year=?, license_plate=?, vin=?, color=?,
+      mileage=?, fuel_type=?, purchase_price=?, sale_price=?, status=?, notes=?,
+      updated_at=datetime('now') WHERE id=?
+    `).run(
+      data.brand, data.model, data.year, data.license_plate || null,
+      data.vin || null, data.color || null, data.mileage || null,
+      data.fuel_type || null, data.purchase_price, data.sale_price || null,
+      data.status || 'em_stock', data.notes || null, id
+    );
+  }
 
   if (data.new_cost) {
     db.prepare('INSERT INTO vehicle_costs (vehicle_id, type, amount, description) VALUES (?, ?, ?, ?)').run(

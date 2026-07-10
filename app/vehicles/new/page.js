@@ -8,15 +8,22 @@ const labelClass = "block text-xs font-medium text-octane-gray uppercase trackin
 
 export default function NewVehiclePage() {
   const [user, setUser] = useState(null);
+  const [investors, setInvestors] = useState([]);
   const [form, setForm] = useState({
     brand: '', model: '', year: new Date().getFullYear(), license_plate: '', vin: '',
-    color: '', mileage: '', fuel_type: 'Gasolina', purchase_price: '', sale_price: '', notes: '',
+    color: '', mileage: '', fuel_type: 'Gasolina', purchase_price: '', sale_price: '',
+    notes: '', investor_id: '',
   });
   const [error, setError] = useState('');
   const router = useRouter();
 
   useEffect(() => {
-    fetch('/api/users/me').then(r => r.ok ? r.json() : Promise.reject()).then(setUser).catch(() => router.push('/login'));
+    fetch('/api/users/me').then(r => r.ok ? r.json() : Promise.reject()).then(u => {
+      setUser(u);
+      if (u.role !== 'comercial') {
+        fetch('/api/investors').then(r => r.json()).then(setInvestors);
+      }
+    }).catch(() => router.push('/login'));
   }, [router]);
 
   async function handleSubmit(e) {
@@ -24,8 +31,14 @@ export default function NewVehiclePage() {
     const res = await fetch('/api/vehicles', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...form, year: parseInt(form.year), mileage: form.mileage ? parseInt(form.mileage) : null,
-        purchase_price: parseFloat(form.purchase_price), sale_price: form.sale_price ? parseFloat(form.sale_price) : null }),
+      body: JSON.stringify({
+        ...form,
+        year: parseInt(form.year),
+        mileage: form.mileage ? parseInt(form.mileage) : null,
+        purchase_price: parseFloat(form.purchase_price),
+        sale_price: form.sale_price ? parseFloat(form.sale_price) : null,
+        investor_id: form.investor_id ? parseInt(form.investor_id) : null,
+      }),
     });
     if (res.ok) router.push('/vehicles');
     else setError((await res.json()).error);
@@ -74,11 +87,19 @@ export default function NewVehiclePage() {
               <input type="number" step="0.01" value={form.sale_price} onChange={e => set('sale_price', e.target.value)}
                 className={inputClass} />
             </div>
+            {user.role !== 'comercial' && (
+              <div>
+                <label className={labelClass}>Investidor</label>
+                <select value={form.investor_id} onChange={e => set('investor_id', e.target.value)} className={inputClass}>
+                  <option value="">Sem investidor</option>
+                  {investors.map(inv => <option key={inv.id} value={inv.id}>{inv.name}</option>)}
+                </select>
+              </div>
+            )}
           </div>
           <div>
             <label className={labelClass}>Observações</label>
-            <textarea value={form.notes} onChange={e => set('notes', e.target.value)} rows={3}
-              className={inputClass} />
+            <textarea value={form.notes} onChange={e => set('notes', e.target.value)} rows={3} className={inputClass} />
           </div>
           <div className="flex gap-3">
             <button type="submit" className="bg-octane-gold text-octane-black px-6 py-2.5 rounded-lg hover:bg-octane-gold-light font-semibold transition-colors">Guardar</button>

@@ -12,12 +12,18 @@ export default function VehicleDetailPage({ params }) {
   const [vehicle, setVehicle] = useState(null);
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({});
+  const [investors, setInvestors] = useState([]);
   const [newCost, setNewCost] = useState({ type: 'manutencao', amount: '', description: '' });
   const [showCostForm, setShowCostForm] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
-    fetch('/api/users/me').then(r => r.ok ? r.json() : Promise.reject()).then(setUser).catch(() => router.push('/login'));
+    fetch('/api/users/me').then(r => r.ok ? r.json() : Promise.reject()).then(u => {
+      setUser(u);
+      if (u.role !== 'comercial') {
+        fetch('/api/investors').then(r => r.json()).then(setInvestors);
+      }
+    }).catch(() => router.push('/login'));
   }, [router]);
 
   function loadVehicle() {
@@ -101,6 +107,15 @@ export default function VehicleDetailPage({ params }) {
                     <option value="reservado">Reservado</option>
                   </select>
                 </div>
+                {user.role !== 'comercial' && (
+                  <div>
+                    <label className="text-xs text-octane-gray uppercase tracking-wider">Investidor</label>
+                    <select value={form.investor_id || ''} onChange={e => set('investor_id', e.target.value ? parseInt(e.target.value) : null)} className={inputClass}>
+                      <option value="">Sem investidor</option>
+                      {investors.map(inv => <option key={inv.id} value={inv.id}>{inv.name}</option>)}
+                    </select>
+                  </div>
+                )}
                 <div>
                   <label className="text-xs text-octane-gray uppercase tracking-wider">Observações</label>
                   <textarea value={form.notes || ''} onChange={e => set('notes', e.target.value)}
@@ -117,7 +132,9 @@ export default function VehicleDetailPage({ params }) {
                   ['Matrícula', vehicle.license_plate], ['VIN', vehicle.vin], ['Cor', vehicle.color],
                   ['Quilometragem', vehicle.mileage ? `${vehicle.mileage.toLocaleString()} km` : null],
                   ['Combustível', vehicle.fuel_type], ['Estado', vehicle.status === 'em_stock' ? 'Em Stock' : vehicle.status === 'vendido' ? 'Vendido' : 'Reservado'],
-                  ['Comercial', vehicle.created_by_name], ['Observações', vehicle.notes],
+                  ['Comercial', vehicle.created_by_name],
+                  ...(user.role !== 'comercial' ? [['Investidor', vehicle.investor_name || 'Sem investidor']] : []),
+                  ['Observações', vehicle.notes],
                 ].map(([l, v]) => v && (
                   <div key={l} className="flex justify-between border-b border-octane-border/50 pb-2">
                     <dt className="text-octane-gray">{l}</dt>

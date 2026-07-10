@@ -13,9 +13,11 @@ export async function GET(req) {
 
   let query = `
     SELECT v.*, u.name as created_by_name,
-      COALESCE((SELECT SUM(amount) FROM vehicle_costs WHERE vehicle_id = v.id), 0) as total_costs
+      COALESCE((SELECT SUM(amount) FROM vehicle_costs WHERE vehicle_id = v.id), 0) as total_costs,
+      i.name as investor_name
     FROM vehicles v
     JOIN users u ON v.created_by = u.id
+    LEFT JOIN investors i ON v.investor_id = i.id
   `;
   const conditions = [];
   const params = [];
@@ -56,13 +58,13 @@ export async function POST(req) {
   const db = getDb();
 
   const result = db.prepare(`
-    INSERT INTO vehicles (brand, model, year, license_plate, vin, color, mileage, fuel_type, purchase_price, sale_price, status, notes, created_by)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO vehicles (brand, model, year, license_plate, vin, color, mileage, fuel_type, purchase_price, sale_price, status, notes, investor_id, created_by)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
     data.brand, data.model, data.year, data.license_plate || null,
     data.vin || null, data.color || null, data.mileage || null,
     data.fuel_type || null, data.purchase_price, data.sale_price || null,
-    data.status || 'em_stock', data.notes || null, user.id
+    data.status || 'em_stock', data.notes || null, data.investor_id || null, user.id
   );
 
   return NextResponse.json({ id: result.lastInsertRowid });

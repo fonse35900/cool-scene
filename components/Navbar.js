@@ -15,7 +15,10 @@ export default function Navbar({ user }) {
   const links = [
     { href: '/dashboard', label: 'Dashboard' },
     { href: '/vehicles', label: 'Viaturas' },
-    ...(user.role !== 'comercial' ? [{ href: '/users', label: 'Utilizadores' }] : []),
+    ...(user.role !== 'comercial' ? [
+      { href: '/investors', label: 'Investidores' },
+      { href: '/users', label: 'Utilizadores' },
+    ] : []),
     { href: '/reports', label: 'Relatórios' },
   ];
 

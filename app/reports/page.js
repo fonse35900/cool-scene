@@ -6,26 +6,30 @@ import Navbar from '@/components/Navbar';
 export default function ReportsPage() {
   const [user, setUser] = useState(null);
   const [users, setUsers] = useState([]);
+  const [investors, setInvestors] = useState([]);
   const [selectedUsers, setSelectedUsers] = useState([]);
+  const [selectedInvestor, setSelectedInvestor] = useState('');
   const [report, setReport] = useState(null);
   const router = useRouter();
 
   useEffect(() => {
-    fetch('/api/users/me').then(r => r.ok ? r.json() : Promise.reject()).then(setUser).catch(() => router.push('/login'));
+    fetch('/api/users/me').then(r => r.ok ? r.json() : Promise.reject()).then(u => {
+      setUser(u);
+      if (u.role !== 'comercial') {
+        fetch('/api/users').then(r => r.json()).then(setUsers);
+        fetch('/api/investors').then(r => r.json()).then(setInvestors);
+      }
+    }).catch(() => router.push('/login'));
   }, [router]);
 
   useEffect(() => {
-    if (user && user.role !== 'comercial') {
-      fetch('/api/users').then(r => r.json()).then(setUsers);
-    }
-  }, [user]);
-
-  useEffect(() => {
     if (user) {
-      const params = selectedUsers.length ? `?users=${selectedUsers.join(',')}` : '';
-      fetch(`/api/reports${params}`).then(r => r.json()).then(setReport);
+      const params = new URLSearchParams();
+      if (selectedUsers.length) params.set('users', selectedUsers.join(','));
+      if (selectedInvestor) params.set('investor_id', selectedInvestor);
+      fetch(`/api/reports?${params}`).then(r => r.json()).then(setReport);
     }
-  }, [user, selectedUsers]);
+  }, [user, selectedUsers, selectedInvestor]);
 
   function toggleUser(id) {
     setSelectedUsers(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
@@ -39,26 +43,55 @@ export default function ReportsPage() {
       <div className="max-w-7xl mx-auto p-6">
         <h1 className="text-2xl font-bold mb-6 tracking-wide">Relatórios</h1>
 
-        {user.role !== 'comercial' && users.length > 0 && (
-          <div className="bg-octane-card border border-octane-border p-4 rounded-xl mb-6">
-            <h2 className="font-semibold mb-3 text-xs text-octane-gray uppercase tracking-wider">Filtrar por utilizador</h2>
-            <div className="flex flex-wrap gap-2">
-              {users.filter(u => u.role !== 'admin' || user.role === 'admin').map(u => (
-                <button key={u.id} onClick={() => toggleUser(u.id)}
-                  className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${
-                    selectedUsers.includes(u.id)
-                      ? 'bg-octane-gold text-octane-black border-octane-gold font-semibold'
-                      : 'border-octane-border text-octane-gray hover:border-octane-gold hover:text-octane-gold'
-                  }`}>
-                  {u.name}
-                </button>
-              ))}
-              {selectedUsers.length > 0 && (
-                <button onClick={() => setSelectedUsers([])} className="px-3 py-1.5 rounded-full text-sm text-octane-red hover:bg-octane-red/10 transition-colors">
-                  Limpar filtros
-                </button>
-              )}
-            </div>
+        {user.role !== 'comercial' && (
+          <div className="bg-octane-card border border-octane-border p-4 rounded-xl mb-6 space-y-4">
+            {users.length > 0 && (
+              <div>
+                <h2 className="text-xs text-octane-gray uppercase tracking-wider mb-2">Filtrar por utilizador</h2>
+                <div className="flex flex-wrap gap-2">
+                  {users.filter(u => u.role !== 'admin' || user.role === 'admin').map(u => (
+                    <button key={u.id} onClick={() => toggleUser(u.id)}
+                      className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${
+                        selectedUsers.includes(u.id)
+                          ? 'bg-octane-gold text-octane-black border-octane-gold font-semibold'
+                          : 'border-octane-border text-octane-gray hover:border-octane-gold hover:text-octane-gold'
+                      }`}>
+                      {u.name}
+                    </button>
+                  ))}
+                  {selectedUsers.length > 0 && (
+                    <button onClick={() => setSelectedUsers([])} className="px-3 py-1.5 rounded-full text-sm text-octane-red hover:bg-octane-red/10 transition-colors">
+                      Limpar
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+            {investors.length > 0 && (
+              <div>
+                <h2 className="text-xs text-octane-gray uppercase tracking-wider mb-2">Filtrar por investidor</h2>
+                <div className="flex flex-wrap gap-2">
+                  <button onClick={() => setSelectedInvestor('')}
+                    className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${
+                      !selectedInvestor
+                        ? 'bg-octane-gold text-octane-black border-octane-gold font-semibold'
+                        : 'border-octane-border text-octane-gray hover:border-octane-gold hover:text-octane-gold'
+                    }`}>
+                    Todos
+                  </button>
+                  {investors.map(inv => (
+                    <button key={inv.id} onClick={() => setSelectedInvestor(String(inv.id))}
+                      className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${
+                        selectedInvestor === String(inv.id)
+                          ? 'bg-octane-gold text-octane-black border-octane-gold font-semibold'
+                          : 'border-octane-border text-octane-gray hover:border-octane-gold hover:text-octane-gold'
+                      }`}>
+                      {inv.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -92,9 +125,40 @@ export default function ReportsPage() {
               ))}
             </div>
 
+            {user.role !== 'comercial' && report.perInvestor?.length > 0 && (
+              <div className="bg-octane-card border border-octane-border rounded-xl mb-6">
+                <h2 className="font-semibold p-4 pb-0 text-octane-gold text-sm uppercase tracking-wider">Por Investidor</h2>
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-octane-border">
+                      {['Investidor', 'Viaturas', 'Vendidas', 'Total Compras', 'Total Custos', 'Total Vendas', 'Margem'].map(h => (
+                        <th key={h} className="text-left p-3 font-medium text-octane-gray text-xs uppercase tracking-wider">{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {report.perInvestor.map(inv => {
+                      const margin = inv.total_sales - inv.total_purchase - inv.total_costs;
+                      return (
+                        <tr key={inv.id} className="border-t border-octane-border">
+                          <td className="p-3 font-medium text-octane-white">{inv.name}</td>
+                          <td className="p-3 text-octane-white">{inv.total_vehicles}</td>
+                          <td className="p-3 text-octane-white">{inv.sold}</td>
+                          <td className="p-3 text-octane-white">€{inv.total_purchase.toLocaleString()}</td>
+                          <td className="p-3 text-octane-orange">€{inv.total_costs.toLocaleString()}</td>
+                          <td className="p-3 text-octane-gold">€{inv.total_sales.toLocaleString()}</td>
+                          <td className={`p-3 font-medium ${margin >= 0 ? 'text-octane-green' : 'text-octane-red'}`}>€{margin.toLocaleString()}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
             {user.role !== 'comercial' && report.perUser.length > 0 && (
               <div className="bg-octane-card border border-octane-border rounded-xl mb-6">
-                <h2 className="font-semibold p-4 pb-0 text-octane-gold text-sm uppercase tracking-wider">Desempenho por Utilizador</h2>
+                <h2 className="font-semibold p-4 pb-0 text-octane-gold text-sm uppercase tracking-wider">Por Utilizador</h2>
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-octane-border">
@@ -125,7 +189,11 @@ export default function ReportsPage() {
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-octane-border">
-                        {['Viatura', 'Comercial', 'Preço Compra', 'Custos', 'Preço Venda', 'Margem (€)', 'Margem (%)'].map(h => (
+                        {[
+                          'Viatura', 'Comercial',
+                          ...(user.role !== 'comercial' ? ['Investidor'] : []),
+                          'Preço Compra', 'Custos', 'Preço Venda', 'Margem (€)', 'Margem (%)'
+                        ].map(h => (
                           <th key={h} className="text-left p-3 font-medium text-octane-gray text-xs uppercase tracking-wider">{h}</th>
                         ))}
                       </tr>
@@ -135,6 +203,9 @@ export default function ReportsPage() {
                         <tr key={v.id} className="border-t border-octane-border">
                           <td className="p-3 font-medium text-octane-white">{v.brand} {v.model} ({v.year})</td>
                           <td className="p-3 text-octane-gray">{v.created_by_name}</td>
+                          {user.role !== 'comercial' && (
+                            <td className="p-3 text-octane-gray">{v.investor_name || '-'}</td>
+                          )}
                           <td className="p-3 text-octane-white">€{v.purchase_price.toLocaleString()}</td>
                           <td className="p-3 text-octane-orange">€{v.costs.toLocaleString()}</td>
                           <td className="p-3 text-octane-gold">€{v.sale_price.toLocaleString()}</td>
