@@ -95,26 +95,31 @@ export default function VehicleReportsPage() {
             </div>
 
             {user.role !== 'comercial' && report.perUser.length > 0 && (
-              <div className="bg-octane-card border border-octane-border rounded-xl mb-6">
+              <div className="bg-octane-card border border-octane-border rounded-xl mb-6 overflow-x-auto">
                 <h2 className="font-semibold p-4 pb-0 text-octane-gold text-sm uppercase tracking-wider">Por Utilizador</h2>
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-octane-border">
-                      {['Nome', 'Papel', 'Total Viaturas', 'Vendidas', 'Receita'].map(h => (
+                      {['Nome', 'Papel', 'Total Viaturas', 'Vendidas', 'Receita', 'Margem (€)', 'Margem (%)'].map(h => (
                         <th key={h} className="text-left p-3 font-medium text-octane-gray text-xs uppercase tracking-wider">{h}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
-                    {report.perUser.map(u => (
-                      <tr key={u.id} className="border-t border-octane-border">
-                        <td className="p-3 font-medium text-octane-white">{u.name}</td>
-                        <td className="p-3 text-octane-gray">{u.role === 'director' ? 'Diretor' : 'Comercial'}</td>
-                        <td className="p-3 text-octane-white">{u.total_vehicles}</td>
-                        <td className="p-3 text-octane-white">{u.sold}</td>
-                        <td className="p-3 font-medium text-octane-gold">€{u.revenue.toLocaleString()}</td>
-                      </tr>
-                    ))}
+                    {report.perUser.map(u => {
+                      const roleLabel = { director: 'Diretor', comercial: 'Comercial', admin: 'Administrador', investidor: 'Investidor' }[u.role] || u.role;
+                      return (
+                        <tr key={u.id} className="border-t border-octane-border">
+                          <td className="p-3 font-medium text-octane-white">{u.name}</td>
+                          <td className="p-3 text-octane-gray">{roleLabel}</td>
+                          <td className="p-3 text-octane-white">{u.total_vehicles}</td>
+                          <td className="p-3 text-octane-white">{u.sold}</td>
+                          <td className="p-3 font-medium text-octane-gold">€{u.revenue.toLocaleString()}</td>
+                          <td className={`p-3 font-medium ${u.margin >= 0 ? 'text-octane-green' : 'text-octane-red'}`}>€{(u.margin ?? 0).toLocaleString()}</td>
+                          <td className={`p-3 font-medium ${u.margin_percent >= 0 ? 'text-octane-green' : 'text-octane-red'}`}>{(u.margin_percent ?? 0).toFixed(1)}%</td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>

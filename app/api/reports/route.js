@@ -63,11 +63,25 @@ export async function GET(req) {
   });
 
   const perUser = userIds.map(uid => {
-    const u = db.prepare('SELECT name, role FROM users WHERE id = ?').get(uid);
-    const count = db.prepare(`SELECT COUNT(*) as c FROM vehicles v WHERE v.created_by=?${investorCondition}`).get(uid, ...investorParams).c;
-    const soldCount = db.prepare(`SELECT COUNT(*) as c FROM vehicles v WHERE v.created_by=? AND v.status='vendido'${investorCondition}`).get(uid, ...investorParams).c;
-    const revenue = db.prepare(`SELECT COALESCE(SUM(v.sale_price),0) as t FROM vehicles v WHERE v.created_by=? AND v.status='vendido' AND v.sale_price IS NOT NULL${investorCondition}`).get(uid, ...investorParams).t;
-    return { id: uid, name: u.name, role: u.role, total_vehicles: count, sold: soldCount, revenue };
+    const u = db.prepare('SELECT name, role, investor_id FROM users WHERE id = ?').get(uid);
+    let count, soldCount, revenue, totalPurchase, totalCosts;
+    if (u.role === 'investidor' && u.investor_id) {
+      // Attribute vehicles by investor_id
+      count = db.prepare(`SELECT COUNT(*) as c FROM vehicles v WHERE v.investor_id=? AND v.vehicle_type='stock'`).get(u.investor_id).c;
+      soldCount = db.prepare(`SELECT COUNT(*) as c FROM vehicles v WHERE v.investor_id=? AND v.vehicle_type='stock' AND v.status='vendido'`).get(u.investor_id).c;
+      revenue = db.prepare(`SELECT COALESCE(SUM(v.sale_price),0) as t FROM vehicles v WHERE v.investor_id=? AND v.vehicle_type='stock' AND v.status='vendido' AND v.sale_price IS NOT NULL`).get(u.investor_id).t;
+      totalPurchase = db.prepare(`SELECT COALESCE(SUM(v.purchase_price),0) as t FROM vehicles v WHERE v.investor_id=? AND v.vehicle_type='stock' AND v.status='vendido'`).get(u.investor_id).t;
+      totalCosts = db.prepare(`SELECT COALESCE(SUM(vc.amount),0) as t FROM vehicle_costs vc JOIN vehicles v ON vc.vehicle_id=v.id WHERE v.investor_id=? AND v.vehicle_type='stock' AND v.status='vendido'`).get(u.investor_id).t;
+    } else {
+      count = db.prepare(`SELECT COUNT(*) as c FROM vehicles v WHERE v.created_by=?${investorCondition}`).get(uid, ...investorParams).c;
+      soldCount = db.prepare(`SELECT COUNT(*) as c FROM vehicles v WHERE v.created_by=? AND v.status='vendido'${investorCondition}`).get(uid, ...investorParams).c;
+      revenue = db.prepare(`SELECT COALESCE(SUM(v.sale_price),0) as t FROM vehicles v WHERE v.created_by=? AND v.status='vendido' AND v.sale_price IS NOT NULL${investorCondition}`).get(uid, ...investorParams).t;
+      totalPurchase = db.prepare(`SELECT COALESCE(SUM(v.purchase_price),0) as t FROM vehicles v WHERE v.created_by=? AND v.status='vendido'${investorCondition}`).get(uid, ...investorParams).t;
+      totalCosts = db.prepare(`SELECT COALESCE(SUM(vc.amount),0) as t FROM vehicle_costs vc JOIN vehicles v ON vc.vehicle_id=v.id WHERE v.created_by=? AND v.status='vendido'${investorCondition}`).get(uid, ...investorParams).t;
+    }
+    const margin = revenue - totalPurchase - totalCosts;
+    const marginPercent = (totalPurchase + totalCosts) > 0 ? (margin / (totalPurchase + totalCosts) * 100) : 0;
+    return { id: uid, name: u.name, role: u.role, total_vehicles: count, sold: soldCount, revenue, margin, margin_percent: marginPercent };
   });
 
   // Per investor summary (only for director/admin)
