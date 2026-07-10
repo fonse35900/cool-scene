@@ -92,5 +92,37 @@ export async function GET(req) {
     };
   });
 
-  return NextResponse.json({ perInvestor: result, salesDetails });
+  // Financial position per investor (contributions - purchases - costs + sales)
+  const posicaoFinanceira = result.map(inv => {
+    const contributions = db.prepare(
+      'SELECT COALESCE(SUM(amount), 0) as total FROM investor_contributions WHERE investor_id = ?'
+    ).get(inv.id).total;
+
+    const stockVehicles = db.prepare(`
+      SELECT v.id, v.brand, v.model, v.year, v.license_plate, v.status, v.purchase_price, v.sale_price,
+        COALESCE((SELECT SUM(amount) FROM vehicle_costs WHERE vehicle_id = v.id), 0) as total_costs
+      FROM vehicles v WHERE v.investor_id = ? AND v.vehicle_type = 'stock'
+      ORDER BY v.created_at ASC
+    `).all(inv.id);
+
+    const investorVehicles = db.prepare(`
+      SELECT v.id, v.brand, v.model, v.year, v.license_plate,
+        COALESCE((SELECT SUM(amount) FROM vehicle_costs WHERE vehicle_id = v.id), 0) as total_costs
+      FROM vehicles v WHERE v.investor_id = ? AND v.vehicle_type = 'investidor'
+    `).all(inv.id);
+
+    const totalPurchased = stockVehicles.reduce((s, v) => s + v.purchase_price, 0);
+    const totalStockCosts = stockVehicles.reduce((s, v) => s + v.total_costs, 0);
+    const totalSalesRevenue = stockVehicles.filter(v => v.status === 'vendido' && v.sale_price).reduce((s, v) => s + v.sale_price, 0);
+    const totalInvestorCosts = investorVehicles.reduce((s, v) => s + v.total_costs, 0);
+    const balance = contributions - totalPurchased - totalStockCosts - totalInvestorCosts + totalSalesRevenue;
+
+    return {
+      id: inv.id, name: inv.name,
+      contributions, totalPurchased, totalStockCosts, totalInvestorCosts, totalSalesRevenue, balance,
+      stockVehicles, investorVehicles,
+    };
+  });
+
+  return NextResponse.json({ perInvestor: result, salesDetails, posicaoFinanceira });
 }
