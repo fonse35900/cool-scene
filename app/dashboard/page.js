@@ -9,7 +9,9 @@ export default function DashboardPage() {
   const router = useRouter();
 
   useEffect(() => {
-    fetch('/api/users/me').then(r => r.ok ? r.json() : Promise.reject()).then(setUser).catch(() => router.push('/login'));
+    fetch('/api/users/me').then(r => r.ok ? r.json() : Promise.reject())
+      .then(u => { if (u.role === 'investidor') { router.replace('/investor'); } else { setUser(u); } })
+      .catch(() => router.push('/login'));
   }, [router]);
 
   useEffect(() => {

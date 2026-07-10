@@ -28,7 +28,7 @@ export default function Navbar({ user }) {
     <nav className="bg-octane-dark border-b border-octane-border">
       <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-8">
-          <a href="/dashboard">
+          <a href={user.role === 'investidor' ? '/investor' : '/dashboard'}>
             <img src="/logo-octane.jpeg" alt="OCTANE" className="h-8" />
           </a>
           <div className="hidden md:flex gap-1">
