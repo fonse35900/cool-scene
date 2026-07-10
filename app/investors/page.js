@@ -83,7 +83,7 @@ export default function InvestorsPage() {
 
   async function addContribution(investorId) {
     const f = contribForm[investorId] || {};
-    if (!f.amount) return;
+    if (!f.amount) { alert('Insira um valor'); return; }
     const res = await fetch('/api/investor/contributions', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ investor_id: investorId, amount: parseFloat(f.amount), notes: f.notes || '', date: f.date || new Date().toISOString().split('T')[0] }),
@@ -91,6 +91,9 @@ export default function InvestorsPage() {
     if (res.ok) {
       setContribForm(cf => ({ ...cf, [investorId]: {} }));
       loadContributions(investorId);
+    } else {
+      const d = await res.json().catch(() => ({}));
+      alert(d.error || `Erro ${res.status}`);
     }
   }
 
@@ -110,7 +113,7 @@ export default function InvestorsPage() {
 
   async function sendInvite(investorId) {
     const email = inviteEmail[investorId];
-    if (!email) return;
+    if (!email) { alert('Insira um email'); return; }
     const res = await fetch('/api/invitations', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ investor_id: investorId, email }),
@@ -121,6 +124,9 @@ export default function InvestorsPage() {
       setInviteLink(l => ({ ...l, [investorId]: link }));
       setInviteEmail(e => ({ ...e, [investorId]: '' }));
       loadInvitations(investorId);
+    } else {
+      const d = await res.json().catch(() => ({}));
+      alert(d.error || `Erro ${res.status}`);
     }
   }
 
