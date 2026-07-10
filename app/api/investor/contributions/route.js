@@ -19,16 +19,21 @@ export async function GET(req) {
 }
 
 export async function POST(req) {
-  const user = await getCurrentUser();
-  if (!user || (user.role !== 'director' && user.role !== 'admin')) {
-    return NextResponse.json({ error: 'Sem permissão' }, { status: 403 });
+  try {
+    const user = await getCurrentUser();
+    if (!user || (user.role !== 'director' && user.role !== 'admin')) {
+      return NextResponse.json({ error: 'Sem permissão' }, { status: 403 });
+    }
+    const { investor_id, amount, notes, date } = await req.json();
+    const db = getDb();
+    const result = db.prepare(
+      'INSERT INTO investor_contributions (investor_id, amount, notes, date) VALUES (?, ?, ?, ?)'
+    ).run(investor_id, amount, notes || null, date || new Date().toISOString());
+    return NextResponse.json({ id: result.lastInsertRowid });
+  } catch (e) {
+    console.error('contributions POST error:', e);
+    return NextResponse.json({ error: e.message }, { status: 500 });
   }
-  const { investor_id, amount, notes, date } = await req.json();
-  const db = getDb();
-  const result = db.prepare(
-    'INSERT INTO investor_contributions (investor_id, amount, notes, date) VALUES (?, ?, ?, ?)'
-  ).run(investor_id, amount, notes || null, date || new Date().toISOString());
-  return NextResponse.json({ id: result.lastInsertRowid });
 }
 
 export async function DELETE(req) {
