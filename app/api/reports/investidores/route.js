@@ -124,5 +124,30 @@ export async function GET(req) {
     };
   });
 
-  return NextResponse.json({ perInvestor: result, salesDetails, posicaoFinanceira });
+  // Vehicles with no investor assigned
+  const semInvestidorVehicles = db.prepare(`
+    SELECT v.id, v.brand, v.model, v.year, v.license_plate, v.status, v.vehicle_type,
+      v.purchase_price, v.sale_price, v.created_at,
+      u.name as created_by_name,
+      COALESCE((SELECT SUM(amount) FROM vehicle_costs WHERE vehicle_id = v.id), 0) as total_costs
+    FROM vehicles v
+    JOIN users u ON v.created_by = u.id
+    WHERE v.investor_id IS NULL AND v.created_by IN (${placeholders})
+    ORDER BY v.created_at DESC
+  `).all(...userIds);
+
+  const semInvestidor = {
+    stockVehicles: semInvestidorVehicles.filter(v => v.vehicle_type === 'stock').map(v => ({
+      ...v,
+      margin: v.sale_price ? v.sale_price - v.purchase_price - v.total_costs : null,
+    })),
+    totalPurchase: semInvestidorVehicles.filter(v => v.vehicle_type === 'stock').reduce((s, v) => s + v.purchase_price, 0),
+    totalSales: semInvestidorVehicles.filter(v => v.vehicle_type === 'stock' && v.sale_price).reduce((s, v) => s + v.sale_price, 0),
+    totalCosts: semInvestidorVehicles.reduce((s, v) => s + v.total_costs, 0),
+    sold: semInvestidorVehicles.filter(v => v.vehicle_type === 'stock' && v.status === 'vendido').length,
+    inStock: semInvestidorVehicles.filter(v => v.vehicle_type === 'stock' && v.status === 'em_stock').length,
+  };
+  semInvestidor.grossMargin = semInvestidor.totalSales - semInvestidor.totalPurchase - semInvestidor.totalCosts;
+
+  return NextResponse.json({ perInvestor: result, salesDetails, posicaoFinanceira, semInvestidor });
 }

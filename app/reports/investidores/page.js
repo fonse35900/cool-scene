@@ -170,6 +170,58 @@ export default function InvestorReportsPage() {
               </>
             )}
 
+            {/* Sem Investidor */}
+            {report.semInvestidor?.stockVehicles?.length > 0 && (
+              <div className="bg-octane-card border border-octane-border rounded-xl mb-6">
+                <div className="flex items-center justify-between p-4 pb-3">
+                  <h2 className="font-semibold text-octane-gray text-sm uppercase tracking-wider">Sem Investidor Atribuído</h2>
+                  <div className="flex gap-4 text-xs">
+                    <span className="text-octane-gray">Em Stock: <span className="text-octane-white font-medium">{report.semInvestidor.inStock}</span></span>
+                    <span className="text-octane-gray">Vendidas: <span className="text-octane-white font-medium">{report.semInvestidor.sold}</span></span>
+                    <span className="text-octane-gray">Compras: <span className="text-octane-white font-medium">{fmt(report.semInvestidor.totalPurchase)}</span></span>
+                    <span className="text-octane-gray">Custos: <span className="text-octane-red font-medium">{fmt(report.semInvestidor.totalCosts)}</span></span>
+                    <span className="text-octane-gray">Vendas: <span className="text-octane-gold font-medium">{fmt(report.semInvestidor.totalSales)}</span></span>
+                    <span className="text-octane-gray">Margem: <span className={`font-medium ${report.semInvestidor.grossMargin >= 0 ? 'text-octane-green' : 'text-octane-red'}`}>{fmt(report.semInvestidor.grossMargin)}</span></span>
+                  </div>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-octane-border">
+                        {['Viatura', 'Matricula', 'Comercial', 'Estado', 'Compra', 'Custos', 'Venda', 'Margem (€)', 'Margem (%)'].map(h => (
+                          <th key={h} className="text-left p-3 font-medium text-octane-gray text-xs uppercase tracking-wider">{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {report.semInvestidor.stockVehicles.map(v => {
+                        const cost = v.purchase_price + v.total_costs;
+                        const pct = v.margin !== null && cost > 0 ? (v.margin / cost * 100) : null;
+                        return (
+                          <tr key={v.id} className="border-t border-octane-border">
+                            <td className="p-3 font-medium text-octane-white">{v.brand} {v.model} <span className="text-octane-gray">({v.year})</span></td>
+                            <td className="p-3 text-octane-gray">{v.license_plate || '-'}</td>
+                            <td className="p-3 text-octane-gray">{v.created_by_name}</td>
+                            <td className="p-3">
+                              <span className={`text-xs px-2 py-0.5 rounded font-medium ${
+                                v.status === 'vendido' ? 'bg-octane-green/10 text-octane-green' :
+                                v.status === 'reservado' ? 'bg-octane-gold/10 text-octane-gold' :
+                                'bg-octane-gray/10 text-octane-gray'}`}>{v.status}</span>
+                            </td>
+                            <td className="p-3 text-octane-white">{fmt(v.purchase_price)}</td>
+                            <td className="p-3 text-octane-red">{fmt(v.total_costs)}</td>
+                            <td className="p-3 text-octane-white">{v.sale_price ? fmt(v.sale_price) : '-'}</td>
+                            <td className={`p-3 font-medium ${v.margin === null ? 'text-octane-gray' : v.margin >= 0 ? 'text-octane-green' : 'text-octane-red'}`}>{v.margin === null ? '-' : fmt(v.margin)}</td>
+                            <td className={`p-3 font-medium ${pct === null ? 'text-octane-gray' : pct >= 0 ? 'text-octane-green' : 'text-octane-red'}`}>{pct === null ? '-' : `${pct.toFixed(1)}%`}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
             {report.salesDetails.length > 0 && (
               <div className="bg-octane-card border border-octane-border rounded-xl">
                 <h2 className="font-semibold p-4 pb-0 text-octane-gold text-sm uppercase tracking-wider">Detalhe de Vendas</h2>
