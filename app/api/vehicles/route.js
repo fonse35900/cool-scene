@@ -88,7 +88,8 @@ export async function POST(req) {
     data.vin || null, data.color || null, data.mileage || null,
     data.fuel_type || null, data.purchase_price || 0, null,
     'em_stock', data.notes || null,
-    data.investor_id || null, vehicleType, user.id
+    data.investor_id || null, vehicleType,
+    (user.role !== 'comercial' && data.assigned_to) ? data.assigned_to : user.id
   );
 
   return NextResponse.json({ id: result.lastInsertRowid });

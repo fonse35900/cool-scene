@@ -14,6 +14,7 @@ export default function VehicleDetailPage({ params }) {
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({});
   const [investors, setInvestors] = useState([]);
+  const [teamMembers, setTeamMembers] = useState([]);
   const [newCost, setNewCost] = useState({ type: 'manutencao', amount: '', description: '', date: '' });
   const [showCostForm, setShowCostForm] = useState(false);
   const router = useRouter();
@@ -23,6 +24,9 @@ export default function VehicleDetailPage({ params }) {
       setUser(u);
       if (u.role !== 'comercial') {
         fetch('/api/investors').then(r => r.json()).then(setInvestors);
+        fetch('/api/users').then(r => r.json()).then(users => {
+          setTeamMembers(users.filter(m => m.role === 'comercial' || m.id === u.id));
+        });
       }
     }).catch(() => router.push('/login'));
   }, [router]);
@@ -109,13 +113,21 @@ export default function VehicleDetailPage({ params }) {
                   </select>
                 </div>
                 {user.role !== 'comercial' && (
-                  <div>
-                    <label className="text-xs text-octane-gray uppercase tracking-wider">Investidor</label>
-                    <select value={form.investor_id || ''} onChange={e => set('investor_id', e.target.value ? parseInt(e.target.value) : null)} className={inputClass}>
-                      <option value="">Sem investidor</option>
-                      {investors.map(inv => <option key={inv.id} value={inv.id}>{inv.name}</option>)}
-                    </select>
-                  </div>
+                  <>
+                    <div>
+                      <label className="text-xs text-octane-gray uppercase tracking-wider">Responsável</label>
+                      <select value={form.created_by || ''} onChange={e => set('created_by', e.target.value ? parseInt(e.target.value) : null)} className={inputClass}>
+                        {teamMembers.map(m => <option key={m.id} value={m.id}>{m.name}{m.id === user.id ? ' (eu)' : ''}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-xs text-octane-gray uppercase tracking-wider">Investidor</label>
+                      <select value={form.investor_id || ''} onChange={e => set('investor_id', e.target.value ? parseInt(e.target.value) : null)} className={inputClass}>
+                        <option value="">Sem investidor</option>
+                        {investors.map(inv => <option key={inv.id} value={inv.id}>{inv.name}</option>)}
+                      </select>
+                    </div>
+                  </>
                 )}
                 <div>
                   <label className="text-xs text-octane-gray uppercase tracking-wider">Observações</label>

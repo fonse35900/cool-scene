@@ -9,10 +9,11 @@ const labelClass = "block text-xs font-medium text-octane-gray uppercase trackin
 export default function NewVehiclePage() {
   const [user, setUser] = useState(null);
   const [investors, setInvestors] = useState([]);
+  const [teamMembers, setTeamMembers] = useState([]);
   const [form, setForm] = useState({
     brand: '', model: '', year: new Date().getFullYear(), license_plate: '', vin: '',
     color: '', mileage: '', fuel_type: 'Gasolina', purchase_price: '', sale_price: '',
-    notes: '', investor_id: '',
+    notes: '', investor_id: '', assigned_to: '',
   });
   const [error, setError] = useState('');
   const router = useRouter();
@@ -22,6 +23,11 @@ export default function NewVehiclePage() {
       setUser(u);
       if (u.role !== 'comercial') {
         fetch('/api/investors').then(r => r.json()).then(setInvestors);
+        fetch('/api/users').then(r => r.json()).then(users => {
+          const team = users.filter(m => m.role === 'comercial' || m.id === u.id);
+          setTeamMembers(team);
+          setForm(f => ({ ...f, assigned_to: String(u.id) }));
+        });
       }
     }).catch(() => router.push('/login'));
   }, [router]);
@@ -38,6 +44,7 @@ export default function NewVehiclePage() {
         purchase_price: parseFloat(form.purchase_price),
         sale_price: form.sale_price ? parseFloat(form.sale_price) : null,
         investor_id: form.investor_id ? parseInt(form.investor_id) : null,
+        assigned_to: form.assigned_to ? parseInt(form.assigned_to) : null,
       }),
     });
     if (res.ok) router.push('/vehicles');
@@ -88,13 +95,21 @@ export default function NewVehiclePage() {
                 className={inputClass} />
             </div>
             {user.role !== 'comercial' && (
-              <div>
-                <label className={labelClass}>Investidor</label>
-                <select value={form.investor_id} onChange={e => set('investor_id', e.target.value)} className={inputClass}>
-                  <option value="">Sem investidor</option>
-                  {investors.map(inv => <option key={inv.id} value={inv.id}>{inv.name}</option>)}
-                </select>
-              </div>
+              <>
+                <div>
+                  <label className={labelClass}>Atribuir a</label>
+                  <select value={form.assigned_to} onChange={e => set('assigned_to', e.target.value)} className={inputClass}>
+                    {teamMembers.map(m => <option key={m.id} value={m.id}>{m.name}{m.id === user.id ? ' (eu)' : ''}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className={labelClass}>Investidor</label>
+                  <select value={form.investor_id} onChange={e => set('investor_id', e.target.value)} className={inputClass}>
+                    <option value="">Sem investidor</option>
+                    {investors.map(inv => <option key={inv.id} value={inv.id}>{inv.name}</option>)}
+                  </select>
+                </div>
+              </>
             )}
           </div>
           <div>
