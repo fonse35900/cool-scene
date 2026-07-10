@@ -56,8 +56,9 @@ export async function PUT(req, { params }) {
   }
 
   if (data.new_cost) {
-    db.prepare('INSERT INTO vehicle_costs (vehicle_id, type, amount, description) VALUES (?, ?, ?, ?)').run(
-      id, data.new_cost.type, data.new_cost.amount, data.new_cost.description || null
+    db.prepare('INSERT INTO vehicle_costs (vehicle_id, type, amount, description, date) VALUES (?, ?, ?, ?, ?)').run(
+      id, data.new_cost.type, data.new_cost.amount, data.new_cost.description || null,
+      data.new_cost.date || new Date().toISOString()
     );
   }
 

@@ -2,6 +2,7 @@
 import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
+import DateInput from '@/components/DateInput';
 
 const costTypeLabels = { manutencao: 'Manutenção', revisao: 'Revisão', outro: 'Outro' };
 const inputClass = "w-full bg-octane-card border border-octane-border rounded px-3 py-2 text-sm text-octane-white focus:ring-2 focus:ring-octane-gold focus:outline-none";
@@ -13,7 +14,7 @@ export default function VehicleDetailPage({ params }) {
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({});
   const [investors, setInvestors] = useState([]);
-  const [newCost, setNewCost] = useState({ type: 'manutencao', amount: '', description: '' });
+  const [newCost, setNewCost] = useState({ type: 'manutencao', amount: '', description: '', date: '' });
   const [showCostForm, setShowCostForm] = useState(false);
   const router = useRouter();
 
@@ -48,7 +49,7 @@ export default function VehicleDetailPage({ params }) {
       method: 'PUT', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ...vehicle, new_cost: { ...newCost, amount: parseFloat(newCost.amount) } }),
     });
-    setNewCost({ type: 'manutencao', amount: '', description: '' });
+    setNewCost({ type: 'manutencao', amount: '', description: '', date: '' });
     setShowCostForm(false);
     loadVehicle();
   }
@@ -204,13 +205,19 @@ export default function VehicleDetailPage({ params }) {
               </div>
               {showCostForm && (
                 <div className="bg-octane-dark border border-octane-border p-4 rounded-lg mb-4 space-y-3">
-                  <select value={newCost.type} onChange={e => setNewCost(c => ({ ...c, type: e.target.value }))} className={inputClass}>
-                    <option value="manutencao">Manutenção</option>
-                    <option value="revisao">Revisão</option>
-                    <option value="outro">Outro</option>
-                  </select>
-                  <input type="number" step="0.01" placeholder="Valor (€)" value={newCost.amount}
-                    onChange={e => setNewCost(c => ({ ...c, amount: e.target.value }))} className={inputClass} />
+                  <div className="grid grid-cols-2 gap-3">
+                    <select value={newCost.type} onChange={e => setNewCost(c => ({ ...c, type: e.target.value }))} className={inputClass}>
+                      <option value="manutencao">Manutenção</option>
+                      <option value="revisao">Revisão</option>
+                      <option value="outro">Outro</option>
+                    </select>
+                    <input type="number" step="0.01" placeholder="Valor (€)" value={newCost.amount}
+                      onChange={e => setNewCost(c => ({ ...c, amount: e.target.value }))} className={inputClass} />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-octane-gray mb-1">Data</label>
+                    <DateInput value={newCost.date} onChange={v => setNewCost(c => ({ ...c, date: v }))} className={inputClass} />
+                  </div>
                   <textarea placeholder="Descrição / Observações" value={newCost.description}
                     onChange={e => setNewCost(c => ({ ...c, description: e.target.value }))}
                     className={inputClass} rows={2} />

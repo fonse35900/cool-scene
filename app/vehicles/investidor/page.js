@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import VehiclesTabs from '@/components/VehiclesTabs';
+import DateInput from '@/components/DateInput';
 
 const costTypeLabels = { manutencao: 'Manutenção', revisao: 'Revisão', outro: 'Outro' };
 const inputClass = "w-full bg-octane-dark border border-octane-border rounded-lg px-4 py-3 text-sm text-octane-white focus:ring-2 focus:ring-octane-gold focus:border-octane-gold focus:outline-none";
@@ -17,7 +18,7 @@ export default function InvestorVehiclesPage() {
   const [expanded, setExpanded] = useState(null);
   const [vehicleDetail, setVehicleDetail] = useState({});
   const [showCostForm, setShowCostForm] = useState(null);
-  const [newCost, setNewCost] = useState({ type: 'manutencao', amount: '', description: '' });
+  const [newCost, setNewCost] = useState({ type: 'manutencao', amount: '', description: '', date: '' });
   const [form, setForm] = useState({ brand: '', model: '', year: new Date().getFullYear(), license_plate: '', vin: '', color: '', mileage: '', fuel_type: 'Gasolina', notes: '', investor_id: '' });
   const [error, setError] = useState('');
   const router = useRouter();
@@ -84,7 +85,7 @@ export default function InvestorVehiclesPage() {
       method: 'PUT', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ...detail, new_cost: { ...newCost, amount: parseFloat(newCost.amount) } }),
     });
-    setNewCost({ type: 'manutencao', amount: '', description: '' });
+    setNewCost({ type: 'manutencao', amount: '', description: '', date: '' });
     setShowCostForm(null);
     loadDetail(vehicleId);
     loadVehicles();
@@ -230,6 +231,11 @@ export default function InvestorVehiclesPage() {
                           <input type="number" step="0.01" placeholder="Valor (€)" value={newCost.amount}
                             onChange={e => setNewCost(c => ({ ...c, amount: e.target.value }))}
                             className="w-full bg-octane-card border border-octane-border rounded px-3 py-2 text-sm text-octane-white" />
+                          <div>
+                            <label className="block text-xs text-octane-gray mb-1">Data</label>
+                            <DateInput value={newCost.date} onChange={v => setNewCost(c => ({ ...c, date: v }))}
+                              className="w-full bg-octane-card border border-octane-border rounded px-3 py-2 text-sm text-octane-white" />
+                          </div>
                           <textarea placeholder="Descrição / Observações" value={newCost.description}
                             onChange={e => setNewCost(c => ({ ...c, description: e.target.value }))}
                             className="w-full bg-octane-card border border-octane-border rounded px-3 py-2 text-sm text-octane-white" rows={2} />

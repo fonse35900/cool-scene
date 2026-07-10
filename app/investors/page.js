@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
+import DateInput from '@/components/DateInput';
 
 const inputClass = "w-full bg-octane-card border border-octane-border rounded-lg px-4 py-3 text-sm text-octane-white focus:ring-2 focus:ring-octane-gold focus:border-octane-gold focus:outline-none";
 
@@ -272,8 +273,9 @@ export default function InvestorsPage() {
                     <div className="flex gap-2 items-end">
                       <div>
                         <label className="block text-xs text-octane-gray mb-1">Data</label>
-                        <input type="date" value={(contribForm[inv.id] || {}).date || ''}
-                          onChange={e => setCF(inv.id, 'date', e.target.value)}
+                        <DateInput
+                          value={(contribForm[inv.id] || {}).date || ''}
+                          onChange={v => setCF(inv.id, 'date', v)}
                           className="bg-octane-black border border-octane-border rounded px-3 py-2 text-sm text-octane-white w-36" />
                       </div>
                       <div>
