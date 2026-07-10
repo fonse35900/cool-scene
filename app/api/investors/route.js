@@ -29,6 +29,19 @@ export async function POST(req) {
   }
 }
 
+export async function PUT(req) {
+  const user = await getCurrentUser();
+  if (!user || user.role === 'comercial' || user.role === 'investidor') {
+    return NextResponse.json({ error: 'Sem permissão' }, { status: 403 });
+  }
+  const { id, name, email, phone, notes } = await req.json();
+  if (!id || !name) return NextResponse.json({ error: 'ID e nome obrigatórios' }, { status: 400 });
+  const db = getDb();
+  db.prepare('UPDATE investors SET name=?, email=?, phone=?, notes=? WHERE id=?')
+    .run(name, email || null, phone || null, notes || null, id);
+  return NextResponse.json({ success: true });
+}
+
 export async function DELETE(req) {
   const user = await getCurrentUser();
   if (!user || user.role !== 'admin') return NextResponse.json({ error: 'Sem permissão' }, { status: 403 });

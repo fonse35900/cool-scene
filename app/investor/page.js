@@ -32,10 +32,16 @@ const typeColors = {
   despesa_viatura: 'text-octane-red',
 };
 
+const inputCls = "w-full bg-octane-card border border-octane-border rounded-lg px-4 py-3 text-sm text-octane-white focus:ring-2 focus:ring-octane-gold focus:outline-none";
+
 export default function InvestorPage() {
   const [user, setUser] = useState(null);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showSettings, setShowSettings] = useState(false);
+  const [settingsForm, setSettingsForm] = useState({ email: '', phone: '', currentPassword: '', newPassword: '', confirmPassword: '' });
+  const [settingsMsg, setSettingsMsg] = useState('');
+  const [settingsErr, setSettingsErr] = useState('');
   const router = useRouter();
 
   useEffect(() => {
@@ -45,6 +51,33 @@ export default function InvestorPage() {
         setUser(u);
       }).catch(() => router.push('/login'));
   }, [router]);
+
+  useEffect(() => {
+    if (user) setSettingsForm(f => ({ ...f, email: user.email || '', phone: user.phone || '' }));
+  }, [user]);
+
+  async function handleSettings(e) {
+    e.preventDefault();
+    setSettingsErr(''); setSettingsMsg('');
+    if (settingsForm.newPassword && settingsForm.newPassword !== settingsForm.confirmPassword) {
+      setSettingsErr('As passwords não coincidem'); return;
+    }
+    const body = { email: settingsForm.email, phone: settingsForm.phone };
+    if (settingsForm.newPassword) {
+      body.currentPassword = settingsForm.currentPassword;
+      body.newPassword = settingsForm.newPassword;
+    }
+    const res = await fetch('/api/users/me', {
+      method: 'PUT', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    if (res.ok) {
+      setSettingsMsg('Dados atualizados com sucesso');
+      setSettingsForm(f => ({ ...f, currentPassword: '', newPassword: '', confirmPassword: '' }));
+    } else {
+      setSettingsErr((await res.json()).error);
+    }
+  }
 
   useEffect(() => {
     if (!user) return;
@@ -67,10 +100,56 @@ export default function InvestorPage() {
     <div className="min-h-screen bg-octane-black">
       <Navbar user={user} />
       <div className="max-w-5xl mx-auto p-6 space-y-8">
-        <div>
-          <h1 className="text-2xl font-bold tracking-wide mb-1">Portal do Investidor</h1>
-          <p className="text-octane-gray text-sm">Bem-vindo, {user.name}</p>
+        <div className="flex items-start justify-between">
+          <div>
+            <h1 className="text-2xl font-bold tracking-wide mb-1">Portal do Investidor</h1>
+            <p className="text-octane-gray text-sm">Bem-vindo, {user.name}</p>
+          </div>
+          <button onClick={() => setShowSettings(s => !s)}
+            className="border border-octane-border text-octane-gray px-4 py-2 rounded-lg text-sm hover:border-octane-gold hover:text-octane-gold transition-colors">
+            {showSettings ? 'Fechar' : 'Definições'}
+          </button>
         </div>
+
+        {showSettings && (
+          <div className="bg-octane-card border border-octane-border rounded-xl p-6">
+            <h2 className="text-sm font-semibold text-octane-gold uppercase tracking-wider mb-4">As Minhas Definições</h2>
+            {settingsErr && <div className="bg-octane-red/10 border border-octane-red/30 text-octane-red p-3 rounded text-sm mb-3">{settingsErr}</div>}
+            {settingsMsg && <div className="bg-octane-green/10 border border-octane-green/30 text-octane-green p-3 rounded text-sm mb-3">{settingsMsg}</div>}
+            <form onSubmit={handleSettings} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-octane-gray uppercase tracking-wider mb-2">Email</label>
+                  <input type="email" value={settingsForm.email} onChange={e => setSettingsForm(f => ({ ...f, email: e.target.value }))} className={inputCls} />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-octane-gray uppercase tracking-wider mb-2">Telefone</label>
+                  <input value={settingsForm.phone} onChange={e => setSettingsForm(f => ({ ...f, phone: e.target.value }))} className={inputCls} />
+                </div>
+              </div>
+              <div className="border-t border-octane-border pt-4">
+                <p className="text-xs font-medium text-octane-gray uppercase tracking-wider mb-3">Alterar Password (opcional)</p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-xs text-octane-gray mb-2">Password Atual</label>
+                    <input type="password" value={settingsForm.currentPassword} onChange={e => setSettingsForm(f => ({ ...f, currentPassword: e.target.value }))} className={inputCls} />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-octane-gray mb-2">Nova Password</label>
+                    <input type="password" value={settingsForm.newPassword} onChange={e => setSettingsForm(f => ({ ...f, newPassword: e.target.value }))} className={inputCls} placeholder="Mín. 6 caracteres" />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-octane-gray mb-2">Confirmar Password</label>
+                    <input type="password" value={settingsForm.confirmPassword} onChange={e => setSettingsForm(f => ({ ...f, confirmPassword: e.target.value }))} className={inputCls} />
+                  </div>
+                </div>
+              </div>
+              <button type="submit" className="bg-octane-gold text-octane-black px-6 py-2.5 rounded-lg hover:bg-octane-gold-light text-sm font-semibold transition-colors">
+                Guardar Alterações
+              </button>
+            </form>
+          </div>
+        )}
 
         {/* Summary Cards */}
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">

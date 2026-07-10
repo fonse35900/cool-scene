@@ -19,6 +19,10 @@ export default function InvestorsPage() {
   // Expanded investor panels
   const [expanded, setExpanded] = useState({});
 
+  // Inline edit per investor
+  const [editingId, setEditingId] = useState(null);
+  const [editForm, setEditForm] = useState({});
+
   // Contributions per investor
   const [contributions, setContributions] = useState({});
   const [contribForm, setContribForm] = useState({});
@@ -57,6 +61,20 @@ export default function InvestorsPage() {
     } else {
       setError((await res.json()).error);
     }
+  }
+
+  function startEdit(inv) {
+    setEditingId(inv.id);
+    setEditForm({ name: inv.name, email: inv.email || '', phone: inv.phone || '', notes: inv.notes || '' });
+  }
+
+  async function handleEdit(id) {
+    const res = await fetch('/api/investors', {
+      method: 'PUT', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, ...editForm }),
+    });
+    if (res.ok) { setEditingId(null); loadInvestors(); }
+    else alert((await res.json()).error);
   }
 
   async function handleDelete(id) {
@@ -187,20 +205,49 @@ export default function InvestorsPage() {
           {investors.map(inv => (
             <div key={inv.id} className="bg-octane-card border border-octane-border rounded-xl overflow-hidden">
               {/* Header row */}
-              <div className="flex items-center justify-between p-4 cursor-pointer" onClick={() => toggleExpand(inv.id)}>
-                <div className="flex items-center gap-4">
-                  <span className="font-semibold text-octane-white">{inv.name}</span>
-                  {inv.email && <span className="text-octane-gray text-sm">{inv.email}</span>}
-                  {inv.phone && <span className="text-octane-gray text-sm">{inv.phone}</span>}
+              {editingId === inv.id ? (
+                <div className="p-4 space-y-3" onClick={e => e.stopPropagation()}>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs text-octane-gray mb-1">Nome *</label>
+                      <input value={editForm.name} onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))} className={inputClass} />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-octane-gray mb-1">Email</label>
+                      <input type="email" value={editForm.email} onChange={e => setEditForm(f => ({ ...f, email: e.target.value }))} className={inputClass} />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-octane-gray mb-1">Telefone</label>
+                      <input value={editForm.phone} onChange={e => setEditForm(f => ({ ...f, phone: e.target.value }))} className={inputClass} />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-octane-gray mb-1">Notas</label>
+                      <input value={editForm.notes} onChange={e => setEditForm(f => ({ ...f, notes: e.target.value }))} className={inputClass} />
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <button onClick={() => handleEdit(inv.id)} className="bg-octane-gold text-octane-black px-4 py-1.5 rounded text-sm font-semibold hover:bg-octane-gold-light transition-colors">Guardar</button>
+                    <button onClick={() => setEditingId(null)} className="border border-octane-border text-octane-gray px-4 py-1.5 rounded text-sm hover:border-octane-gold hover:text-octane-gold transition-colors">Cancelar</button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  {user.role === 'admin' && (
-                    <button onClick={e => { e.stopPropagation(); handleDelete(inv.id); }}
-                      className="text-octane-red text-xs hover:underline">Eliminar</button>
-                  )}
-                  <span className="text-octane-gray text-sm">{expanded[inv.id] ? '▲' : '▼'}</span>
+              ) : (
+                <div className="flex items-center justify-between p-4 cursor-pointer" onClick={() => toggleExpand(inv.id)}>
+                  <div className="flex items-center gap-4">
+                    <span className="font-semibold text-octane-white">{inv.name}</span>
+                    {inv.email && <span className="text-octane-gray text-sm">{inv.email}</span>}
+                    {inv.phone && <span className="text-octane-gray text-sm">{inv.phone}</span>}
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <button onClick={e => { e.stopPropagation(); startEdit(inv); }}
+                      className="text-octane-gold text-xs hover:underline">Editar</button>
+                    {user.role === 'admin' && (
+                      <button onClick={e => { e.stopPropagation(); handleDelete(inv.id); }}
+                        className="text-octane-red text-xs hover:underline">Eliminar</button>
+                    )}
+                    <span className="text-octane-gray text-sm">{expanded[inv.id] ? '▲' : '▼'}</span>
+                  </div>
                 </div>
-              </div>
+              )}
 
               {expanded[inv.id] && (
                 <div className="border-t border-octane-border p-4 space-y-6">
