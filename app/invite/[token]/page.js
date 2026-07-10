@@ -1,0 +1,86 @@
+'use client';
+import { useState, useEffect, use } from 'react';
+import { useRouter } from 'next/navigation';
+
+export default function InvitePage({ params }) {
+  const { token } = use(params);
+  const [invite, setInvite] = useState(null);
+  const [error, setError] = useState('');
+  const [form, setForm] = useState({ name: '', password: '', confirm: '' });
+  const [done, setDone] = useState(false);
+  const router = useRouter();
+
+  useEffect(() => {
+    fetch(`/api/invitations/${token}`)
+      .then(r => r.ok ? r.json() : r.json().then(d => Promise.reject(d.error)))
+      .then(setInvite)
+      .catch(e => setError(typeof e === 'string' ? e : 'Convite inválido ou já utilizado'));
+  }, [token]);
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setError('');
+    if (form.password !== form.confirm) { setError('As passwords não coincidem'); return; }
+    const res = await fetch(`/api/invitations/${token}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: form.name, password: form.password }),
+    });
+    if (res.ok) { setDone(true); setTimeout(() => router.push('/investor'), 2000); }
+    else setError((await res.json()).error);
+  }
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-octane-black">
+      <div className="bg-octane-dark border border-octane-border p-10 rounded-2xl shadow-2xl w-full max-w-md">
+        <div className="text-center mb-8">
+          <img src="/logo-octane.jpeg" alt="OCTANE" className="h-14 mx-auto mb-4" />
+          <div className="w-12 h-0.5 bg-octane-gold mx-auto mt-3"></div>
+        </div>
+
+        {error && (
+          <div className="bg-octane-red/10 border border-octane-red/30 text-octane-red p-4 rounded-lg text-center text-sm">
+            {error}
+          </div>
+        )}
+
+        {done && (
+          <div className="bg-octane-green/10 border border-octane-green/30 text-octane-green p-4 rounded-lg text-center text-sm">
+            Conta criada com sucesso! A redirecionar...
+          </div>
+        )}
+
+        {invite && !done && (
+          <>
+            <div className="mb-6 text-center">
+              <p className="text-octane-gray text-sm">Convite para</p>
+              <p className="text-octane-gold font-semibold">{invite.investor_name}</p>
+              <p className="text-octane-gray text-sm mt-1">{invite.email}</p>
+            </div>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="block text-xs font-medium text-octane-gray uppercase tracking-wider mb-2">O seu nome</label>
+                <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} required
+                  className="w-full bg-octane-card border border-octane-border rounded-lg px-4 py-3 text-octane-white text-sm focus:ring-2 focus:ring-octane-gold focus:outline-none"
+                  placeholder="Nome completo" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-octane-gray uppercase tracking-wider mb-2">Password</label>
+                <input type="password" value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))} required
+                  className="w-full bg-octane-card border border-octane-border rounded-lg px-4 py-3 text-octane-white text-sm focus:ring-2 focus:ring-octane-gold focus:outline-none"
+                  placeholder="Mínimo 6 caracteres" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-octane-gray uppercase tracking-wider mb-2">Confirmar Password</label>
+                <input type="password" value={form.confirm} onChange={e => setForm(f => ({ ...f, confirm: e.target.value }))} required
+                  className="w-full bg-octane-card border border-octane-border rounded-lg px-4 py-3 text-octane-white text-sm focus:ring-2 focus:ring-octane-gold focus:outline-none" />
+              </div>
+              <button type="submit" className="w-full bg-octane-gold text-octane-black py-3 rounded-lg hover:bg-octane-gold-light font-semibold tracking-wide transition-colors">
+                Ativar Conta
+              </button>
+            </form>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}

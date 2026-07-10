@@ -1,7 +1,7 @@
 'use client';
 import { useRouter, usePathname } from 'next/navigation';
 
-const roleLabels = { admin: 'Administrador', director: 'Diretor', comercial: 'Comercial' };
+const roleLabels = { admin: 'Administrador', director: 'Diretor', comercial: 'Comercial', investidor: 'Investidor' };
 
 export default function Navbar({ user }) {
   const router = useRouter();
@@ -12,7 +12,9 @@ export default function Navbar({ user }) {
     router.push('/login');
   }
 
-  const links = [
+  const links = user.role === 'investidor' ? [
+    { href: '/investor', label: 'Portal do Investidor' },
+  ] : [
     { href: '/dashboard', label: 'Dashboard' },
     { href: '/vehicles', label: 'Viaturas' },
     ...(user.role !== 'comercial' ? [
