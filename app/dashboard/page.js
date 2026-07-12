@@ -41,28 +41,40 @@ export default function DashboardPage() {
               { label: 'Total Vendas', value: `€${stats.totalSales.toLocaleString()}`, accent: true },
               { label: 'Total Custos', value: `€${stats.totalCosts.toLocaleString()}`, accent: false },
               { label: 'Margem Bruta', value: `€${stats.grossMargin.toLocaleString()}`, accent: true, negative: stats.grossMargin < 0, drilldown: true },
-            ].map(s => (
-              <div
-                key={s.label}
-                onClick={s.drilldown ? () => setShowDrilldown(true) : undefined}
-                className={`bg-octane-card border border-octane-border p-5 rounded-xl ${s.drilldown ? 'cursor-pointer hover:border-octane-gold transition-colors group' : ''}`}>
-                <p className="text-xs text-octane-gray uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                  {s.label}
-                  {s.drilldown && <span className="text-octane-gold opacity-0 group-hover:opacity-100 transition-opacity text-xs">↗ detalhes</span>}
-                </p>
-                <p className={`text-2xl font-bold ${s.negative ? 'text-octane-red' : s.accent ? 'text-octane-gold' : 'text-octane-white'}`}>
-                  {s.value}
-                </p>
-              </div>
-            ))}
+            ].map(s => {
+              const inner = (
+                <>
+                  <p className="text-xs text-octane-gray uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                    {s.label}
+                    {s.drilldown && <span className="text-octane-gold text-xs">↗</span>}
+                  </p>
+                  <p className={`text-2xl font-bold ${s.negative ? 'text-octane-red' : s.accent ? 'text-octane-gold' : 'text-octane-white'}`}>
+                    {s.value}
+                  </p>
+                </>
+              );
+              return s.drilldown ? (
+                <button
+                  key={s.label}
+                  type="button"
+                  onClick={() => setShowDrilldown(true)}
+                  className="bg-octane-card border border-octane-border p-5 rounded-xl text-left cursor-pointer hover:border-octane-gold transition-colors w-full">
+                  {inner}
+                </button>
+              ) : (
+                <div key={s.label} className="bg-octane-card border border-octane-border p-5 rounded-xl">
+                  {inner}
+                </div>
+              );
+            })}
           </div>
         )}
         <DashboardChart userRole={user.role} />
       </div>
     </div>
-    {showDrilldown && salesDetails && (
+    {showDrilldown && (
       <MargemDrilldown
-        items={salesDetails}
+        items={salesDetails || []}
         grossMargin={stats?.grossMargin}
         onClose={() => setShowDrilldown(false)}
       />
