@@ -39,6 +39,11 @@ const PRESETS = [
   },
 ];
 
+const todayISO = () => new Date().toISOString().split('T')[0];
+
+const dateInputClass = "bg-octane-dark border border-octane-border rounded px-3 py-1.5 text-sm text-octane-white focus:ring-1 focus:ring-octane-gold focus:outline-none";
+const todayBtnClass = "text-xs px-2 py-1.5 rounded border border-octane-border text-octane-gray hover:border-octane-gold hover:text-octane-gold transition-colors";
+
 export default function DateRangeFilter({ value, onChange }) {
   const { from, to, preset } = value;
 
@@ -59,19 +64,15 @@ export default function DateRangeFilter({ value, onChange }) {
         <div>
           <p className="text-xs text-octane-gray uppercase tracking-wider mb-2">Intervalo de datas</p>
           <div className="flex items-center gap-2">
-            <input
-              type="date"
-              value={from}
+            <input type="date" value={from}
               onChange={e => onChange({ from: e.target.value, to, preset: null })}
-              className="bg-octane-dark border border-octane-border rounded px-3 py-1.5 text-sm text-octane-white focus:ring-1 focus:ring-octane-gold focus:outline-none"
-            />
+              className={dateInputClass} />
+            <button onClick={() => onChange({ from: todayISO(), to, preset: null })} className={todayBtnClass}>Hoje</button>
             <span className="text-octane-gray text-sm">até</span>
-            <input
-              type="date"
-              value={to}
+            <input type="date" value={to}
               onChange={e => onChange({ from, to: e.target.value, preset: null })}
-              className="bg-octane-dark border border-octane-border rounded px-3 py-1.5 text-sm text-octane-white focus:ring-1 focus:ring-octane-gold focus:outline-none"
-            />
+              className={dateInputClass} />
+            <button onClick={() => onChange({ from, to: todayISO(), preset: null })} className={todayBtnClass}>Hoje</button>
             {active && (
               <button onClick={clearFilter}
                 className="text-octane-red text-xs hover:bg-octane-red/10 px-2 py-1.5 rounded transition-colors">
