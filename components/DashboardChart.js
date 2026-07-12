@@ -134,18 +134,18 @@ export default function DashboardChart() {
 
             <g transform={`translate(${PAD.left},${PAD.top})`}>
               {/* grid */}
-              {chart.yTicks.map(t => (
-                <line key={t.v} x1={0} x2={CW} y1={t.y} y2={t.y} stroke="#1f1f1f" strokeWidth={1} />
+              {chart.yTicks.map((t, i) => (
+                <line key={i} x1={0} x2={CW} y1={t.y} y2={t.y} stroke="#1f1f1f" strokeWidth={1} />
               ))}
 
               {/* left axis ticks */}
-              {chart.yTicks.map(t => (
-                <text key={t.v} x={-6} y={t.y + 4} textAnchor="end" fontSize={10} fill="#6b7280">{t.v}</text>
+              {chart.yTicks.map((t, i) => (
+                <text key={i} x={-6} y={t.y + 4} textAnchor="end" fontSize={10} fill="#6b7280">{t.v}</text>
               ))}
 
               {/* right axis ticks */}
-              {chart.mTicks.map(t => (
-                <text key={t.v} x={CW + 6} y={t.y + 4} textAnchor="start" fontSize={10} fill="#9a7010">{fmtEur(t.v)}</text>
+              {chart.mTicks.map((t, i) => (
+                <text key={i} x={CW + 6} y={t.y + 4} textAnchor="start" fontSize={10} fill="#9a7010">{fmtEur(t.v)}</text>
               ))}
 
               {/* bars */}
