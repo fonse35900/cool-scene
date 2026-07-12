@@ -48,7 +48,10 @@ export async function GET(req) {
 
   const placeholders = userIds.map(() => '?').join(',');
 
+  const excludeInvestors = searchParams.get('exclude_investors') === '1';
+
   // Fetch all stock vehicles with their costs
+  const investorCond = excludeInvestors ? ' AND v.investor_id IS NULL' : '';
   const vehicles = db.prepare(`
     SELECT
       DATE(v.created_at) as created_date,
@@ -58,7 +61,7 @@ export async function GET(req) {
       v.sale_price,
       COALESCE((SELECT SUM(amount) FROM vehicle_costs WHERE vehicle_id = v.id), 0) as total_costs
     FROM vehicles v
-    WHERE v.vehicle_type = 'stock' AND v.created_by IN (${placeholders})
+    WHERE v.vehicle_type = 'stock' AND v.created_by IN (${placeholders})${investorCond}
   `).all(...userIds);
 
   // Determine granularity based on range

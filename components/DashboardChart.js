@@ -27,12 +27,13 @@ const CH = H - PAD.top - PAD.bottom;
 const GOLD = '#d4a017', GREEN = '#22c55e', GRAY = '#4b5563';
 
 export default function DashboardChart() {
-  const [dateFrom, setDateFrom] = useState(nDaysAgo(90));
-  const [dateTo, setDateTo]     = useState(todayISO());
-  const [preset, setPreset]     = useState(null);
-  const [data, setData]         = useState(null);
-  const [loading, setLoading]   = useState(false);
-  const [tooltip, setTooltip]   = useState(null);
+  const [dateFrom, setDateFrom]           = useState(nDaysAgo(90));
+  const [dateTo, setDateTo]               = useState(todayISO());
+  const [preset, setPreset]               = useState(null);
+  const [excludeInvestors, setExcludeInvestors] = useState(false);
+  const [data, setData]                   = useState(null);
+  const [loading, setLoading]             = useState(false);
+  const [tooltip, setTooltip]             = useState(null);
   const svgRef = useRef(null);
 
   function applyPreset(p) { setDateFrom(p.from()); setDateTo(p.to()); setPreset(p.label); }
@@ -40,10 +41,10 @@ export default function DashboardChart() {
   useEffect(() => {
     if (!dateFrom || !dateTo) return;
     setLoading(true);
-    fetch(`/api/reports/chart?date_from=${dateFrom}&date_to=${dateTo}`)
+    fetch(`/api/reports/chart?date_from=${dateFrom}&date_to=${dateTo}${excludeInvestors ? '&exclude_investors=1' : ''}`)
       .then(r => r.json()).then(d => { setData(d.data); setLoading(false); })
       .catch(() => setLoading(false));
-  }, [dateFrom, dateTo]);
+  }, [dateFrom, dateTo, excludeInvestors]);
 
   const inputCls = "bg-octane-dark border border-octane-border rounded px-3 py-1.5 text-sm text-octane-white focus:ring-1 focus:ring-octane-gold focus:outline-none";
   const todayCls = "text-xs px-2 py-1.5 rounded border border-octane-border text-octane-gray hover:border-octane-gold hover:text-octane-gold transition-colors";
@@ -91,7 +92,18 @@ export default function DashboardChart() {
     <div className="bg-octane-card border border-octane-border rounded-xl p-6 mt-6">
       {/* header */}
       <div className="flex flex-wrap items-start justify-between gap-4 mb-5">
-        <h2 className="font-semibold text-octane-gold text-sm uppercase tracking-wider">Evolução do Stock e Margens</h2>
+        <div className="flex items-center gap-3">
+          <h2 className="font-semibold text-octane-gold text-sm uppercase tracking-wider">Evolução do Stock e Margens</h2>
+          <button
+            onClick={() => setExcludeInvestors(v => !v)}
+            className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs border transition-colors ${
+              excludeInvestors
+                ? 'bg-octane-gold text-octane-black border-octane-gold font-semibold'
+                : 'border-octane-border text-octane-gray hover:border-octane-gold hover:text-octane-gold'
+            }`}>
+            {excludeInvestors ? '✓' : '○'} Excluir Investidores
+          </button>
+        </div>
         <div className="flex flex-wrap items-end gap-3">
           <div className="flex flex-wrap gap-1.5">
             {PRESETS.map(p => (
