@@ -115,6 +115,13 @@ export default function VehicleDetailPage({ params }) {
                 {user.role !== 'comercial' && (
                   <>
                     <div>
+                      <label className="text-xs text-octane-gray uppercase tracking-wider">Tipo de Viatura</label>
+                      <select value={form.vehicle_type || 'stock'} onChange={e => set('vehicle_type', e.target.value)} className={inputClass}>
+                        <option value="stock">Stock Octane</option>
+                        <option value="investidor">Viatura de Investidor</option>
+                      </select>
+                    </div>
+                    <div>
                       <label className="text-xs text-octane-gray uppercase tracking-wider">Responsável</label>
                       <select value={form.created_by || ''} onChange={e => set('created_by', e.target.value ? parseInt(e.target.value) : null)} className={inputClass}>
                         {teamMembers.map(m => <option key={m.id} value={m.id}>{m.name}{m.id === user.id ? ' (eu)' : ''}</option>)}

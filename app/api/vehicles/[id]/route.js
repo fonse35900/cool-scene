@@ -35,13 +35,13 @@ export async function PUT(req, { params }) {
     db.prepare(`
       UPDATE vehicles SET brand=?, model=?, year=?, license_plate=?, vin=?, color=?,
       mileage=?, fuel_type=?, purchase_price=?, sale_price=?, status=?, notes=?, investor_id=?,
-      created_by=?, updated_at=datetime('now') WHERE id=?
+      vehicle_type=?, created_by=?, updated_at=datetime('now') WHERE id=?
     `).run(
       data.brand, data.model, data.year, data.license_plate || null,
       data.vin || null, data.color || null, data.mileage || null,
       data.fuel_type || null, data.purchase_price, data.sale_price || null,
       data.status || 'em_stock', data.notes || null, data.investor_id || null,
-      data.created_by || null, id
+      data.vehicle_type || 'stock', data.created_by || null, id
     );
   } else {
     db.prepare(`
