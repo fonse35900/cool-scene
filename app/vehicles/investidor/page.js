@@ -32,8 +32,7 @@ export default function InvestorVehiclesPage() {
   }, [router]);
 
   function loadVehicles() {
-    const params = new URLSearchParams({ type: 'investidor' });
-    if (filterInvestor) params.set('user_id', filterInvestor); // reuse for investor filter below
+    const params = new URLSearchParams({ has_investor: '1' });
     fetch(`/api/vehicles?${params}`).then(r => r.json()).then(data => {
       const filtered = filterInvestor
         ? data.filter(v => String(v.investor_id) === filterInvestor)
@@ -167,7 +166,7 @@ export default function InvestorVehiclesPage() {
         <div className="space-y-3">
           {vehicles.length === 0 && (
             <div className="bg-octane-card border border-octane-border rounded-xl p-8 text-center text-octane-gray">
-              Nenhuma viatura de investidor registada.
+              Nenhuma viatura com investidor atribuído.
             </div>
           )}
           {vehicles.map(v => (
@@ -175,17 +174,40 @@ export default function InvestorVehiclesPage() {
               <div
                 className="flex items-center justify-between p-4 cursor-pointer hover:bg-octane-dark/50 transition-colors"
                 onClick={() => toggleExpand(v.id)}>
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-3 flex-wrap">
                   <div>
                     <span className="font-semibold text-octane-white">{v.brand} {v.model}</span>
                     <span className="text-octane-gray ml-2">({v.year})</span>
                     {v.license_plate && <span className="text-octane-gray text-sm ml-2">· {v.license_plate}</span>}
                   </div>
                   <span className="bg-octane-gold/15 text-octane-gold border border-octane-gold/30 text-xs px-2 py-0.5 rounded-full">{v.investor_name}</span>
+                  {v.vehicle_type === 'stock' ? (
+                    <span className={`text-xs px-2 py-0.5 rounded-full border font-medium ${
+                      v.status === 'vendido' ? 'bg-octane-green/10 text-octane-green border-octane-green/30' :
+                      v.status === 'reservado' ? 'bg-octane-gold/10 text-octane-gold border-octane-gold/30' :
+                      'bg-octane-gray/10 text-octane-gray border-octane-gray/30'
+                    }`}>
+                      Stock · {v.status === 'em_stock' ? 'Em Stock' : v.status === 'vendido' ? 'Vendido' : 'Reservado'}
+                    </span>
+                  ) : (
+                    <span className="bg-octane-orange/10 text-octane-orange border border-octane-orange/30 text-xs px-2 py-0.5 rounded-full">Viatura Pessoal</span>
+                  )}
                 </div>
                 <div className="flex items-center gap-6 text-sm">
+                  {v.vehicle_type === 'stock' && (
+                    <div className="text-right">
+                      <p className="text-octane-gray text-xs">Compra</p>
+                      <p className="text-octane-white font-semibold">€{(v.purchase_price || 0).toLocaleString()}</p>
+                    </div>
+                  )}
+                  {v.vehicle_type === 'stock' && v.sale_price && (
+                    <div className="text-right">
+                      <p className="text-octane-gray text-xs">Venda</p>
+                      <p className="text-octane-gold font-semibold">€{v.sale_price.toLocaleString()}</p>
+                    </div>
+                  )}
                   <div className="text-right">
-                    <p className="text-octane-gray text-xs">Total Despesas</p>
+                    <p className="text-octane-gray text-xs">Custos</p>
                     <p className="text-octane-orange font-semibold">€{v.total_costs.toLocaleString()}</p>
                   </div>
                   <span className="text-octane-gray">{expanded === v.id ? '▲' : '▼'}</span>
@@ -202,6 +224,10 @@ export default function InvestorVehiclesPage() {
                           ['VIN', v.vin], ['Cor', v.color],
                           ['Quilometragem', v.mileage ? `${v.mileage.toLocaleString()} km` : null],
                           ['Combustível', v.fuel_type], ['Registado por', v.created_by_name],
+                          ...(v.vehicle_type === 'stock' ? [
+                            ['Preço Compra', `€${(v.purchase_price || 0).toLocaleString()}`],
+                            ...(v.sale_price ? [['Preço Venda', `€${v.sale_price.toLocaleString()}`]] : []),
+                          ] : []),
                           ['Observações', v.notes],
                         ].filter(([, val]) => val).map(([l, val]) => (
                           <div key={l} className="flex justify-between border-b border-octane-border/30 pb-1">
@@ -233,7 +259,7 @@ export default function InvestorVehiclesPage() {
                             className="w-full bg-octane-card border border-octane-border rounded px-3 py-2 text-sm text-octane-white" />
                           <div>
                             <label className="block text-xs text-octane-gray mb-1">Data</label>
-                            <DateInput value={newCost.date} onChange={v => setNewCost(c => ({ ...c, date: v }))}
+                            <DateInput value={newCost.date} onChange={val => setNewCost(c => ({ ...c, date: val }))}
                               className="w-full bg-octane-card border border-octane-border rounded px-3 py-2 text-sm text-octane-white" />
                           </div>
                           <textarea placeholder="Descrição / Observações" value={newCost.description}

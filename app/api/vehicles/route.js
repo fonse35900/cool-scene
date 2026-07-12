@@ -12,6 +12,7 @@ export async function GET(req) {
   const userId = searchParams.get('user_id');
   // vehicle_type: 'stock' (default), 'investidor', or 'all'
   const vehicleType = searchParams.get('type') || 'stock';
+  const hasInvestor = searchParams.get('has_investor') === '1';
 
   let query = `
     SELECT v.*, u.name as created_by_name,
@@ -37,7 +38,9 @@ export async function GET(req) {
       conditions.push('(v.created_by = ? OR v.created_by IN (SELECT id FROM users WHERE director_id = ?))');
       params.push(user.id, user.id);
     }
-    if (vehicleType !== 'all') {
+    if (hasInvestor) {
+      conditions.push('v.investor_id IS NOT NULL');
+    } else if (vehicleType !== 'all') {
       conditions.push('v.vehicle_type = ?');
       params.push(vehicleType);
     }
@@ -47,7 +50,9 @@ export async function GET(req) {
       conditions.push('v.created_by = ?');
       params.push(parseInt(userId));
     }
-    if (vehicleType !== 'all') {
+    if (hasInvestor) {
+      conditions.push('v.investor_id IS NOT NULL');
+    } else if (vehicleType !== 'all') {
       conditions.push('v.vehicle_type = ?');
       params.push(vehicleType);
     }
