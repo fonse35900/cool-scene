@@ -25,6 +25,7 @@ export default function DashboardPage() {
   if (!user) return null;
 
   return (
+    <>
     <div className="min-h-screen bg-octane-black">
       <Navbar user={user} />
       <div className="max-w-7xl mx-auto p-6">
@@ -66,5 +67,6 @@ export default function DashboardPage() {
         onClose={() => setShowDrilldown(false)}
       />
     )}
+    </>
   );
 }
