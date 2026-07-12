@@ -1,8 +1,9 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import ReportsTabs from '@/components/ReportsTabs';
+import { useSort, Th } from '@/components/useSort';
 
 function fmt(n) {
   return new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(n ?? 0);
@@ -14,6 +15,21 @@ export default function InvestorReportsPage() {
   const [selectedInvestor, setSelectedInvestor] = useState('');
   const [report, setReport] = useState(null);
   const router = useRouter();
+
+  const perInvestorSort = useSort(report?.perInvestor, 'name');
+  const invVehicleCostSort = useSort(
+    useMemo(() => report?.perInvestor?.filter(inv => inv.total_investor_vehicles > 0) ?? null, [report]),
+    'name'
+  );
+  const semInvestidorSort = useSort(
+    useMemo(() => report?.semInvestidor?.stockVehicles?.map(v => {
+      const cost = v.purchase_price + v.total_costs;
+      const pct = v.margin !== null && cost > 0 ? v.margin / cost * 100 : null;
+      return { ...v, _vehicle: `${v.brand} ${v.model}`, _pct: pct };
+    }) ?? null, [report]),
+    '_vehicle'
+  );
+  const salesSort = useSort(report?.salesDetails, 'brand');
 
   useEffect(() => {
     fetch('/api/users/me').then(r => r.ok ? r.json() : Promise.reject()).then(u => {
@@ -115,13 +131,19 @@ export default function InvestorReportsPage() {
                     <table className="w-full text-sm">
                       <thead>
                         <tr className="border-b border-octane-border">
-                          {['Investidor', 'Viaturas', 'Em Stock', 'Vendidas', 'Reservadas', 'Total Compras', 'Custos', 'Total Vendas', 'Margem'].map(h => (
-                            <th key={h} className="text-left p-3 font-medium text-octane-gray text-xs uppercase tracking-wider">{h}</th>
-                          ))}
+                          <Th label="Investidor" col="name" sort={perInvestorSort.sort} toggle={perInvestorSort.toggle} />
+                          <Th label="Viaturas" col="total_vehicles" sort={perInvestorSort.sort} toggle={perInvestorSort.toggle} />
+                          <Th label="Em Stock" col="in_stock" sort={perInvestorSort.sort} toggle={perInvestorSort.toggle} />
+                          <Th label="Vendidas" col="sold" sort={perInvestorSort.sort} toggle={perInvestorSort.toggle} />
+                          <Th label="Reservadas" col="reserved" sort={perInvestorSort.sort} toggle={perInvestorSort.toggle} />
+                          <Th label="Total Compras" col="total_purchase" sort={perInvestorSort.sort} toggle={perInvestorSort.toggle} />
+                          <Th label="Custos" col="total_costs" sort={perInvestorSort.sort} toggle={perInvestorSort.toggle} />
+                          <Th label="Total Vendas" col="total_sales" sort={perInvestorSort.sort} toggle={perInvestorSort.toggle} />
+                          <Th label="Margem" col="gross_margin" sort={perInvestorSort.sort} toggle={perInvestorSort.toggle} />
                         </tr>
                       </thead>
                       <tbody>
-                        {report.perInvestor.map(inv => (
+                        {perInvestorSort.sorted?.map(inv => (
                           <tr key={inv.id} className="border-t border-octane-border">
                             <td className="p-3 font-medium text-octane-white">{inv.name}</td>
                             <td className="p-3 text-octane-white">{inv.total_vehicles}</td>
@@ -149,13 +171,13 @@ export default function InvestorReportsPage() {
                       <table className="w-full text-sm">
                         <thead>
                           <tr className="border-b border-octane-border">
-                            {['Investidor', 'Viaturas', 'Total Despesas'].map(h => (
-                              <th key={h} className="text-left p-3 font-medium text-octane-gray text-xs uppercase tracking-wider">{h}</th>
-                            ))}
+                            <Th label="Investidor" col="name" sort={invVehicleCostSort.sort} toggle={invVehicleCostSort.toggle} />
+                            <Th label="Viaturas" col="total_investor_vehicles" sort={invVehicleCostSort.sort} toggle={invVehicleCostSort.toggle} />
+                            <Th label="Total Despesas" col="investor_vehicle_costs" sort={invVehicleCostSort.sort} toggle={invVehicleCostSort.toggle} />
                           </tr>
                         </thead>
                         <tbody>
-                          {report.perInvestor.filter(inv => inv.total_investor_vehicles > 0).map(inv => (
+                          {invVehicleCostSort.sorted?.map(inv => (
                             <tr key={inv.id} className="border-t border-octane-border">
                               <td className="p-3 font-medium text-octane-white">{inv.name}</td>
                               <td className="p-3 text-octane-white">{inv.total_investor_vehicles}</td>
@@ -188,34 +210,36 @@ export default function InvestorReportsPage() {
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-octane-border">
-                        {['Viatura', 'Matricula', 'Comercial', 'Estado', 'Compra', 'Custos', 'Venda', 'Margem (€)', 'Margem (%)'].map(h => (
-                          <th key={h} className="text-left p-3 font-medium text-octane-gray text-xs uppercase tracking-wider">{h}</th>
-                        ))}
+                        <Th label="Viatura" col="_vehicle" sort={semInvestidorSort.sort} toggle={semInvestidorSort.toggle} />
+                        <Th label="Matrícula" col="license_plate" sort={semInvestidorSort.sort} toggle={semInvestidorSort.toggle} />
+                        <Th label="Comercial" col="created_by_name" sort={semInvestidorSort.sort} toggle={semInvestidorSort.toggle} />
+                        <Th label="Estado" col="status" sort={semInvestidorSort.sort} toggle={semInvestidorSort.toggle} />
+                        <Th label="Compra" col="purchase_price" sort={semInvestidorSort.sort} toggle={semInvestidorSort.toggle} />
+                        <Th label="Custos" col="total_costs" sort={semInvestidorSort.sort} toggle={semInvestidorSort.toggle} />
+                        <Th label="Venda" col="sale_price" sort={semInvestidorSort.sort} toggle={semInvestidorSort.toggle} />
+                        <Th label="Margem (€)" col="margin" sort={semInvestidorSort.sort} toggle={semInvestidorSort.toggle} />
+                        <Th label="Margem (%)" col="_pct" sort={semInvestidorSort.sort} toggle={semInvestidorSort.toggle} />
                       </tr>
                     </thead>
                     <tbody>
-                      {report.semInvestidor.stockVehicles.map(v => {
-                        const cost = v.purchase_price + v.total_costs;
-                        const pct = v.margin !== null && cost > 0 ? (v.margin / cost * 100) : null;
-                        return (
-                          <tr key={v.id} className="border-t border-octane-border">
-                            <td className="p-3 font-medium text-octane-white">{v.brand} {v.model} <span className="text-octane-gray">({v.year})</span></td>
-                            <td className="p-3 text-octane-gray">{v.license_plate || '-'}</td>
-                            <td className="p-3 text-octane-gray">{v.created_by_name}</td>
-                            <td className="p-3">
-                              <span className={`text-xs px-2 py-0.5 rounded font-medium ${
-                                v.status === 'vendido' ? 'bg-octane-green/10 text-octane-green' :
-                                v.status === 'reservado' ? 'bg-octane-gold/10 text-octane-gold' :
-                                'bg-octane-gray/10 text-octane-gray'}`}>{v.status}</span>
-                            </td>
-                            <td className="p-3 text-octane-white">{fmt(v.purchase_price)}</td>
-                            <td className="p-3 text-octane-red">{fmt(v.total_costs)}</td>
-                            <td className="p-3 text-octane-white">{v.sale_price ? fmt(v.sale_price) : '-'}</td>
-                            <td className={`p-3 font-medium ${v.margin === null ? 'text-octane-gray' : v.margin >= 0 ? 'text-octane-green' : 'text-octane-red'}`}>{v.margin === null ? '-' : fmt(v.margin)}</td>
-                            <td className={`p-3 font-medium ${pct === null ? 'text-octane-gray' : pct >= 0 ? 'text-octane-green' : 'text-octane-red'}`}>{pct === null ? '-' : `${pct.toFixed(1)}%`}</td>
-                          </tr>
-                        );
-                      })}
+                      {semInvestidorSort.sorted?.map(v => (
+                        <tr key={v.id} className="border-t border-octane-border">
+                          <td className="p-3 font-medium text-octane-white">{v.brand} {v.model} <span className="text-octane-gray">({v.year})</span></td>
+                          <td className="p-3 text-octane-gray">{v.license_plate || '-'}</td>
+                          <td className="p-3 text-octane-gray">{v.created_by_name}</td>
+                          <td className="p-3">
+                            <span className={`text-xs px-2 py-0.5 rounded font-medium ${
+                              v.status === 'vendido' ? 'bg-octane-green/10 text-octane-green' :
+                              v.status === 'reservado' ? 'bg-octane-gold/10 text-octane-gold' :
+                              'bg-octane-gray/10 text-octane-gray'}`}>{v.status}</span>
+                          </td>
+                          <td className="p-3 text-octane-white">{fmt(v.purchase_price)}</td>
+                          <td className="p-3 text-octane-red">{fmt(v.total_costs)}</td>
+                          <td className="p-3 text-octane-white">{v.sale_price ? fmt(v.sale_price) : '-'}</td>
+                          <td className={`p-3 font-medium ${v.margin === null ? 'text-octane-gray' : v.margin >= 0 ? 'text-octane-green' : 'text-octane-red'}`}>{v.margin === null ? '-' : fmt(v.margin)}</td>
+                          <td className={`p-3 font-medium ${v._pct === null ? 'text-octane-gray' : v._pct >= 0 ? 'text-octane-green' : 'text-octane-red'}`}>{v._pct === null ? '-' : `${v._pct.toFixed(1)}%`}</td>
+                        </tr>
+                      ))}
                     </tbody>
                   </table>
                 </div>
@@ -229,13 +253,18 @@ export default function InvestorReportsPage() {
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-octane-border">
-                        {['Viatura', 'Investidor', 'Comercial', 'Preço Compra', 'Custos', 'Preço Venda', 'Margem (€)', 'Margem (%)'].map(h => (
-                          <th key={h} className="text-left p-3 font-medium text-octane-gray text-xs uppercase tracking-wider">{h}</th>
-                        ))}
+                        <Th label="Viatura" col="brand" sort={salesSort.sort} toggle={salesSort.toggle} />
+                        <Th label="Investidor" col="investor_name" sort={salesSort.sort} toggle={salesSort.toggle} />
+                        <Th label="Comercial" col="created_by_name" sort={salesSort.sort} toggle={salesSort.toggle} />
+                        <Th label="Preço Compra" col="purchase_price" sort={salesSort.sort} toggle={salesSort.toggle} />
+                        <Th label="Custos" col="costs" sort={salesSort.sort} toggle={salesSort.toggle} />
+                        <Th label="Preço Venda" col="sale_price" sort={salesSort.sort} toggle={salesSort.toggle} />
+                        <Th label="Margem (€)" col="margin" sort={salesSort.sort} toggle={salesSort.toggle} />
+                        <Th label="Margem (%)" col="margin_percent" sort={salesSort.sort} toggle={salesSort.toggle} />
                       </tr>
                     </thead>
                     <tbody>
-                      {report.salesDetails.map(v => (
+                      {salesSort.sorted?.map(v => (
                         <tr key={v.id} className="border-t border-octane-border">
                           <td className="p-3 font-medium text-octane-white">{v.brand} {v.model} ({v.year})</td>
                           <td className="p-3 text-octane-gold">{v.investor_name}</td>
@@ -260,7 +289,6 @@ export default function InvestorReportsPage() {
                 <div className="space-y-4">
                   {report.posicaoFinanceira.map(inv => (
                     <div key={inv.id} className="bg-octane-card border border-octane-border rounded-xl overflow-hidden">
-                      {/* Header */}
                       <div className="flex flex-wrap items-center justify-between p-4 border-b border-octane-border gap-4">
                         <h3 className="font-semibold text-octane-white text-base">{inv.name}</h3>
                         <div className={`text-xl font-bold px-4 py-1 rounded-lg ${inv.balance >= 0 ? 'bg-octane-green/10 text-octane-green' : 'bg-octane-red/10 text-octane-red'}`}>
@@ -268,7 +296,6 @@ export default function InvestorReportsPage() {
                         </div>
                       </div>
 
-                      {/* Summary row */}
                       <div className="grid grid-cols-2 md:grid-cols-5 divide-x divide-octane-border border-b border-octane-border">
                         {[
                           { l: 'Capital Investido', v: inv.contributions, c: 'text-octane-gold' },
@@ -284,7 +311,6 @@ export default function InvestorReportsPage() {
                         ))}
                       </div>
 
-                      {/* Stock vehicles */}
                       {inv.stockVehicles.length > 0 && (
                         <div className="p-4">
                           <p className="text-xs font-medium text-octane-gray uppercase tracking-wider mb-2">Viaturas de Stock</p>
@@ -326,7 +352,6 @@ export default function InvestorReportsPage() {
                         </div>
                       )}
 
-                      {/* Investor vehicles */}
                       {inv.investorVehicles.length > 0 && (
                         <div className="px-4 pb-4 border-t border-octane-border pt-3">
                           <p className="text-xs font-medium text-octane-gray uppercase tracking-wider mb-2">Viaturas de Manutenção (não stock)</p>

@@ -1,8 +1,9 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import ReportsTabs from '@/components/ReportsTabs';
+import { useSort, Th, SmallTh } from '@/components/useSort';
 
 const roleLabel = { director: 'Diretor', comercial: 'Comercial', admin: 'Administrador', investidor: 'Investidor' };
 
@@ -15,9 +16,21 @@ export default function VehicleReportsPage() {
   const [users, setUsers] = useState([]);
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [report, setReport] = useState(null);
-  const [drilldown, setDrilldown] = useState(null); // { uid, name, role, investor_id }
+  const [drilldown, setDrilldown] = useState(null);
   const [drillData, setDrillData] = useState(null);
   const router = useRouter();
+
+  const perUserSort = useSort(report?.perUser, 'name');
+  const salesSort = useSort(report?.salesDetails, 'brand');
+  const drillSort = useSort(
+    useMemo(() => drillData?.vehicles?.map(v => {
+      const cost = v.purchase_price + v.costs;
+      const margin = v.sale_price ? v.sale_price - cost : null;
+      const pct = margin !== null && cost > 0 ? margin / cost * 100 : null;
+      return { ...v, _vehicle: `${v.brand} ${v.model}`, _margin: margin, _pct: pct };
+    }) ?? null, [drillData]),
+    '_vehicle'
+  );
 
   useEffect(() => {
     fetch('/api/users/me').then(r => r.ok ? r.json() : Promise.reject()).then(u => {
@@ -119,13 +132,17 @@ export default function VehicleReportsPage() {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-octane-border">
-                      {['Nome', 'Papel', 'Total Viaturas', 'Vendidas', 'Receita', 'Margem (€)', 'Margem (%)'].map(h => (
-                        <th key={h} className="text-left p-3 font-medium text-octane-gray text-xs uppercase tracking-wider">{h}</th>
-                      ))}
+                      <Th label="Nome" col="name" sort={perUserSort.sort} toggle={perUserSort.toggle} />
+                      <Th label="Papel" col="role" sort={perUserSort.sort} toggle={perUserSort.toggle} />
+                      <Th label="Total Viaturas" col="total_vehicles" sort={perUserSort.sort} toggle={perUserSort.toggle} />
+                      <Th label="Vendidas" col="sold" sort={perUserSort.sort} toggle={perUserSort.toggle} />
+                      <Th label="Receita" col="revenue" sort={perUserSort.sort} toggle={perUserSort.toggle} />
+                      <Th label="Margem (€)" col="margin" sort={perUserSort.sort} toggle={perUserSort.toggle} />
+                      <Th label="Margem (%)" col="margin_percent" sort={perUserSort.sort} toggle={perUserSort.toggle} />
                     </tr>
                   </thead>
                   <tbody>
-                    {report.perUser.map(u => {
+                    {perUserSort.sorted?.map(u => {
                       const isOpen = drilldown?.id === u.id;
                       return (
                         <React.Fragment key={u.id}>
@@ -144,45 +161,46 @@ export default function VehicleReportsPage() {
                             <td className={`p-3 font-medium ${u.margin_percent >= 0 ? 'text-octane-green' : 'text-octane-red'}`}>{(u.margin_percent ?? 0).toFixed(1)}%</td>
                           </tr>
                           {isOpen && (
-                            <tr key={`${u.id}-dd`} className="border-t border-octane-border bg-octane-dark/40">
+                            <tr className="border-t border-octane-border bg-octane-dark/40">
                               <td colSpan={7} className="p-4">
                                 {!drillData ? (
                                   <p className="text-octane-gray text-sm">A carregar...</p>
-                                ) : drillData.vehicles.length === 0 ? (
+                                ) : drillSort.sorted?.length === 0 ? (
                                   <p className="text-octane-gray text-sm">Nenhuma viatura registada.</p>
                                 ) : (
                                   <table className="w-full text-sm">
                                     <thead>
                                       <tr className="border-b border-octane-border/50">
-                                        {['Viatura', 'Matrícula', 'Estado', 'Data', 'Compra', 'Custos', 'Venda', 'Margem (€)', 'Margem (%)'].map(h => (
-                                          <th key={h} className="text-left pb-2 pr-3 font-medium text-octane-gray text-xs uppercase tracking-wider">{h}</th>
-                                        ))}
+                                        <SmallTh label="Viatura" col="_vehicle" sort={drillSort.sort} toggle={drillSort.toggle} />
+                                        <SmallTh label="Matrícula" col="license_plate" sort={drillSort.sort} toggle={drillSort.toggle} />
+                                        <SmallTh label="Estado" col="status" sort={drillSort.sort} toggle={drillSort.toggle} />
+                                        <SmallTh label="Data" col="date" sort={drillSort.sort} toggle={drillSort.toggle} />
+                                        <SmallTh label="Compra" col="purchase_price" sort={drillSort.sort} toggle={drillSort.toggle} />
+                                        <SmallTh label="Custos" col="costs" sort={drillSort.sort} toggle={drillSort.toggle} />
+                                        <SmallTh label="Venda" col="sale_price" sort={drillSort.sort} toggle={drillSort.toggle} />
+                                        <SmallTh label="Margem (€)" col="_margin" sort={drillSort.sort} toggle={drillSort.toggle} />
+                                        <SmallTh label="Margem (%)" col="_pct" sort={drillSort.sort} toggle={drillSort.toggle} />
                                       </tr>
                                     </thead>
                                     <tbody>
-                                      {drillData.vehicles.map(v => {
-                                        const cost = v.purchase_price + v.costs;
-                                        const margin = v.sale_price ? v.sale_price - cost : null;
-                                        const pct = margin !== null && cost > 0 ? (margin / cost * 100) : null;
-                                        return (
-                                          <tr key={v.id} className="border-t border-octane-border/30">
-                                            <td className="py-2 pr-3 font-medium text-octane-white">{v.brand} {v.model} <span className="text-octane-gray">({v.year})</span></td>
-                                            <td className="py-2 pr-3 text-octane-gray">{v.license_plate || '-'}</td>
-                                            <td className="py-2 pr-3">
-                                              <span className={`text-xs px-2 py-0.5 rounded font-medium ${
-                                                v.status === 'vendido' ? 'bg-octane-green/10 text-octane-green' :
-                                                v.status === 'reservado' ? 'bg-octane-gold/10 text-octane-gold' :
-                                                'bg-octane-gray/10 text-octane-gray'}`}>{v.status}</span>
-                                            </td>
-                                            <td className="py-2 pr-3 text-octane-gray whitespace-nowrap">{v.date ? new Date(v.date).toLocaleDateString('pt-PT') : '-'}</td>
-                                            <td className="py-2 pr-3 text-octane-white">{fmt(v.purchase_price)}</td>
-                                            <td className="py-2 pr-3 text-octane-red">{fmt(v.costs)}</td>
-                                            <td className="py-2 pr-3 text-octane-white">{v.sale_price ? fmt(v.sale_price) : '-'}</td>
-                                            <td className={`py-2 pr-3 font-medium ${margin === null ? 'text-octane-gray' : margin >= 0 ? 'text-octane-green' : 'text-octane-red'}`}>{margin === null ? '-' : fmt(margin)}</td>
-                                            <td className={`py-2 font-medium ${pct === null ? 'text-octane-gray' : pct >= 0 ? 'text-octane-green' : 'text-octane-red'}`}>{pct === null ? '-' : `${pct.toFixed(1)}%`}</td>
-                                          </tr>
-                                        );
-                                      })}
+                                      {drillSort.sorted?.map(v => (
+                                        <tr key={v.id} className="border-t border-octane-border/30">
+                                          <td className="py-2 pr-3 font-medium text-octane-white">{v.brand} {v.model} <span className="text-octane-gray">({v.year})</span></td>
+                                          <td className="py-2 pr-3 text-octane-gray">{v.license_plate || '-'}</td>
+                                          <td className="py-2 pr-3">
+                                            <span className={`text-xs px-2 py-0.5 rounded font-medium ${
+                                              v.status === 'vendido' ? 'bg-octane-green/10 text-octane-green' :
+                                              v.status === 'reservado' ? 'bg-octane-gold/10 text-octane-gold' :
+                                              'bg-octane-gray/10 text-octane-gray'}`}>{v.status}</span>
+                                          </td>
+                                          <td className="py-2 pr-3 text-octane-gray whitespace-nowrap">{v.date ? new Date(v.date).toLocaleDateString('pt-PT') : '-'}</td>
+                                          <td className="py-2 pr-3 text-octane-white">{fmt(v.purchase_price)}</td>
+                                          <td className="py-2 pr-3 text-octane-red">{fmt(v.costs)}</td>
+                                          <td className="py-2 pr-3 text-octane-white">{v.sale_price ? fmt(v.sale_price) : '-'}</td>
+                                          <td className={`py-2 pr-3 font-medium ${v._margin === null ? 'text-octane-gray' : v._margin >= 0 ? 'text-octane-green' : 'text-octane-red'}`}>{v._margin === null ? '-' : fmt(v._margin)}</td>
+                                          <td className={`py-2 font-medium ${v._pct === null ? 'text-octane-gray' : v._pct >= 0 ? 'text-octane-green' : 'text-octane-red'}`}>{v._pct === null ? '-' : `${v._pct.toFixed(1)}%`}</td>
+                                        </tr>
+                                      ))}
                                     </tbody>
                                   </table>
                                 )}
@@ -204,13 +222,17 @@ export default function VehicleReportsPage() {
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-octane-border">
-                        {['Viatura', 'Comercial', 'Preço Compra', 'Custos', 'Preço Venda', 'Margem (€)', 'Margem (%)'].map(h => (
-                          <th key={h} className="text-left p-3 font-medium text-octane-gray text-xs uppercase tracking-wider">{h}</th>
-                        ))}
+                        <Th label="Viatura" col="brand" sort={salesSort.sort} toggle={salesSort.toggle} />
+                        <Th label="Comercial" col="created_by_name" sort={salesSort.sort} toggle={salesSort.toggle} />
+                        <Th label="Preço Compra" col="purchase_price" sort={salesSort.sort} toggle={salesSort.toggle} />
+                        <Th label="Custos" col="costs" sort={salesSort.sort} toggle={salesSort.toggle} />
+                        <Th label="Preço Venda" col="sale_price" sort={salesSort.sort} toggle={salesSort.toggle} />
+                        <Th label="Margem (€)" col="margin" sort={salesSort.sort} toggle={salesSort.toggle} />
+                        <Th label="Margem (%)" col="margin_percent" sort={salesSort.sort} toggle={salesSort.toggle} />
                       </tr>
                     </thead>
                     <tbody>
-                      {report.salesDetails.map(v => (
+                      {salesSort.sorted?.map(v => (
                         <tr key={v.id} className="border-t border-octane-border">
                           <td className="p-3 font-medium text-octane-white">{v.brand} {v.model} ({v.year})</td>
                           <td className="p-3 text-octane-gray">{v.created_by_name}</td>
