@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
+import DashboardChart from '@/components/DashboardChart';
 
 export default function DashboardPage() {
   const [user, setUser] = useState(null);
@@ -46,6 +47,7 @@ export default function DashboardPage() {
             ))}
           </div>
         )}
+        <DashboardChart userRole={user.role} />
       </div>
     </div>
   );
