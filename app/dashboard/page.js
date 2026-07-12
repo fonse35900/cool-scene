@@ -3,10 +3,13 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import DashboardChart from '@/components/DashboardChart';
+import MargemDrilldown from '@/components/MargemDrilldown';
 
 export default function DashboardPage() {
   const [user, setUser] = useState(null);
   const [stats, setStats] = useState(null);
+  const [salesDetails, setSalesDetails] = useState(null);
+  const [showDrilldown, setShowDrilldown] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -16,7 +19,7 @@ export default function DashboardPage() {
   }, [router]);
 
   useEffect(() => {
-    if (user) fetch('/api/reports').then(r => r.json()).then(d => setStats(d.summary));
+    if (user) fetch('/api/reports').then(r => r.json()).then(d => { setStats(d.summary); setSalesDetails(d.salesDetails); });
   }, [user]);
 
   if (!user) return null;
@@ -36,10 +39,16 @@ export default function DashboardPage() {
               { label: 'Total Compras', value: `€${stats.totalPurchase.toLocaleString()}`, accent: false },
               { label: 'Total Vendas', value: `€${stats.totalSales.toLocaleString()}`, accent: true },
               { label: 'Total Custos', value: `€${stats.totalCosts.toLocaleString()}`, accent: false },
-              { label: 'Margem Bruta', value: `€${stats.grossMargin.toLocaleString()}`, accent: true, negative: stats.grossMargin < 0 },
+              { label: 'Margem Bruta', value: `€${stats.grossMargin.toLocaleString()}`, accent: true, negative: stats.grossMargin < 0, drilldown: true },
             ].map(s => (
-              <div key={s.label} className="bg-octane-card border border-octane-border p-5 rounded-xl">
-                <p className="text-xs text-octane-gray uppercase tracking-wider mb-2">{s.label}</p>
+              <div
+                key={s.label}
+                onClick={s.drilldown ? () => setShowDrilldown(true) : undefined}
+                className={`bg-octane-card border border-octane-border p-5 rounded-xl ${s.drilldown ? 'cursor-pointer hover:border-octane-gold transition-colors group' : ''}`}>
+                <p className="text-xs text-octane-gray uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                  {s.label}
+                  {s.drilldown && <span className="text-octane-gold opacity-0 group-hover:opacity-100 transition-opacity text-xs">↗ detalhes</span>}
+                </p>
                 <p className={`text-2xl font-bold ${s.negative ? 'text-octane-red' : s.accent ? 'text-octane-gold' : 'text-octane-white'}`}>
                   {s.value}
                 </p>
@@ -50,5 +59,12 @@ export default function DashboardPage() {
         <DashboardChart userRole={user.role} />
       </div>
     </div>
+    {showDrilldown && salesDetails && (
+      <MargemDrilldown
+        items={salesDetails}
+        grossMargin={stats?.grossMargin}
+        onClose={() => setShowDrilldown(false)}
+      />
+    )}
   );
 }
