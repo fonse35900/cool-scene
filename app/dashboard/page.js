@@ -9,6 +9,7 @@ export default function DashboardPage() {
   const [user, setUser] = useState(null);
   const [stats, setStats] = useState(null);
   const [salesDetails, setSalesDetails] = useState(null);
+  const [allVehiclesDetail, setAllVehiclesDetail] = useState(null);
   const [showDrilldown, setShowDrilldown] = useState(false);
   const router = useRouter();
 
@@ -19,7 +20,7 @@ export default function DashboardPage() {
   }, [router]);
 
   useEffect(() => {
-    if (user) fetch('/api/reports').then(r => r.json()).then(d => { setStats(d.summary); setSalesDetails(d.salesDetails); });
+    if (user) fetch('/api/reports').then(r => r.json()).then(d => { setStats(d.summary); setSalesDetails(d.salesDetails); setAllVehiclesDetail(d.allVehiclesDetail); });
   }, [user]);
 
   if (!user) return null;
@@ -74,7 +75,7 @@ export default function DashboardPage() {
     </div>
     {showDrilldown && (
       <MargemDrilldown
-        items={salesDetails || []}
+        items={allVehiclesDetail || []}
         grossMargin={stats?.grossMargin}
         onClose={() => setShowDrilldown(false)}
       />

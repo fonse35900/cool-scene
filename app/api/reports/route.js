@@ -67,6 +67,27 @@ export async function GET(req) {
     };
   });
 
+  // All vehicles for margin drill-down (sold + unsold — unsold have no sale_price so they drag margin down)
+  const allVehiclesDetail = db.prepare(`
+    SELECT v.id, v.brand, v.model, v.year, v.status, v.purchase_price, v.sale_price,
+      u.name as created_by_name, i.name as investor_name,
+      COALESCE((SELECT SUM(amount) FROM vehicle_costs WHERE vehicle_id=v.id),0) as total_vehicle_costs
+    FROM vehicles v JOIN users u ON v.created_by=u.id
+    LEFT JOIN investors i ON v.investor_id = i.id
+    WHERE v.created_by IN (${placeholders})${investorCondition}${dateCondition}
+    ORDER BY v.status, v.updated_at DESC
+  `).all(...userIds, ...dp).map(v => ({
+    id: v.id, brand: v.brand, model: v.model, year: v.year, status: v.status,
+    purchase_price: v.purchase_price,
+    sale_price: v.sale_price,
+    costs: v.total_vehicle_costs,
+    margin: v.status === 'vendido' && v.sale_price != null
+      ? v.sale_price - v.purchase_price - v.total_vehicle_costs
+      : -(v.purchase_price + v.total_vehicle_costs),
+    created_by_name: v.created_by_name,
+    investor_name: v.investor_name,
+  }));
+
   const perUser = userIds.map(uid => {
     const u = db.prepare('SELECT name, role, investor_id FROM users WHERE id = ?').get(uid);
     let count, soldCount, revenue, totalPurchase, totalCosts;
@@ -109,6 +130,7 @@ export async function GET(req) {
   return NextResponse.json({
     summary: { totalVehicles, inStock, sold, reserved, totalPurchase, totalSales, totalCosts, grossMargin: totalSales - totalPurchase - totalCosts },
     salesDetails,
+    allVehiclesDetail,
     perUser,
     perInvestor,
   });
