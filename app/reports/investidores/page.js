@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import ReportsTabs from '@/components/ReportsTabs';
 import { useSort, Th } from '@/components/useSort';
+import DateRangeFilter from '@/components/DateRangeFilter';
 
 function fmt(n) {
   return new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(n ?? 0);
@@ -14,6 +15,7 @@ export default function InvestorReportsPage() {
   const [investors, setInvestors] = useState([]);
   const [selectedInvestor, setSelectedInvestor] = useState('');
   const [report, setReport] = useState(null);
+  const [dateRange, setDateRange] = useState({ from: '', to: '', preset: null });
   const router = useRouter();
 
   const perInvestorSort = useSort(report?.perInvestor, 'name');
@@ -43,9 +45,11 @@ export default function InvestorReportsPage() {
     if (user) {
       const params = new URLSearchParams();
       if (selectedInvestor) params.set('investor_id', selectedInvestor);
+      if (dateRange.from) params.set('date_from', dateRange.from);
+      if (dateRange.to) params.set('date_to', dateRange.to);
       fetch(`/api/reports/investidores?${params}`).then(r => r.json()).then(setReport);
     }
-  }, [user, selectedInvestor]);
+  }, [user, selectedInvestor, dateRange]);
 
   if (!user) return null;
 
@@ -66,6 +70,8 @@ export default function InvestorReportsPage() {
       <div className="max-w-7xl mx-auto p-6">
         <h1 className="text-2xl font-bold mb-6 tracking-wide">Relatórios</h1>
         <ReportsTabs userRole={user.role} />
+
+        <DateRangeFilter value={dateRange} onChange={setDateRange} />
 
         {investors.length > 0 && (
           <div className="bg-octane-card border border-octane-border p-4 rounded-xl mb-6">

@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import ReportsTabs from '@/components/ReportsTabs';
 import { useSort, Th, SmallTh } from '@/components/useSort';
+import DateRangeFilter from '@/components/DateRangeFilter';
 
 const roleLabel = { director: 'Diretor', comercial: 'Comercial', admin: 'Administrador', investidor: 'Investidor' };
 
@@ -18,6 +19,7 @@ export default function VehicleReportsPage() {
   const [report, setReport] = useState(null);
   const [drilldown, setDrilldown] = useState(null);
   const [drillData, setDrillData] = useState(null);
+  const [dateRange, setDateRange] = useState({ from: '', to: '', preset: null });
   const router = useRouter();
 
   const perUserSort = useSort(report?.perUser, 'name');
@@ -45,9 +47,11 @@ export default function VehicleReportsPage() {
     if (user) {
       const params = new URLSearchParams();
       if (selectedUsers.length) params.set('users', selectedUsers.join(','));
+      if (dateRange.from) params.set('date_from', dateRange.from);
+      if (dateRange.to) params.set('date_to', dateRange.to);
       fetch(`/api/reports?${params}`).then(r => r.json()).then(setReport);
     }
-  }, [user, selectedUsers]);
+  }, [user, selectedUsers, dateRange]);
 
   function toggleUser(id) {
     setSelectedUsers(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
@@ -72,6 +76,8 @@ export default function VehicleReportsPage() {
       <div className="max-w-7xl mx-auto p-6">
         <h1 className="text-2xl font-bold mb-6 tracking-wide">Relatórios</h1>
         <ReportsTabs userRole={user.role} />
+
+        <DateRangeFilter value={dateRange} onChange={setDateRange} />
 
         {user.role !== 'comercial' && users.length > 0 && (
           <div className="bg-octane-card border border-octane-border p-4 rounded-xl mb-6">
