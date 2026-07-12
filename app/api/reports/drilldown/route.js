@@ -13,7 +13,7 @@ export async function GET(req) {
 
   let vehicles;
   if (drillInvestorId) {
-    vehicles = db.prepare(`
+    vehicles = await db.prepare(`
       SELECT v.id, v.brand, v.model, v.year, v.license_plate, v.status,
         v.purchase_price, v.sale_price, v.created_at as date,
         COALESCE((SELECT SUM(amount) FROM vehicle_costs WHERE vehicle_id = v.id), 0) as costs
@@ -22,7 +22,7 @@ export async function GET(req) {
       ORDER BY v.created_at DESC
     `).all(drillInvestorId);
   } else {
-    vehicles = db.prepare(`
+    vehicles = await db.prepare(`
       SELECT v.id, v.brand, v.model, v.year, v.license_plate, v.status,
         v.purchase_price, v.sale_price, v.created_at as date,
         COALESCE((SELECT SUM(amount) FROM vehicle_costs WHERE vehicle_id = v.id), 0) as costs

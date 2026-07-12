@@ -15,22 +15,18 @@ export async function GET(req) {
   const dateCondition = (dateFrom ? ' AND v.created_at >= ?' : '') + (dateTo ? ' AND v.created_at <= ?' : '');
   const dateParams = [...(dateFrom ? [dateFrom] : []), ...(dateTo ? [dateTo + ' 23:59:59'] : [])];
 
-  // Restrict to team for directors
   let userIds;
   if (user.role === 'director') {
-    userIds = db.prepare('SELECT id FROM users WHERE director_id = ? OR id = ?').all(user.id, user.id).map(u => u.id);
+    userIds = (await db.prepare('SELECT id FROM users WHERE director_id = ? OR id = ?').all(user.id, user.id)).map(u => u.id);
   } else {
-    userIds = db.prepare('SELECT id FROM users').all().map(u => u.id);
+    userIds = (await db.prepare('SELECT id FROM users').all()).map(u => u.id);
   }
 
   const placeholders = userIds.map(() => '?').join(',');
-
-  // Summary per investor
   const investorCondition = investorId ? ' AND i.id = ?' : '';
   const investorParams = investorId ? [investorId] : [];
 
-  const dateCond = dateCondition.replace(/v\.created_at/g, 'v.created_at');
-  const perInvestor = db.prepare(`
+  const perInvestor = await db.prepare(`
     SELECT
       i.id, i.name, i.email, i.phone,
       COUNT(CASE WHEN v.vehicle_type = 'stock' THEN 1 END) as total_vehicles,
@@ -41,34 +37,33 @@ export async function GET(req) {
       COALESCE(SUM(CASE WHEN v.sale_price IS NOT NULL AND v.vehicle_type = 'stock' THEN v.sale_price ELSE 0 END), 0) as total_sales,
       COUNT(CASE WHEN v.vehicle_type = 'investidor' THEN 1 END) as total_investor_vehicles
     FROM investors i
-    LEFT JOIN vehicles v ON v.investor_id = i.id AND v.created_by IN (${placeholders})${dateCond}
+    LEFT JOIN vehicles v ON v.investor_id = i.id AND v.created_by IN (${placeholders})${dateCondition}
     WHERE 1=1 ${investorCondition}
     GROUP BY i.id
     ORDER BY i.name
   `).all(...userIds, ...dateParams, ...investorParams);
 
-  // Add total costs (stock + investor vehicles) and margins per investor
-  const result = perInvestor.map(inv => {
-    const stockCosts = db.prepare(`
-      SELECT COALESCE(SUM(vc.amount), 0) as total
-      FROM vehicle_costs vc
-      JOIN vehicles v ON vc.vehicle_id = v.id
-      WHERE v.investor_id = ? AND v.vehicle_type = 'stock' AND v.created_by IN (${placeholders})${dateCondition}
-    `).get(inv.id, ...userIds, ...dateParams).total;
-
-    const investorVehicleCosts = db.prepare(`
-      SELECT COALESCE(SUM(vc.amount), 0) as total
-      FROM vehicle_costs vc
-      JOIN vehicles v ON vc.vehicle_id = v.id
-      WHERE v.investor_id = ? AND v.vehicle_type = 'investidor' AND v.created_by IN (${placeholders})${dateCondition}
-    `).get(inv.id, ...userIds, ...dateParams).total;
-
+  const result = await Promise.all(perInvestor.map(async inv => {
+    const [stockCostsRow, investorVehicleCostsRow] = await Promise.all([
+      db.prepare(`
+        SELECT COALESCE(SUM(vc.amount), 0) as total
+        FROM vehicle_costs vc
+        JOIN vehicles v ON vc.vehicle_id = v.id
+        WHERE v.investor_id = ? AND v.vehicle_type = 'stock' AND v.created_by IN (${placeholders})${dateCondition}
+      `).get(inv.id, ...userIds, ...dateParams),
+      db.prepare(`
+        SELECT COALESCE(SUM(vc.amount), 0) as total
+        FROM vehicle_costs vc
+        JOIN vehicles v ON vc.vehicle_id = v.id
+        WHERE v.investor_id = ? AND v.vehicle_type = 'investidor' AND v.created_by IN (${placeholders})${dateCondition}
+      `).get(inv.id, ...userIds, ...dateParams),
+    ]);
+    const stockCosts = stockCostsRow.total;
+    const investorVehicleCosts = investorVehicleCostsRow.total;
     const grossMargin = inv.total_sales - inv.total_purchase - stockCosts;
-
     return { ...inv, total_costs: stockCosts, investor_vehicle_costs: investorVehicleCosts, gross_margin: grossMargin };
-  });
+  }));
 
-  // Sold vehicles detail per investor
   const soldQuery = investorId
     ? `SELECT v.*, u.name as created_by_name, i.name as investor_name,
         COALESCE((SELECT SUM(amount) FROM vehicle_costs WHERE vehicle_id=v.id),0) as total_vehicle_costs
@@ -82,8 +77,8 @@ export async function GET(req) {
        ORDER BY v.updated_at DESC`;
 
   const soldVehicles = investorId
-    ? db.prepare(soldQuery).all(investorId, ...userIds, ...dateParams)
-    : db.prepare(soldQuery).all(...userIds, ...dateParams);
+    ? await db.prepare(soldQuery).all(investorId, ...userIds, ...dateParams)
+    : await db.prepare(soldQuery).all(...userIds, ...dateParams);
 
   const salesDetails = soldVehicles.map(v => {
     const totalCost = v.purchase_price + v.total_vehicle_costs;
@@ -97,25 +92,23 @@ export async function GET(req) {
     };
   });
 
-  // Financial position per investor (contributions - purchases - costs + sales)
-  const posicaoFinanceira = result.map(inv => {
-    const contributions = db.prepare(
-      'SELECT COALESCE(SUM(amount), 0) as total FROM investor_contributions WHERE investor_id = ?'
-    ).get(inv.id).total;
+  const posicaoFinanceira = await Promise.all(result.map(async inv => {
+    const [contributionsRow, stockVehicles, investorVehicles] = await Promise.all([
+      db.prepare('SELECT COALESCE(SUM(amount), 0) as total FROM investor_contributions WHERE investor_id = ?').get(inv.id),
+      db.prepare(`
+        SELECT v.id, v.brand, v.model, v.year, v.license_plate, v.status, v.purchase_price, v.sale_price,
+          COALESCE((SELECT SUM(amount) FROM vehicle_costs WHERE vehicle_id = v.id), 0) as total_costs
+        FROM vehicles v WHERE v.investor_id = ? AND v.vehicle_type = 'stock'
+        ORDER BY v.created_at ASC
+      `).all(inv.id),
+      db.prepare(`
+        SELECT v.id, v.brand, v.model, v.year, v.license_plate,
+          COALESCE((SELECT SUM(amount) FROM vehicle_costs WHERE vehicle_id = v.id), 0) as total_costs
+        FROM vehicles v WHERE v.investor_id = ? AND v.vehicle_type = 'investidor'
+      `).all(inv.id),
+    ]);
 
-    const stockVehicles = db.prepare(`
-      SELECT v.id, v.brand, v.model, v.year, v.license_plate, v.status, v.purchase_price, v.sale_price,
-        COALESCE((SELECT SUM(amount) FROM vehicle_costs WHERE vehicle_id = v.id), 0) as total_costs
-      FROM vehicles v WHERE v.investor_id = ? AND v.vehicle_type = 'stock'
-      ORDER BY v.created_at ASC
-    `).all(inv.id);
-
-    const investorVehicles = db.prepare(`
-      SELECT v.id, v.brand, v.model, v.year, v.license_plate,
-        COALESCE((SELECT SUM(amount) FROM vehicle_costs WHERE vehicle_id = v.id), 0) as total_costs
-      FROM vehicles v WHERE v.investor_id = ? AND v.vehicle_type = 'investidor'
-    `).all(inv.id);
-
+    const contributions = contributionsRow.total;
     const totalPurchased = stockVehicles.reduce((s, v) => s + v.purchase_price, 0);
     const totalStockCosts = stockVehicles.reduce((s, v) => s + v.total_costs, 0);
     const totalSalesRevenue = stockVehicles.filter(v => v.status === 'vendido' && v.sale_price).reduce((s, v) => s + v.sale_price, 0);
@@ -127,10 +120,9 @@ export async function GET(req) {
       contributions, totalPurchased, totalStockCosts, totalInvestorCosts, totalSalesRevenue, balance,
       stockVehicles, investorVehicles,
     };
-  });
+  }));
 
-  // Vehicles with no investor assigned
-  const semInvestidorVehicles = db.prepare(`
+  const semInvestidorVehicles = await db.prepare(`
     SELECT v.id, v.brand, v.model, v.year, v.license_plate, v.status, v.vehicle_type,
       v.purchase_price, v.sale_price, v.created_at,
       u.name as created_by_name,

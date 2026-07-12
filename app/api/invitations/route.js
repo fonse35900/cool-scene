@@ -9,7 +9,7 @@ export async function GET() {
     return NextResponse.json({ error: 'Sem permissão' }, { status: 403 });
   }
   const db = getDb();
-  const invitations = db.prepare(`
+  const invitations = await db.prepare(`
     SELECT i.*, inv.name as investor_name, u.name as director_name
     FROM invitations i
     JOIN investors inv ON i.investor_id = inv.id
@@ -31,17 +31,17 @@ export async function POST(req) {
 
     const db = getDb();
 
-    const investor = db.prepare('SELECT * FROM investors WHERE id = ?').get(investor_id);
+    const investor = await db.prepare('SELECT * FROM investors WHERE id = ?').get(investor_id);
     if (!investor) return NextResponse.json({ error: 'Investidor não encontrado' }, { status: 404 });
 
-    const existing = db.prepare("SELECT id FROM users WHERE email = ? AND role = 'investidor'").get(email);
+    const existing = await db.prepare("SELECT id FROM users WHERE email = ? AND role = 'investidor'").get(email);
     if (existing) return NextResponse.json({ error: 'Este email já tem conta de investidor' }, { status: 400 });
 
     const token = randomBytes(32).toString('hex');
 
-    db.prepare(`
-      INSERT INTO invitations (email, investor_id, token, director_id) VALUES (?, ?, ?, ?)
-    `).run(email, investor_id, token, user.id);
+    await db.prepare(
+      'INSERT INTO invitations (email, investor_id, token, director_id) VALUES (?, ?, ?, ?)'
+    ).run(email, investor_id, token, user.id);
 
     return NextResponse.json({ token, investor_name: investor.name });
   } catch (e) {
@@ -57,6 +57,6 @@ export async function DELETE(req) {
   }
   const { id } = await req.json();
   const db = getDb();
-  db.prepare('DELETE FROM invitations WHERE id = ?').run(id);
+  await db.prepare('DELETE FROM invitations WHERE id = ?').run(id);
   return NextResponse.json({ success: true });
 }

@@ -6,7 +6,7 @@ import { signToken } from '@/lib/auth';
 export async function POST(req) {
   const { email, password } = await req.json();
   const db = getDb();
-  const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
+  const user = await db.prepare('SELECT * FROM users WHERE email = ?').get(email);
 
   if (!user || !bcrypt.compareSync(password, user.password)) {
     return NextResponse.json({ error: 'Credenciais inválidas' }, { status: 401 });

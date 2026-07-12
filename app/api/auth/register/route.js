@@ -15,17 +15,15 @@ export async function POST(req) {
     return NextResponse.json({ error: 'Diretor só pode criar comerciais' }, { status: 403 });
   }
 
-  if (currentUser.role === 'director' && role === 'comercial') {
-    var assignedDirector = currentUser.id;
-  } else {
-    var assignedDirector = director_id || null;
-  }
+  const assignedDirector = (currentUser.role === 'director' && role === 'comercial')
+    ? currentUser.id
+    : (director_id || null);
 
   const db = getDb();
   const hash = bcrypt.hashSync(password, 10);
 
   try {
-    db.prepare('INSERT INTO users (name, email, password, role, phone, director_id) VALUES (?, ?, ?, ?, ?, ?)').run(
+    await db.prepare('INSERT INTO users (name, email, password, role, phone, director_id) VALUES (?, ?, ?, ?, ?, ?)').run(
       name, email, hash, role, phone || null, assignedDirector
     );
     return NextResponse.json({ success: true });

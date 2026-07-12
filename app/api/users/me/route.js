@@ -19,20 +19,20 @@ export async function PUT(req) {
   if (newPassword) {
     if (!currentPassword) return NextResponse.json({ error: 'Password atual obrigatória' }, { status: 400 });
     if (newPassword.length < 6) return NextResponse.json({ error: 'Nova password deve ter mínimo 6 caracteres' }, { status: 400 });
-    const dbUser = db.prepare('SELECT password FROM users WHERE id = ?').get(user.id);
+    const dbUser = await db.prepare('SELECT password FROM users WHERE id = ?').get(user.id);
     if (!bcrypt.compareSync(currentPassword, dbUser.password)) {
       return NextResponse.json({ error: 'Password atual incorreta' }, { status: 400 });
     }
     const hash = bcrypt.hashSync(newPassword, 10);
-    db.prepare('UPDATE users SET password=? WHERE id=?').run(hash, user.id);
+    await db.prepare('UPDATE users SET password=? WHERE id=?').run(hash, user.id);
   }
 
   if (email !== undefined || phone !== undefined) {
     if (email && email !== user.email) {
-      const existing = db.prepare('SELECT id FROM users WHERE email=? AND id!=?').get(email, user.id);
+      const existing = await db.prepare('SELECT id FROM users WHERE email=? AND id!=?').get(email, user.id);
       if (existing) return NextResponse.json({ error: 'Este email já está em uso' }, { status: 400 });
     }
-    db.prepare('UPDATE users SET email=COALESCE(?,email), phone=? WHERE id=?')
+    await db.prepare('UPDATE users SET email=COALESCE(?,email), phone=? WHERE id=?')
       .run(email || null, phone || null, user.id);
   }
 

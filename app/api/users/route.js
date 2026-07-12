@@ -10,9 +10,9 @@ export async function GET() {
   let users;
 
   if (user.role === 'admin') {
-    users = db.prepare('SELECT id, name, email, role, phone, director_id, created_at FROM users').all();
+    users = await db.prepare('SELECT id, name, email, role, phone, director_id, created_at FROM users').all();
   } else if (user.role === 'director') {
-    users = db.prepare(
+    users = await db.prepare(
       'SELECT id, name, email, role, phone, director_id, created_at FROM users WHERE (director_id = ? OR id = ?) AND role != ?'
     ).all(user.id, user.id, 'admin');
   } else {

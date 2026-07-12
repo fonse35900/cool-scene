@@ -17,17 +17,15 @@ export async function GET(req) {
   }
   if (!investorId) return NextResponse.json({ error: 'Investidor não encontrado' }, { status: 400 });
 
-  const investor = db.prepare('SELECT * FROM investors WHERE id = ?').get(investorId);
+  const investor = await db.prepare('SELECT * FROM investors WHERE id = ?').get(investorId);
   if (!investor) return NextResponse.json({ error: 'Investidor não encontrado' }, { status: 404 });
 
-  // Contributions (money deposited)
-  const contributions = db.prepare(
+  const contributions = await db.prepare(
     'SELECT * FROM investor_contributions WHERE investor_id = ? ORDER BY date ASC'
   ).all(investorId);
   const totalContributions = contributions.reduce((s, c) => s + c.amount, 0);
 
-  // Stock vehicles (purchased with investor's money)
-  const stockVehicles = db.prepare(`
+  const stockVehicles = await db.prepare(`
     SELECT v.*, COALESCE((SELECT SUM(amount) FROM vehicle_costs WHERE vehicle_id = v.id), 0) as total_costs
     FROM vehicles v WHERE v.investor_id = ? AND v.vehicle_type = 'stock'
     ORDER BY v.created_at ASC
@@ -41,18 +39,15 @@ export async function GET(req) {
   const soldPurchaseCost = soldVehicles.reduce((s, v) => s + v.purchase_price + v.total_costs, 0);
   const totalGainLoss = totalSalesRevenue - soldPurchaseCost;
 
-  // Investor-type vehicle expenses (services, not stock)
-  const investorVehicles = db.prepare(`
+  const investorVehicles = await db.prepare(`
     SELECT v.brand, v.model, v.year, v.license_plate,
       COALESCE((SELECT SUM(amount) FROM vehicle_costs WHERE vehicle_id = v.id), 0) as total_costs
     FROM vehicles v WHERE v.investor_id = ? AND v.vehicle_type = 'investidor'
   `).all(investorId);
   const totalInvestorVehicleCosts = investorVehicles.reduce((s, v) => s + v.total_costs, 0);
 
-  // Running balance = contributions - purchases (in stock) - stock costs - investor vehicle costs + sales revenue
   const currentBalance = totalContributions - totalPurchased - totalStockCosts - totalInvestorVehicleCosts + totalSalesRevenue;
 
-  // Timeline of movements for the balance chart
   const movements = [];
 
   contributions.forEach(c => movements.push({
@@ -90,7 +85,6 @@ export async function GET(req) {
 
   movements.sort((a, b) => new Date(a.date) - new Date(b.date));
 
-  // Running balance per movement
   let running = 0;
   const timeline = movements.map(m => {
     running += m.sign * m.amount;
@@ -100,17 +94,9 @@ export async function GET(req) {
   return NextResponse.json({
     investor,
     summary: {
-      totalContributions,
-      totalPurchased,
-      totalStockCosts,
-      totalInvestorVehicleCosts,
-      totalSalesRevenue,
-      totalGainLoss,
-      currentBalance,
+      totalContributions, totalPurchased, totalStockCosts,
+      totalInvestorVehicleCosts, totalSalesRevenue, totalGainLoss, currentBalance,
     },
-    contributions,
-    stockVehicles,
-    investorVehicles,
-    timeline,
+    contributions, stockVehicles, investorVehicles, timeline,
   });
 }

@@ -8,7 +8,7 @@ export async function GET() {
   if (user.role === 'comercial') return NextResponse.json({ error: 'Sem permissão' }, { status: 403 });
 
   const db = getDb();
-  const investors = db.prepare('SELECT * FROM investors ORDER BY name').all();
+  const investors = await db.prepare('SELECT * FROM investors ORDER BY name').all();
   return NextResponse.json(investors);
 }
 
@@ -20,7 +20,7 @@ export async function POST(req) {
   const db = getDb();
 
   try {
-    const result = db.prepare(
+    const result = await db.prepare(
       'INSERT INTO investors (name, email, phone, notes) VALUES (?, ?, ?, ?)'
     ).run(name, email || null, phone || null, notes || null);
     return NextResponse.json({ id: result.lastInsertRowid });
@@ -37,7 +37,7 @@ export async function PUT(req) {
   const { id, name, email, phone, notes } = await req.json();
   if (!id || !name) return NextResponse.json({ error: 'ID e nome obrigatórios' }, { status: 400 });
   const db = getDb();
-  db.prepare('UPDATE investors SET name=?, email=?, phone=?, notes=? WHERE id=?')
+  await db.prepare('UPDATE investors SET name=?, email=?, phone=?, notes=? WHERE id=?')
     .run(name, email || null, phone || null, notes || null, id);
   return NextResponse.json({ success: true });
 }
@@ -48,7 +48,7 @@ export async function DELETE(req) {
 
   const { id } = await req.json();
   const db = getDb();
-  db.prepare('UPDATE vehicles SET investor_id = NULL WHERE investor_id = ?').run(id);
-  db.prepare('DELETE FROM investors WHERE id = ?').run(id);
+  await db.prepare('UPDATE vehicles SET investor_id = NULL WHERE investor_id = ?').run(id);
+  await db.prepare('DELETE FROM investors WHERE id = ?').run(id);
   return NextResponse.json({ success: true });
 }

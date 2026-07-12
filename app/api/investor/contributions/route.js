@@ -14,7 +14,7 @@ export async function GET(req) {
   if (user.role === 'investidor') id = user.investor_id;
   if (!id) return NextResponse.json({ error: 'Investidor não especificado' }, { status: 400 });
 
-  const contributions = db.prepare('SELECT * FROM investor_contributions WHERE investor_id = ? ORDER BY date DESC').all(id);
+  const contributions = await db.prepare('SELECT * FROM investor_contributions WHERE investor_id = ? ORDER BY date DESC').all(id);
   return NextResponse.json(contributions);
 }
 
@@ -26,7 +26,7 @@ export async function POST(req) {
     }
     const { investor_id, amount, notes, date } = await req.json();
     const db = getDb();
-    const result = db.prepare(
+    const result = await db.prepare(
       'INSERT INTO investor_contributions (investor_id, amount, notes, date) VALUES (?, ?, ?, ?)'
     ).run(investor_id, amount, notes || null, date || new Date().toISOString());
     return NextResponse.json({ id: result.lastInsertRowid });
@@ -43,6 +43,6 @@ export async function DELETE(req) {
   }
   const { id } = await req.json();
   const db = getDb();
-  db.prepare('DELETE FROM investor_contributions WHERE id = ?').run(id);
+  await db.prepare('DELETE FROM investor_contributions WHERE id = ?').run(id);
   return NextResponse.json({ success: true });
 }

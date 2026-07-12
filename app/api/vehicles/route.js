@@ -10,7 +10,6 @@ export async function GET(req) {
   const { searchParams } = new URL(req.url);
   const status = searchParams.get('status');
   const userId = searchParams.get('user_id');
-  // vehicle_type: 'stock' (default), 'investidor', or 'all'
   const vehicleType = searchParams.get('type') || 'stock';
   const hasInvestor = searchParams.get('has_investor') === '1';
 
@@ -25,7 +24,6 @@ export async function GET(req) {
   const conditions = [];
   const params = [];
 
-  // Comerciais only see stock vehicles they created
   if (user.role === 'comercial') {
     conditions.push('v.created_by = ?');
     conditions.push("v.vehicle_type = 'stock'");
@@ -45,7 +43,6 @@ export async function GET(req) {
       params.push(vehicleType);
     }
   } else {
-    // admin
     if (userId) {
       conditions.push('v.created_by = ?');
       params.push(parseInt(userId));
@@ -66,7 +63,7 @@ export async function GET(req) {
   if (conditions.length) query += ' WHERE ' + conditions.join(' AND ');
   query += ' ORDER BY v.created_at DESC';
 
-  const vehicles = db.prepare(query).all(...params);
+  const vehicles = await db.prepare(query).all(...params);
   return NextResponse.json(vehicles);
 }
 
@@ -77,15 +74,13 @@ export async function POST(req) {
   const data = await req.json();
   const db = getDb();
 
-  // Only director/admin can create investor vehicles
   const vehicleType = (user.role !== 'comercial' && data.vehicle_type === 'investidor') ? 'investidor' : 'stock';
 
-  // Investor vehicles must have an investor
   if (vehicleType === 'investidor' && !data.investor_id) {
     return NextResponse.json({ error: 'Viatura de investidor requer um investidor associado' }, { status: 400 });
   }
 
-  const result = db.prepare(`
+  const result = await db.prepare(`
     INSERT INTO vehicles (brand, model, year, license_plate, vin, color, mileage, fuel_type, purchase_price, sale_price, status, notes, investor_id, vehicle_type, created_by)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
