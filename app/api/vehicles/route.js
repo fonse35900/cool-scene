@@ -80,16 +80,22 @@ export async function POST(req) {
     return NextResponse.json({ error: 'Viatura de investidor requer um investidor associado' }, { status: 400 });
   }
 
+  // Registration date (defaults to now if not provided)
+  const createdAt = data.created_at
+    ? (data.created_at.length === 10 ? data.created_at + ' 12:00:00' : data.created_at)
+    : new Date().toISOString();
+
   const result = await db.prepare(`
-    INSERT INTO vehicles (brand, model, year, license_plate, vin, color, mileage, fuel_type, purchase_price, sale_price, status, notes, investor_id, vehicle_type, created_by)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO vehicles (brand, model, year, license_plate, vin, color, mileage, fuel_type, purchase_price, sale_price, status, notes, investor_id, vehicle_type, created_by, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
     data.brand, data.model, data.year, data.license_plate || null,
     data.vin || null, data.color || null, data.mileage || null,
     data.fuel_type || null, data.purchase_price || 0, null,
     'em_stock', data.notes || null,
     data.investor_id || null, vehicleType,
-    (user.role !== 'comercial' && data.assigned_to) ? data.assigned_to : user.id
+    (user.role !== 'comercial' && data.assigned_to) ? data.assigned_to : user.id,
+    createdAt, createdAt
   );
 
   return NextResponse.json({ id: result.lastInsertRowid });

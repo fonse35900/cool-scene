@@ -5,12 +5,15 @@ import Navbar from '@/components/Navbar';
 
 const inputClass = "w-full bg-octane-card border border-octane-border rounded-lg px-4 py-3 text-sm text-octane-white focus:ring-2 focus:ring-octane-gold focus:border-octane-gold focus:outline-none";
 const labelClass = "block text-xs font-medium text-octane-gray uppercase tracking-wider mb-2";
+const todayISO = () => new Date().toISOString().split('T')[0];
+const todayBtnClass = "text-xs px-3 py-1.5 rounded border border-octane-border text-octane-gray hover:border-octane-gold hover:text-octane-gold transition-colors whitespace-nowrap";
 
 export default function NewVehiclePage() {
   const [user, setUser] = useState(null);
   const [investors, setInvestors] = useState([]);
   const [teamMembers, setTeamMembers] = useState([]);
   const [form, setForm] = useState({
+    date: todayISO(),
     brand: '', model: '', year: new Date().getFullYear(), license_plate: '', vin: '',
     color: '', mileage: '', fuel_type: 'Gasolina', purchase_price: '', sale_price: '',
     notes: '', investor_id: '', assigned_to: '',
@@ -39,6 +42,7 @@ export default function NewVehiclePage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         ...form,
+        created_at: form.date,
         year: parseInt(form.year),
         mileage: form.mileage ? parseInt(form.mileage) : null,
         purchase_price: parseFloat(form.purchase_price),
@@ -62,6 +66,13 @@ export default function NewVehiclePage() {
         <h1 className="text-2xl font-bold mb-6 tracking-wide">Nova Viatura</h1>
         <form onSubmit={handleSubmit} className="bg-octane-card border border-octane-border p-6 rounded-xl space-y-5">
           {error && <div className="bg-octane-red/10 border border-octane-red/30 text-octane-red p-3 rounded text-sm">{error}</div>}
+          <div>
+            <label className={labelClass}>Data *</label>
+            <div className="flex items-center gap-2">
+              <input type="date" value={form.date} onChange={e => set('date', e.target.value)} required className={inputClass} />
+              <button type="button" onClick={() => set('date', todayISO())} className={todayBtnClass}>Hoje</button>
+            </div>
+          </div>
           <div className="grid grid-cols-2 gap-4">
             {[
               { k: 'brand', l: 'Marca', required: true },
