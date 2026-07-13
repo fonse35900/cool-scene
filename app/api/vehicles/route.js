@@ -98,5 +98,13 @@ export async function POST(req) {
     createdAt, createdAt
   );
 
+  // Log creation in history
+  await db.prepare(`
+    INSERT INTO vehicle_history (vehicle_id, changed_by, changed_by_name, action, changes, created_at)
+    VALUES (?, ?, ?, 'created', ?, ?)
+  `).run(
+    result.lastInsertRowid, user.id, user.name, 'Viatura registada', createdAt
+  );
+
   return NextResponse.json({ id: result.lastInsertRowid });
 }
