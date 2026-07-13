@@ -49,7 +49,6 @@ export default function LoginPage() {
             Entrar
           </button>
         </form>
-        <p className="text-xs text-octane-gray/50 mt-6 text-center">admin@empresa.pt / admin123</p>
       </div>
     </div>
   );
