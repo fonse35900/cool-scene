@@ -14,6 +14,7 @@ export default function Navbar({ user }) {
 
   const links = user.role === 'investidor' ? [
     { href: '/investor', label: 'Portal do Investidor' },
+    { href: '/perfil', label: 'Perfil' },
   ] : [
     { href: '/dashboard', label: 'Dashboard' },
     { href: '/vehicles', label: 'Viaturas' },
@@ -22,6 +23,7 @@ export default function Navbar({ user }) {
       { href: '/users', label: 'Utilizadores' },
     ] : []),
     { href: '/reports', label: 'Relatórios' },
+    { href: '/perfil', label: 'Perfil' },
   ];
 
   return (

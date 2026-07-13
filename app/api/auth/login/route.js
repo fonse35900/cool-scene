@@ -13,6 +13,10 @@ export async function POST(req) {
       return NextResponse.json({ error: 'Credenciais inválidas' }, { status: 401 });
     }
 
+    if (user.suspended) {
+      return NextResponse.json({ error: 'Conta suspensa. Contacte o administrador.' }, { status: 403 });
+    }
+
     const token = signToken(user);
     const res = NextResponse.json({ id: user.id, name: user.name, role: user.role });
     res.cookies.set('token', token, { httpOnly: true, path: '/', maxAge: 86400, sameSite: 'lax' });
