@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
+import { useLang } from '@/lib/LanguageContext';
 
 const roleLabels = { admin: 'Administrador', director: 'Diretor', comercial: 'Comercial', investidor: 'Investidor' };
 const roleColors = {
@@ -33,6 +34,8 @@ export default function UsersPage() {
   const [editForm, setEditForm] = useState({ name: '', email: '', phone: '', password: '' });
   const [editError, setEditError] = useState('');
   const router = useRouter();
+  const { t } = useLang();
+  const roleLabelsL = { admin: t('Administrador', 'Administrator'), director: t('Diretor', 'Director'), comercial: t('Comercial', 'Sales'), investidor: t('Investidor', 'Investor') };
 
   useEffect(() => {
     fetch('/api/users/me').then(r => r.ok ? r.json() : Promise.reject()).then(u => {
@@ -86,8 +89,8 @@ export default function UsersPage() {
   }
 
   async function toggleSuspend(u) {
-    const action = u.suspended ? 'reativar' : 'suspender';
-    if (!confirm(`Tem a certeza que deseja ${action} ${u.name}?`)) return;
+    const action = u.suspended ? t('reativar', 'reactivate') : t('suspender', 'suspend');
+    if (!confirm(t(`Tem a certeza que deseja ${action} ${u.name}?`, `Are you sure you want to ${action} ${u.name}?`))) return;
     const res = await fetch(`/api/users/${u.id}`, {
       method: 'PUT', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ suspended: u.suspended ? 0 : 1 }),
@@ -97,7 +100,7 @@ export default function UsersPage() {
   }
 
   async function handleDelete(u) {
-    if (!confirm(`Eliminar permanentemente ${u.name}? Esta ação não pode ser revertida.`)) return;
+    if (!confirm(t(`Eliminar permanentemente ${u.name}? Esta ação não pode ser revertida.`, `Permanently delete ${u.name}? This action cannot be undone.`))) return;
     const res = await fetch(`/api/users/${u.id}`, { method: 'DELETE' });
     if (res.ok) loadUsers();
     else alert((await res.json()).error);
@@ -115,10 +118,10 @@ export default function UsersPage() {
       <Navbar user={user} />
       <div className="max-w-6xl mx-auto p-6">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold tracking-wide">Utilizadores</h1>
+          <h1 className="text-2xl font-bold tracking-wide">{t('Utilizadores', 'Users')}</h1>
           <button onClick={() => setShowForm(!showForm)}
             className="bg-octane-gold text-octane-black px-4 py-2 rounded-lg text-sm font-semibold hover:bg-octane-gold-light transition-colors">
-            {showForm ? 'Cancelar' : '+ Novo Utilizador'}
+            {showForm ? t('Cancelar', 'Cancel') : t('+ Novo Utilizador', '+ New User')}
           </button>
         </div>
 
@@ -127,7 +130,7 @@ export default function UsersPage() {
             {error && <div className="bg-octane-red/10 border border-octane-red/30 text-octane-red p-3 rounded text-sm">{error}</div>}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-medium text-octane-gray uppercase tracking-wider mb-2">Nome *</label>
+                <label className="block text-xs font-medium text-octane-gray uppercase tracking-wider mb-2">{t('Nome', 'Name')} *</label>
                 <input value={form.name} onChange={e => set('name', e.target.value)} required className={inputClass} />
               </div>
               <div>
@@ -139,26 +142,26 @@ export default function UsersPage() {
                 <input type="password" value={form.password} onChange={e => set('password', e.target.value)} required className={inputClass} />
               </div>
               <div>
-                <label className="block text-xs font-medium text-octane-gray uppercase tracking-wider mb-2">Telefone</label>
+                <label className="block text-xs font-medium text-octane-gray uppercase tracking-wider mb-2">{t('Telefone', 'Phone')}</label>
                 <input value={form.phone} onChange={e => set('phone', e.target.value)} className={inputClass} />
               </div>
               <div>
-                <label className="block text-xs font-medium text-octane-gray uppercase tracking-wider mb-2">Papel</label>
+                <label className="block text-xs font-medium text-octane-gray uppercase tracking-wider mb-2">{t('Papel', 'Role')}</label>
                 <select value={form.role} onChange={e => set('role', e.target.value)} className={inputClass}>
-                  {availableRoles.map(r => <option key={r} value={r}>{roleLabels[r]}</option>)}
+                  {availableRoles.map(r => <option key={r} value={r}>{roleLabelsL[r]}</option>)}
                 </select>
               </div>
               {user.role === 'admin' && form.role === 'comercial' && (
                 <div>
-                  <label className="block text-xs font-medium text-octane-gray uppercase tracking-wider mb-2">Diretor</label>
+                  <label className="block text-xs font-medium text-octane-gray uppercase tracking-wider mb-2">{t('Diretor', 'Director')}</label>
                   <select value={form.director_id} onChange={e => set('director_id', e.target.value)} className={inputClass}>
-                    <option value="">Sem diretor</option>
+                    <option value="">{t('Sem diretor', 'No director')}</option>
                     {directors.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                   </select>
                 </div>
               )}
             </div>
-            <button type="submit" className="bg-octane-gold text-octane-black px-6 py-2.5 rounded-lg hover:bg-octane-gold-light text-sm font-semibold transition-colors">Criar</button>
+            <button type="submit" className="bg-octane-gold text-octane-black px-6 py-2.5 rounded-lg hover:bg-octane-gold-light text-sm font-semibold transition-colors">{t('Criar', 'Create')}</button>
           </form>
         )}
 
@@ -166,7 +169,7 @@ export default function UsersPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-octane-border">
-                {['Nome', 'Email', 'Papel', 'Telefone', 'Estado', 'Ações'].map(h => (
+                {[t('Nome', 'Name'), 'Email', t('Papel', 'Role'), t('Telefone', 'Phone'), t('Estado', 'Status'), t('Ações', 'Actions')].map(h => (
                   <th key={h} className="text-left p-3 font-medium text-octane-gray text-xs uppercase tracking-wider">{h}</th>
                 ))}
               </tr>
@@ -180,21 +183,21 @@ export default function UsersPage() {
                     <td className="p-3 text-octane-gray">{u.email}</td>
                     <td className="p-3">
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${roleColors[u.role]}`}>
-                        {roleLabels[u.role]}
+                        {roleLabelsL[u.role]}
                       </span>
                     </td>
                     <td className="p-3 text-octane-gray">{u.phone || '-'}</td>
                     <td className="p-3">
                       {u.suspended
-                        ? <span className="text-octane-red text-xs font-medium">Suspenso</span>
-                        : <span className="text-octane-green text-xs font-medium">Ativo</span>}
+                        ? <span className="text-octane-red text-xs font-medium">{t('Suspenso', 'Suspended')}</span>
+                        : <span className="text-octane-green text-xs font-medium">{t('Ativo', 'Active')}</span>}
                     </td>
                     <td className="p-3">
                       <div className="flex gap-2 flex-wrap">
                         {perm && (
                           <button onClick={() => openEdit(u)}
                             className="text-xs px-2.5 py-1 rounded border border-octane-border text-octane-gray hover:border-octane-gold hover:text-octane-gold transition-colors">
-                            Editar
+                            {t('Editar', 'Edit')}
                           </button>
                         )}
                         {perm === 'full' && (
@@ -204,13 +207,13 @@ export default function UsersPage() {
                                 ? 'border-octane-green/40 text-octane-green hover:bg-octane-green/10'
                                 : 'border-yellow-500/40 text-yellow-500 hover:bg-yellow-500/10'
                             }`}>
-                            {u.suspended ? 'Reativar' : 'Suspender'}
+                            {u.suspended ? t('Reativar', 'Reactivate') : t('Suspender', 'Suspend')}
                           </button>
                         )}
                         {perm === 'full' && (
                           <button onClick={() => handleDelete(u)}
                             className="text-xs px-2.5 py-1 rounded border border-octane-red/40 text-octane-red hover:bg-octane-red/10 transition-colors">
-                            Apagar
+                            {t('Apagar', 'Delete')}
                           </button>
                         )}
                         {!perm && <span className="text-octane-gray/40 text-xs">—</span>}
@@ -229,13 +232,13 @@ export default function UsersPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
           <form onSubmit={handleEditSave} className="bg-octane-card border border-octane-border rounded-2xl w-full max-w-lg shadow-2xl">
             <div className="flex items-center justify-between px-6 py-4 border-b border-octane-border">
-              <h2 className="font-bold text-octane-white text-lg">Editar {editing.name}</h2>
+              <h2 className="font-bold text-octane-white text-lg">{t('Editar', 'Edit')} {editing.name}</h2>
               <button type="button" onClick={() => setEditing(null)} className="text-octane-gray hover:text-octane-white text-xl leading-none">✕</button>
             </div>
             <div className="p-6 space-y-4">
               {editError && <div className="bg-octane-red/10 border border-octane-red/30 text-octane-red p-3 rounded text-sm">{editError}</div>}
               <div>
-                <label className="block text-xs font-medium text-octane-gray uppercase tracking-wider mb-2">Nome</label>
+                <label className="block text-xs font-medium text-octane-gray uppercase tracking-wider mb-2">{t('Nome', 'Name')}</label>
                 <input value={editForm.name} onChange={e => setE('name', e.target.value)} className={inputClass} />
               </div>
               <div>
@@ -243,20 +246,20 @@ export default function UsersPage() {
                 <input type="email" value={editForm.email} onChange={e => setE('email', e.target.value)} className={inputClass} />
               </div>
               <div>
-                <label className="block text-xs font-medium text-octane-gray uppercase tracking-wider mb-2">Telefone</label>
+                <label className="block text-xs font-medium text-octane-gray uppercase tracking-wider mb-2">{t('Telefone', 'Phone')}</label>
                 <input value={editForm.phone} onChange={e => setE('phone', e.target.value)} className={inputClass} />
               </div>
               <div>
-                <label className="block text-xs font-medium text-octane-gray uppercase tracking-wider mb-2">Nova Password</label>
+                <label className="block text-xs font-medium text-octane-gray uppercase tracking-wider mb-2">{t('Nova Password', 'New Password')}</label>
                 <input type="password" value={editForm.password} onChange={e => setE('password', e.target.value)}
-                  placeholder="Deixe em branco para manter" className={inputClass} />
+                  placeholder={t('Deixe em branco para manter', 'Leave blank to keep')} className={inputClass} />
               </div>
             </div>
             <div className="flex justify-end gap-3 px-6 py-4 border-t border-octane-border">
               <button type="button" onClick={() => setEditing(null)}
-                className="px-4 py-2 rounded-lg text-sm text-octane-gray hover:text-octane-white transition-colors">Cancelar</button>
+                className="px-4 py-2 rounded-lg text-sm text-octane-gray hover:text-octane-white transition-colors">{t('Cancelar', 'Cancel')}</button>
               <button type="submit"
-                className="bg-octane-gold text-octane-black px-6 py-2 rounded-lg text-sm font-semibold hover:bg-octane-gold-light transition-colors">Guardar</button>
+                className="bg-octane-gold text-octane-black px-6 py-2 rounded-lg text-sm font-semibold hover:bg-octane-gold-light transition-colors">{t('Guardar', 'Save')}</button>
             </div>
           </form>
         </div>

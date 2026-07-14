@@ -3,8 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import VehiclesTabs from '@/components/VehiclesTabs';
-
-const statusLabels = { em_stock: 'Em Stock', vendido: 'Vendido', reservado: 'Reservado' };
+import { useLang } from '@/lib/LanguageContext';
 const statusColors = {
   em_stock: 'bg-octane-green/15 text-octane-green border border-octane-green/30',
   vendido: 'bg-octane-purple/15 text-octane-purple border border-octane-purple/30',
@@ -20,17 +19,18 @@ function fmtDateTime(s) {
 
 function HistoryPanel({ vehicleId }) {
   const [history, setHistory] = useState(null);
+  const { t } = useLang();
 
   useEffect(() => {
     fetch(`/api/vehicles/${vehicleId}`).then(r => r.json()).then(d => setHistory(d.history || []));
   }, [vehicleId]);
 
-  if (history === null) return <div className="p-4 text-octane-gray text-sm">A carregar histórico...</div>;
-  if (history.length === 0) return <div className="p-4 text-octane-gray text-sm">Sem alterações registadas.</div>;
+  if (history === null) return <div className="p-4 text-octane-gray text-sm">{t('A carregar histórico...', 'Loading history...')}</div>;
+  if (history.length === 0) return <div className="p-4 text-octane-gray text-sm">{t('Sem alterações registadas.', 'No changes recorded.')}</div>;
 
   return (
     <div className="p-4 space-y-3">
-      <p className="text-xs uppercase tracking-wider text-octane-gold font-semibold mb-2">Histórico de Alterações</p>
+      <p className="text-xs uppercase tracking-wider text-octane-gold font-semibold mb-2">{t('Histórico de Alterações', 'Change History')}</p>
       {history.map((h, idx) => {
         let changes = [];
         try { changes = h.changes ? JSON.parse(h.changes) : []; } catch { changes = []; }
@@ -40,12 +40,12 @@ function HistoryPanel({ vehicleId }) {
             <div className="flex items-center justify-between flex-wrap gap-2 mb-1">
               <div className="flex items-center gap-2">
                 <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${h.action === 'created' ? 'bg-octane-green/15 text-octane-green' : 'bg-blue-500/15 text-blue-400'}`}>
-                  {h.action === 'created' ? 'Registo' : 'Alteração'}
+                  {h.action === 'created' ? t('Registo', 'Created') : t('Alteração', 'Change')}
                 </span>
-                {isLatest && <span className="text-xs text-octane-gold font-medium">● Atual (contabilizada)</span>}
+                {isLatest && <span className="text-xs text-octane-gold font-medium">● {t('Atual (contabilizada)', 'Current (accounted)')}</span>}
               </div>
               <span className="text-xs text-octane-gray">
-                {h.changed_by_name || 'Sistema'} · {fmtDateTime(h.created_at)}
+                {h.changed_by_name || t('Sistema', 'System')} · {fmtDateTime(h.created_at)}
               </span>
             </div>
             {Array.isArray(changes) && changes.length > 0 && typeof changes[0] === 'object' ? (
@@ -81,6 +81,8 @@ export default function VehiclesPage() {
   const [filter, setFilter] = useState('');
   const [expanded, setExpanded] = useState(null);
   const router = useRouter();
+  const { t } = useLang();
+  const statusLabels = { em_stock: t('Em Stock', 'In Stock'), vendido: t('Vendido', 'Sold'), reservado: t('Reservado', 'Reserved') };
 
   useEffect(() => {
     fetch('/api/users/me').then(r => r.ok ? r.json() : Promise.reject()).then(setUser).catch(() => router.push('/login'));
@@ -99,21 +101,21 @@ export default function VehiclesPage() {
     <div className="min-h-screen bg-octane-black">
       <Navbar user={user} />
       <div className="max-w-7xl mx-auto p-6">
-        <h1 className="text-2xl font-bold mb-6 tracking-wide">Viaturas</h1>
+        <h1 className="text-2xl font-bold mb-6 tracking-wide">{t('Viaturas', 'Vehicles')}</h1>
         <VehiclesTabs userRole={user.role} />
         <div className="flex justify-between items-center mb-6">
           <div />
           <div className="flex gap-3">
             <select value={filter} onChange={e => setFilter(e.target.value)}
               className="bg-octane-card border border-octane-border rounded-lg px-3 py-2 text-sm text-octane-white">
-              <option value="">Todos</option>
-              <option value="em_stock">Em Stock</option>
-              <option value="vendido">Vendido</option>
-              <option value="reservado">Reservado</option>
+              <option value="">{t('Todos', 'All')}</option>
+              <option value="em_stock">{t('Em Stock', 'In Stock')}</option>
+              <option value="vendido">{t('Vendido', 'Sold')}</option>
+              <option value="reservado">{t('Reservado', 'Reserved')}</option>
             </select>
             <button onClick={() => router.push('/vehicles/new')}
               className="bg-octane-gold text-octane-black px-4 py-2 rounded-lg hover:bg-octane-gold-light text-sm font-semibold transition-colors">
-              + Nova Viatura
+              {t('+ Nova Viatura', '+ New Vehicle')}
             </button>
           </div>
         </div>
@@ -122,7 +124,7 @@ export default function VehiclesPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-octane-border">
-                {['', 'Marca', 'Modelo', 'Ano', 'Matrícula', 'Preço Compra', 'Preço Venda', 'Custos', 'Estado', 'Comercial', ''].map((h, i) => (
+                {['', t('Marca', 'Make'), t('Modelo', 'Model'), t('Ano', 'Year'), t('Matrícula', 'Plate'), t('Preço Compra', 'Purchase Price'), t('Preço Venda', 'Sale Price'), t('Custos', 'Costs'), t('Estado', 'Status'), t('Comercial', 'Salesperson'), ''].map((h, i) => (
                   <th key={i} className="text-left p-3 font-medium text-octane-gray text-xs uppercase tracking-wider">{h}</th>
                 ))}
               </tr>
@@ -135,7 +137,7 @@ export default function VehiclesPage() {
                       <button
                         onClick={() => setExpanded(expanded === v.id ? null : v.id)}
                         className="text-octane-gray hover:text-octane-gold w-6 h-6 flex items-center justify-center rounded transition-colors"
-                        title="Ver histórico">
+                        title={t('Ver histórico', 'View history')}>
                         <span className={`inline-block transition-transform ${expanded === v.id ? 'rotate-90' : ''}`}>▸</span>
                       </button>
                     </td>
@@ -155,7 +157,7 @@ export default function VehiclesPage() {
                     <td className="p-3">
                       <button onClick={() => router.push(`/vehicles/${v.id}`)}
                         className="text-xs px-2.5 py-1 rounded border border-octane-border text-octane-gray hover:border-octane-gold hover:text-octane-gold transition-colors">
-                        Editar
+                        {t('Editar', 'Edit')}
                       </button>
                     </td>
                   </tr>
@@ -169,7 +171,7 @@ export default function VehiclesPage() {
                 </React.Fragment>
               ))}
               {vehicles.length === 0 && (
-                <tr><td colSpan={11} className="p-8 text-center text-octane-gray">Nenhuma viatura encontrada</td></tr>
+                <tr><td colSpan={11} className="p-8 text-center text-octane-gray">{t('Nenhuma viatura encontrada', 'No vehicles found')}</td></tr>
               )}
             </tbody>
           </table>

@@ -1,14 +1,15 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
+import { useLang } from '@/lib/LanguageContext';
 
 const todayISO = () => new Date().toISOString().split('T')[0];
 const nDaysAgo = n => { const d = new Date(); d.setDate(d.getDate() - n); return d.toISOString().split('T')[0]; };
 
 const PRESETS = [
-  { label: 'Último mês', from: () => { const d = new Date(); d.setMonth(d.getMonth() - 1, 1); return d.toISOString().split('T')[0]; }, to: () => { const d = new Date(); d.setDate(0); return d.toISOString().split('T')[0]; } },
-  { label: '3 meses',    from: () => { const d = new Date(); d.setMonth(d.getMonth() - 3, 1); return d.toISOString().split('T')[0]; }, to: () => { const d = new Date(); d.setDate(0); return d.toISOString().split('T')[0]; } },
-  { label: '365 dias',   from: () => nDaysAgo(365), to: todayISO },
-  { label: 'Este ano',   from: () => `${new Date().getFullYear()}-01-01`, to: todayISO },
+  { id: 'last_month', label: 'Último mês', labelEn: 'Last month', from: () => { const d = new Date(); d.setMonth(d.getMonth() - 1, 1); return d.toISOString().split('T')[0]; }, to: () => { const d = new Date(); d.setDate(0); return d.toISOString().split('T')[0]; } },
+  { id: 'm3', label: '3 meses', labelEn: '3 months', from: () => { const d = new Date(); d.setMonth(d.getMonth() - 3, 1); return d.toISOString().split('T')[0]; }, to: () => { const d = new Date(); d.setDate(0); return d.toISOString().split('T')[0]; } },
+  { id: 'd365', label: '365 dias', labelEn: '365 days', from: () => nDaysAgo(365), to: todayISO },
+  { id: 'ytd', label: 'Este ano', labelEn: 'This year', from: () => `${new Date().getFullYear()}-01-01`, to: todayISO },
 ];
 
 function fmtEur(n) {
@@ -36,7 +37,8 @@ export default function DashboardChart() {
   const [tooltip, setTooltip]             = useState(null);
   const svgRef = useRef(null);
 
-  function applyPreset(p) { setDateFrom(p.from()); setDateTo(p.to()); setPreset(p.label); }
+  const { t } = useLang();
+  function applyPreset(p) { setDateFrom(p.from()); setDateTo(p.to()); setPreset(p.id); }
 
   useEffect(() => {
     if (!dateFrom || !dateTo) return;
@@ -93,7 +95,7 @@ export default function DashboardChart() {
       {/* header */}
       <div className="flex flex-wrap items-start justify-between gap-4 mb-5">
         <div className="flex items-center gap-3">
-          <h2 className="font-semibold text-octane-gold text-sm uppercase tracking-wider">Evolução do Stock e Margens</h2>
+          <h2 className="font-semibold text-octane-gold text-sm uppercase tracking-wider">{t('Evolução do Stock e Margens', 'Stock and Margin Evolution')}</h2>
           <button
             onClick={() => setExcludeInvestors(v => !v)}
             className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs border transition-colors ${
@@ -101,39 +103,39 @@ export default function DashboardChart() {
                 ? 'bg-octane-gold text-octane-black border-octane-gold font-semibold'
                 : 'border-octane-border text-octane-gray hover:border-octane-gold hover:text-octane-gold'
             }`}>
-            {excludeInvestors ? '✓' : '○'} Excluir Investidores
+            {excludeInvestors ? '✓' : '○'} {t('Excluir Investidores', 'Exclude Investors')}
           </button>
         </div>
         <div className="flex flex-wrap items-end gap-3">
           <div className="flex flex-wrap gap-1.5">
             {PRESETS.map(p => (
-              <button key={p.label} onClick={() => applyPreset(p)}
-                className={`px-3 py-1.5 rounded-full text-xs border transition-colors ${preset === p.label
+              <button key={p.id} onClick={() => applyPreset(p)}
+                className={`px-3 py-1.5 rounded-full text-xs border transition-colors ${preset === p.id
                   ? 'bg-octane-gold text-octane-black border-octane-gold font-semibold'
                   : 'border-octane-border text-octane-gray hover:border-octane-gold hover:text-octane-gold'}`}>
-                {p.label}
+                {t(p.label, p.labelEn)}
               </button>
             ))}
           </div>
           <div className="flex items-center gap-1.5 flex-wrap">
             <input type="date" value={dateFrom} onChange={e => { setDateFrom(e.target.value); setPreset(null); }} className={inputCls} />
-            <button onClick={() => { setDateFrom(todayISO()); setPreset(null); }} className={todayCls}>Hoje</button>
+            <button onClick={() => { setDateFrom(todayISO()); setPreset(null); }} className={todayCls}>{t('Hoje', 'Today')}</button>
             <span className="text-octane-gray text-sm">→</span>
             <input type="date" value={dateTo} onChange={e => { setDateTo(e.target.value); setPreset(null); }} className={inputCls} />
-            <button onClick={() => { setDateTo(todayISO()); setPreset(null); }} className={todayCls}>Hoje</button>
+            <button onClick={() => { setDateTo(todayISO()); setPreset(null); }} className={todayCls}>{t('Hoje', 'Today')}</button>
           </div>
         </div>
       </div>
 
       {/* legend */}
       <div className="flex gap-5 mb-4 text-xs text-octane-gray">
-        <span className="flex items-center gap-1.5"><span style={{ background: GRAY }} className="w-3 h-3 rounded-sm inline-block" />Em Stock</span>
-        <span className="flex items-center gap-1.5"><span style={{ background: GREEN }} className="w-3 h-3 rounded-sm inline-block" />Vendidas</span>
-        <span className="flex items-center gap-1.5"><span style={{ background: GOLD, height: 2 }} className="w-5 h-0.5 inline-block rounded" />Margem Acum.</span>
+        <span className="flex items-center gap-1.5"><span style={{ background: GRAY }} className="w-3 h-3 rounded-sm inline-block" />{t('Em Stock', 'In Stock')}</span>
+        <span className="flex items-center gap-1.5"><span style={{ background: GREEN }} className="w-3 h-3 rounded-sm inline-block" />{t('Vendidas', 'Sold')}</span>
+        <span className="flex items-center gap-1.5"><span style={{ background: GOLD, height: 2 }} className="w-5 h-0.5 inline-block rounded" />{t('Margem Acum.', 'Cum. Margin')}</span>
       </div>
 
-      {loading && <div className="h-72 flex items-center justify-center text-octane-gray text-sm">A carregar...</div>}
-      {!loading && data?.length === 0 && <div className="h-72 flex items-center justify-center text-octane-gray text-sm">Sem dados para o período selecionado.</div>}
+      {loading && <div className="h-72 flex items-center justify-center text-octane-gray text-sm">{t('A carregar...', 'Loading...')}</div>}
+      {!loading && data?.length === 0 && <div className="h-72 flex items-center justify-center text-octane-gray text-sm">{t('Sem dados para o período selecionado.', 'No data for the selected period.')}</div>}
 
       {!loading && chart && data && (
         <div className="relative">
@@ -203,9 +205,9 @@ export default function DashboardChart() {
                 className="absolute top-4 pointer-events-none bg-octane-dark border border-octane-border rounded-lg px-3 py-2 text-xs shadow-xl z-10"
                 style={{ left: relX > 0.6 ? undefined : `${relX * 100}%`, right: relX > 0.6 ? `${(1 - relX) * 100}%` : undefined, transform: 'translateX(-50%)' }}>
                 <p className="text-octane-gold font-semibold mb-1.5">{d.label}</p>
-                <p className="text-octane-gray mb-0.5">Em Stock: <span className="text-octane-white font-semibold">{d.inStock}</span></p>
-                <p className="text-octane-gray mb-0.5">Vendidas: <span style={{ color: GREEN }} className="font-semibold">{d.sold}</span></p>
-                <p className="text-octane-gray">Margem Acum.: <span style={{ color: GOLD }} className="font-semibold">{fmtFull(d.cumulativeMargin)}</span></p>
+                <p className="text-octane-gray mb-0.5">{t('Em Stock', 'In Stock')}: <span className="text-octane-white font-semibold">{d.inStock}</span></p>
+                <p className="text-octane-gray mb-0.5">{t('Vendidas', 'Sold')}: <span style={{ color: GREEN }} className="font-semibold">{d.sold}</span></p>
+                <p className="text-octane-gray">{t('Margem Acum.', 'Cum. Margin')}: <span style={{ color: GOLD }} className="font-semibold">{fmtFull(d.cumulativeMargin)}</span></p>
               </div>
             );
           })()}

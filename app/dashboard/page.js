@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import DashboardChart from '@/components/DashboardChart';
 import MargemDrilldown from '@/components/MargemDrilldown';
+import { useLang } from '@/lib/LanguageContext';
 
 export default function DashboardPage() {
   const [user, setUser] = useState(null);
@@ -12,6 +13,7 @@ export default function DashboardPage() {
   const [allVehiclesDetail, setAllVehiclesDetail] = useState(null);
   const [showDrilldown, setShowDrilldown] = useState(false);
   const router = useRouter();
+  const { t } = useLang();
 
   useEffect(() => {
     fetch('/api/users/me').then(r => r.ok ? r.json() : Promise.reject())
@@ -30,18 +32,18 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-octane-black">
       <Navbar user={user} />
       <div className="max-w-7xl mx-auto p-6">
-        <h1 className="text-2xl font-bold mb-6 tracking-wide">Dashboard</h1>
+        <h1 className="text-2xl font-bold mb-6 tracking-wide">{t('Dashboard', 'Dashboard')}</h1>
         {stats && (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
-              { label: 'Total Viaturas', value: stats.totalVehicles, accent: false },
-              { label: 'Em Stock', value: stats.inStock, accent: false },
-              { label: 'Vendidas', value: stats.sold, accent: false },
-              { label: 'Reservadas', value: stats.reserved, accent: false },
-              { label: 'Total Compras', value: `€${stats.totalPurchase.toLocaleString()}`, accent: false },
-              { label: 'Total Vendas', value: `€${stats.totalSales.toLocaleString()}`, accent: true },
-              { label: 'Total Custos', value: `€${stats.totalCosts.toLocaleString()}`, accent: false },
-              { label: 'Margem Bruta', value: `€${stats.grossMargin.toLocaleString()}`, accent: true, negative: stats.grossMargin < 0, drilldown: true },
+              { label: t('Total Viaturas', 'Total Vehicles'), value: stats.totalVehicles, accent: false },
+              { label: t('Em Stock', 'In Stock'), value: stats.inStock, accent: false },
+              { label: t('Vendidas', 'Sold'), value: stats.sold, accent: false },
+              { label: t('Reservadas', 'Reserved'), value: stats.reserved, accent: false },
+              { label: t('Total Compras', 'Total Purchases'), value: `€${stats.totalPurchase.toLocaleString()}`, accent: false },
+              { label: t('Total Vendas', 'Total Sales'), value: `€${stats.totalSales.toLocaleString()}`, accent: true },
+              { label: t('Total Custos', 'Total Costs'), value: `€${stats.totalCosts.toLocaleString()}`, accent: false },
+              { label: t('Margem Bruta', 'Gross Margin'), value: `€${stats.grossMargin.toLocaleString()}`, accent: true, negative: stats.grossMargin < 0, drilldown: true },
             ].map(s => {
               const inner = (
                 <>

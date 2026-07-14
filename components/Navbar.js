@@ -1,11 +1,18 @@
 'use client';
 import { useRouter, usePathname } from 'next/navigation';
-
-const roleLabels = { admin: 'Administrador', director: 'Diretor', comercial: 'Comercial', investidor: 'Investidor' };
+import { useLang } from '@/lib/LanguageContext';
 
 export default function Navbar({ user }) {
   const router = useRouter();
   const pathname = usePathname();
+  const { lang, setLang, t } = useLang();
+
+  const roleLabels = {
+    admin: t('Administrador', 'Administrator'),
+    director: t('Diretor', 'Director'),
+    comercial: t('Comercial', 'Sales'),
+    investidor: t('Investidor', 'Investor'),
+  };
 
   async function logout() {
     await fetch('/api/users/me', { method: 'POST' });
@@ -13,18 +20,31 @@ export default function Navbar({ user }) {
   }
 
   const links = user.role === 'investidor' ? [
-    { href: '/investor', label: 'Portal do Investidor' },
-    { href: '/perfil', label: 'Perfil' },
+    { href: '/investor', label: t('Portal do Investidor', 'Investor Portal') },
+    { href: '/perfil', label: t('Perfil', 'Profile') },
   ] : [
-    { href: '/dashboard', label: 'Dashboard' },
-    { href: '/vehicles', label: 'Viaturas' },
+    { href: '/dashboard', label: t('Dashboard', 'Dashboard') },
+    { href: '/vehicles', label: t('Viaturas', 'Vehicles') },
     ...(user.role !== 'comercial' ? [
-      { href: '/investors', label: 'Investidores' },
-      { href: '/users', label: 'Utilizadores' },
+      { href: '/investors', label: t('Investidores', 'Investors') },
+      { href: '/users', label: t('Utilizadores', 'Users') },
     ] : []),
-    { href: '/reports', label: 'Relatórios' },
-    { href: '/perfil', label: 'Perfil' },
+    { href: '/reports', label: t('Relatórios', 'Reports') },
+    { href: '/perfil', label: t('Perfil', 'Profile') },
   ];
+
+  const LangToggle = () => (
+    <div className="flex items-center border border-octane-border rounded-full overflow-hidden text-xs">
+      <button onClick={() => setLang('pt')}
+        className={`px-2.5 py-1 font-medium transition-colors ${lang === 'pt' ? 'bg-octane-gold text-octane-black' : 'text-octane-gray hover:text-octane-white'}`}>
+        PT
+      </button>
+      <button onClick={() => setLang('en')}
+        className={`px-2.5 py-1 font-medium transition-colors ${lang === 'en' ? 'bg-octane-gold text-octane-black' : 'text-octane-gray hover:text-octane-white'}`}>
+        EN
+      </button>
+    </div>
+  );
 
   return (
     <nav className="bg-octane-dark border-b border-octane-border">
@@ -47,15 +67,16 @@ export default function Navbar({ user }) {
           </div>
         </div>
         <div className="flex items-center gap-4">
-          <span className="text-sm text-octane-gray">
+          <LangToggle />
+          <span className="text-sm text-octane-gray hidden sm:inline">
             {user.name} <span className="text-octane-gold">({roleLabels[user.role]})</span>
           </span>
           <button onClick={logout} className="text-sm border border-octane-gold text-octane-gold hover:bg-octane-gold hover:text-octane-black px-3 py-1 rounded transition-colors">
-            Sair
+            {t('Sair', 'Log out')}
           </button>
         </div>
       </div>
-      <div className="md:hidden flex gap-1 px-4 pb-2">
+      <div className="md:hidden flex gap-1 px-4 pb-2 flex-wrap">
         {links.map(l => (
           <a key={l.href} href={l.href}
             className={`px-3 py-1 rounded text-xs font-medium ${
