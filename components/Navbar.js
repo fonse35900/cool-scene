@@ -1,6 +1,7 @@
 'use client';
 import { useRouter, usePathname } from 'next/navigation';
 import { useLang } from '@/lib/LanguageContext';
+import { BRAND } from '@/lib/brand';
 
 export default function Navbar({ user }) {
   const router = useRouter();
@@ -51,7 +52,7 @@ export default function Navbar({ user }) {
       <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-8">
           <a href={user.role === 'investidor' ? '/investor' : '/dashboard'}>
-            <img src="/logo-octane.jpeg" alt="OCTANE" className="h-8" />
+            <img src={BRAND.logo} alt={BRAND.logoAlt} className="h-8" />
           </a>
           <div className="hidden md:flex gap-1">
             {links.map(l => (

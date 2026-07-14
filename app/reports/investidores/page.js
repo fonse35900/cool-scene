@@ -134,7 +134,7 @@ export default function InvestorReportsPage() {
             {report.perInvestor.length > 0 && (
               <>
                 <div className="bg-octane-card border border-octane-border rounded-xl mb-6">
-                  <h2 className="font-semibold p-4 pb-0 text-octane-gold text-sm uppercase tracking-wider">{t('Resumo por Investidor: Stock Octane', 'Summary by Investor: Octane Stock')}</h2>
+                  <h2 className="font-semibold p-4 pb-0 text-octane-gold text-sm uppercase tracking-wider">{t('Resumo por Investidor: Stock', 'Summary by Investor: Stock')}</h2>
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                       <thead>
@@ -174,7 +174,7 @@ export default function InvestorReportsPage() {
                 {report.perInvestor.some(inv => inv.total_investor_vehicles > 0) && (
                   <div className="bg-octane-card border border-octane-border rounded-xl mb-6">
                     <h2 className="font-semibold p-4 pb-0 text-octane-gold text-sm uppercase tracking-wider">{t('Despesas de Viaturas de Investidores', 'Investor Vehicle Expenses')}</h2>
-                    <p className="text-octane-gray text-xs px-4 pb-3">{t('Viaturas dos investidores geridas pela Octane, não entram no stock de venda', 'Investor vehicles managed by Octane, not part of the sales stock')}</p>
+                    <p className="text-octane-gray text-xs px-4 pb-3">{t('Viaturas dos investidores geridas pela empresa, não entram no stock de venda', 'Investor vehicles managed by the company, not part of the sales stock')}</p>
                     <div className="overflow-x-auto">
                       <table className="w-full text-sm">
                         <thead>

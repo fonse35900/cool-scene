@@ -1,9 +1,10 @@
 import './globals.css';
 import Providers from '@/components/Providers';
+import { BRAND } from '@/lib/brand';
 
 export const metadata = {
-  title: 'OCTANE - Car Dealer & Collector',
-  description: 'Gestão de viaturas OCTANE',
+  title: BRAND.metaTitle,
+  description: BRAND.metaDescription,
 };
 
 export default function RootLayout({ children }) {

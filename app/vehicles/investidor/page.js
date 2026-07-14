@@ -121,7 +121,7 @@ export default function InvestorVehiclesPage() {
           <form onSubmit={handleCreate} className="bg-octane-card border border-octane-border p-6 rounded-xl mb-6 space-y-5">
             <div className="flex items-center gap-2 mb-2">
               <span className="bg-octane-gold/15 text-octane-gold border border-octane-gold/30 text-xs px-2 py-1 rounded-full font-medium">{t('Viatura de Investidor','Investor Vehicle')}</span>
-              <span className="text-octane-gray text-xs">{t('Não entra no stock Octane','Not part of Octane stock')}</span>
+              <span className="text-octane-gray text-xs">{t('Não entra no stock de venda','Not part of the sales stock')}</span>
             </div>
             {error && <div className="bg-octane-red/10 border border-octane-red/30 text-octane-red p-3 rounded text-sm">{error}</div>}
             <div className="grid grid-cols-2 gap-4">

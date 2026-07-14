@@ -1,16 +1,22 @@
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap');
 @import "tailwindcss";
 
+/* ==========================================================================
+   PALETA DA MARCA (WHITE LABEL)
+   Para rebrandizar, altere apenas os valores hexadecimais abaixo.
+   A cor de destaque (accent) usa a família "gold" — troque pelos tons da marca.
+   Os nomes das classes (octane-*) são internos e não precisam de mudar.
+   ========================================================================== */
 @theme {
-  --color-octane-black: #0D0D0D;
-  --color-octane-dark: #1A1A1A;
-  --color-octane-card: #222222;
-  --color-octane-border: #333333;
-  --color-octane-gold: #C8A86E;
-  --color-octane-gold-light: #D4BA82;
-  --color-octane-gold-dark: #A88B4A;
+  --color-octane-black: #0B0D10;   /* fundo principal */
+  --color-octane-dark: #14181F;    /* fundo secundário */
+  --color-octane-card: #1C2129;    /* cartões */
+  --color-octane-border: #2A303B;  /* bordas */
+  --color-octane-gold: #5B8DEF;        /* ACCENT (cor da marca) */
+  --color-octane-gold-light: #7BA5F5;  /* accent claro */
+  --color-octane-gold-dark: #3F6FD1;   /* accent escuro */
   --color-octane-white: #F5F5F0;
-  --color-octane-gray: #999999;
+  --color-octane-gray: #8A94A6;
   --color-octane-green: #4CAF50;
   --color-octane-red: #E53935;
   --color-octane-orange: #FF9800;
@@ -20,7 +26,7 @@
 
 body {
   font-family: 'Montserrat', sans-serif;
-  background-color: #0D0D0D;
+  background-color: #0B0D10;
   color: #F5F5F0;
 }
 

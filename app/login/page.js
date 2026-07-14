@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLang } from '@/lib/LanguageContext';
+import { BRAND } from '@/lib/brand';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -30,7 +31,7 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-octane-black">
       <div className="bg-octane-dark border border-octane-border p-10 rounded-2xl shadow-2xl w-full max-w-md">
         <div className="text-center mb-8">
-          <img src="/logo-octane.jpeg" alt="OCTANE - Car Dealer & Collector" className="h-16 mx-auto mb-4" />
+          <img src={BRAND.logo} alt={BRAND.logoAlt} className="h-16 mx-auto mb-4" />
           <div className="w-12 h-0.5 bg-octane-gold mx-auto"></div>
         </div>
         <div className="flex justify-center mb-6">

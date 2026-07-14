@@ -119,7 +119,7 @@ export default function VehicleDetailPage({ params }) {
                     <div>
                       <label className="text-xs text-octane-gray uppercase tracking-wider">{t('Tipo de Viatura', 'Vehicle Type')}</label>
                       <select value={form.vehicle_type || 'stock'} onChange={e => set('vehicle_type', e.target.value)} className={inputClass}>
-                        <option value="stock">{t('Stock Octane', 'Octane Stock')}</option>
+                        <option value="stock">{t('Stock', 'Stock')}</option>
                         <option value="investidor">{t('Viatura de Investidor', 'Investor Vehicle')}</option>
                       </select>
                     </div>
