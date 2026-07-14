@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
+import { useLang } from '@/lib/LanguageContext';
 
 export default function InvitePage({ params }) {
   const { token } = use(params);
@@ -9,18 +10,19 @@ export default function InvitePage({ params }) {
   const [form, setForm] = useState({ name: '', password: '', confirm: '' });
   const [done, setDone] = useState(false);
   const router = useRouter();
+  const { t } = useLang();
 
   useEffect(() => {
     fetch(`/api/invitations/${token}`)
       .then(r => r.ok ? r.json() : r.json().then(d => Promise.reject(d.error)))
       .then(setInvite)
-      .catch(e => setError(typeof e === 'string' ? e : 'Convite inválido ou já utilizado'));
+      .catch(e => setError(typeof e === 'string' ? e : t('Convite inválido ou já utilizado','Invalid or already used invitation')));
   }, [token]);
 
   async function handleSubmit(e) {
     e.preventDefault();
     setError('');
-    if (form.password !== form.confirm) { setError('As passwords não coincidem'); return; }
+    if (form.password !== form.confirm) { setError(t('As passwords não coincidem','The passwords do not match')); return; }
     const res = await fetch(`/api/invitations/${token}`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: form.name, password: form.password }),
@@ -45,37 +47,37 @@ export default function InvitePage({ params }) {
 
         {done && (
           <div className="bg-octane-green/10 border border-octane-green/30 text-octane-green p-4 rounded-lg text-center text-sm">
-            Conta criada com sucesso! A redirecionar...
+            {t('Conta criada com sucesso! A redirecionar...','Account created successfully. Redirecting...')}
           </div>
         )}
 
         {invite && !done && (
           <>
             <div className="mb-6 text-center">
-              <p className="text-octane-gray text-sm">Convite para</p>
+              <p className="text-octane-gray text-sm">{t('Convite para','Invitation for')}</p>
               <p className="text-octane-gold font-semibold">{invite.investor_name}</p>
               <p className="text-octane-gray text-sm mt-1">{invite.email}</p>
             </div>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs font-medium text-octane-gray uppercase tracking-wider mb-2">O seu nome</label>
+                <label className="block text-xs font-medium text-octane-gray uppercase tracking-wider mb-2">{t('O seu nome','Your name')}</label>
                 <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} required
                   className="w-full bg-octane-card border border-octane-border rounded-lg px-4 py-3 text-octane-white text-sm focus:ring-2 focus:ring-octane-gold focus:outline-none"
-                  placeholder="Nome completo" />
+                  placeholder={t('Nome completo','Full name')} />
               </div>
               <div>
                 <label className="block text-xs font-medium text-octane-gray uppercase tracking-wider mb-2">Password</label>
                 <input type="password" value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))} required
                   className="w-full bg-octane-card border border-octane-border rounded-lg px-4 py-3 text-octane-white text-sm focus:ring-2 focus:ring-octane-gold focus:outline-none"
-                  placeholder="Mínimo 6 caracteres" />
+                  placeholder={t('Mínimo 6 caracteres','Minimum 6 characters')} />
               </div>
               <div>
-                <label className="block text-xs font-medium text-octane-gray uppercase tracking-wider mb-2">Confirmar Password</label>
+                <label className="block text-xs font-medium text-octane-gray uppercase tracking-wider mb-2">{t('Confirmar Password','Confirm Password')}</label>
                 <input type="password" value={form.confirm} onChange={e => setForm(f => ({ ...f, confirm: e.target.value }))} required
                   className="w-full bg-octane-card border border-octane-border rounded-lg px-4 py-3 text-octane-white text-sm focus:ring-2 focus:ring-octane-gold focus:outline-none" />
               </div>
               <button type="submit" className="w-full bg-octane-gold text-octane-black py-3 rounded-lg hover:bg-octane-gold-light font-semibold tracking-wide transition-colors">
-                Ativar Conta
+                {t('Ativar Conta','Activate Account')}
               </button>
             </form>
           </>
