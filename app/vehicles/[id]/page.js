@@ -3,6 +3,7 @@ import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import DateInput from '@/components/DateInput';
+import { useLang } from '@/lib/LanguageContext';
 
 const costTypeLabels = { manutencao: 'Manutenção', revisao: 'Revisão', outro: 'Outro' };
 const inputClass = "w-full bg-octane-card border border-octane-border rounded px-3 py-2 text-sm text-octane-white focus:ring-2 focus:ring-octane-gold focus:outline-none";
@@ -18,6 +19,7 @@ export default function VehicleDetailPage({ params }) {
   const [newCost, setNewCost] = useState({ type: 'manutencao', amount: '', description: '', date: '' });
   const [showCostForm, setShowCostForm] = useState(false);
   const router = useRouter();
+  const { t } = useLang();
 
   useEffect(() => {
     fetch('/api/users/me').then(r => r.ok ? r.json() : Promise.reject()).then(u => {
@@ -73,24 +75,24 @@ export default function VehicleDetailPage({ params }) {
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold tracking-wide">{vehicle.brand} {vehicle.model} <span className="text-octane-gray">({vehicle.year})</span></h1>
           <div className="flex gap-2">
-            {!editing && <button onClick={() => setEditing(true)} className="bg-octane-gold text-octane-black px-4 py-2 rounded-lg text-sm font-semibold hover:bg-octane-gold-light transition-colors">Editar</button>}
+            {!editing && <button onClick={() => setEditing(true)} className="bg-octane-gold text-octane-black px-4 py-2 rounded-lg text-sm font-semibold hover:bg-octane-gold-light transition-colors">{t('Editar', 'Edit')}</button>}
             {user.role !== 'comercial' && (
               <button onClick={async () => { await fetch(`/api/vehicles/${id}`, { method: 'DELETE' }); router.push('/vehicles'); }}
-                className="border border-octane-red text-octane-red px-4 py-2 rounded-lg text-sm hover:bg-octane-red hover:text-white transition-colors">Eliminar</button>
+                className="border border-octane-red text-octane-red px-4 py-2 rounded-lg text-sm hover:bg-octane-red hover:text-white transition-colors">{t('Eliminar', 'Delete')}</button>
             )}
           </div>
         </div>
 
         <div className="grid md:grid-cols-2 gap-6">
           <div className="bg-octane-card border border-octane-border p-6 rounded-xl">
-            <h2 className="font-semibold mb-4 text-octane-gold text-sm uppercase tracking-wider">Dados da Viatura</h2>
+            <h2 className="font-semibold mb-4 text-octane-gold text-sm uppercase tracking-wider">{t('Dados da Viatura', 'Vehicle Details')}</h2>
             {editing ? (
               <div className="space-y-3">
                 {[
-                  { k: 'brand', l: 'Marca' }, { k: 'model', l: 'Modelo' },
-                  { k: 'year', l: 'Ano', type: 'number' }, { k: 'license_plate', l: 'Matrícula' },
-                  { k: 'vin', l: 'VIN' }, { k: 'color', l: 'Cor' },
-                  { k: 'mileage', l: 'Quilometragem', type: 'number' },
+                  { k: 'brand', l: t('Marca', 'Make') }, { k: 'model', l: t('Modelo', 'Model') },
+                  { k: 'year', l: t('Ano', 'Year'), type: 'number' }, { k: 'license_plate', l: t('Matrícula', 'Plate') },
+                  { k: 'vin', l: 'VIN' }, { k: 'color', l: t('Cor', 'Colour') },
+                  { k: 'mileage', l: t('Quilometragem', 'Mileage'), type: 'number' },
                 ].map(f => (
                   <div key={f.k}>
                     <label className="text-xs text-octane-gray uppercase tracking-wider">{f.l}</label>
@@ -99,62 +101,62 @@ export default function VehicleDetailPage({ params }) {
                   </div>
                 ))}
                 <div>
-                  <label className="text-xs text-octane-gray uppercase tracking-wider">Combustível</label>
+                  <label className="text-xs text-octane-gray uppercase tracking-wider">{t('Combustível', 'Fuel')}</label>
                   <select value={form.fuel_type || ''} onChange={e => set('fuel_type', e.target.value)} className={inputClass}>
                     {['Gasolina', 'Gasóleo', 'Híbrido', 'Elétrico', 'GPL'].map(f => <option key={f}>{f}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="text-xs text-octane-gray uppercase tracking-wider">Estado</label>
+                  <label className="text-xs text-octane-gray uppercase tracking-wider">{t('Estado', 'Status')}</label>
                   <select value={form.status || ''} onChange={e => set('status', e.target.value)} className={inputClass}>
-                    <option value="em_stock">Em Stock</option>
-                    <option value="vendido">Vendido</option>
-                    <option value="reservado">Reservado</option>
+                    <option value="em_stock">{t('Em Stock', 'In Stock')}</option>
+                    <option value="vendido">{t('Vendido', 'Sold')}</option>
+                    <option value="reservado">{t('Reservado', 'Reserved')}</option>
                   </select>
                 </div>
                 {user.role !== 'comercial' && (
                   <>
                     <div>
-                      <label className="text-xs text-octane-gray uppercase tracking-wider">Tipo de Viatura</label>
+                      <label className="text-xs text-octane-gray uppercase tracking-wider">{t('Tipo de Viatura', 'Vehicle Type')}</label>
                       <select value={form.vehicle_type || 'stock'} onChange={e => set('vehicle_type', e.target.value)} className={inputClass}>
-                        <option value="stock">Stock Octane</option>
-                        <option value="investidor">Viatura de Investidor</option>
+                        <option value="stock">{t('Stock Octane', 'Octane Stock')}</option>
+                        <option value="investidor">{t('Viatura de Investidor', 'Investor Vehicle')}</option>
                       </select>
                     </div>
                     <div>
-                      <label className="text-xs text-octane-gray uppercase tracking-wider">Responsável</label>
+                      <label className="text-xs text-octane-gray uppercase tracking-wider">{t('Responsável', 'Assigned to')}</label>
                       <select value={form.created_by || ''} onChange={e => set('created_by', e.target.value ? parseInt(e.target.value) : null)} className={inputClass}>
-                        {teamMembers.map(m => <option key={m.id} value={m.id}>{m.name}{m.id === user.id ? ' (eu)' : ''}</option>)}
+                        {teamMembers.map(m => <option key={m.id} value={m.id}>{m.name}{m.id === user.id ? t(' (eu)', ' (me)') : ''}</option>)}
                       </select>
                     </div>
                     <div>
-                      <label className="text-xs text-octane-gray uppercase tracking-wider">Investidor</label>
+                      <label className="text-xs text-octane-gray uppercase tracking-wider">{t('Investidor', 'Investor')}</label>
                       <select value={form.investor_id || ''} onChange={e => set('investor_id', e.target.value ? parseInt(e.target.value) : null)} className={inputClass}>
-                        <option value="">Sem investidor</option>
+                        <option value="">{t('Sem investidor', 'No investor')}</option>
                         {investors.map(inv => <option key={inv.id} value={inv.id}>{inv.name}</option>)}
                       </select>
                     </div>
                   </>
                 )}
                 <div>
-                  <label className="text-xs text-octane-gray uppercase tracking-wider">Observações</label>
+                  <label className="text-xs text-octane-gray uppercase tracking-wider">{t('Observações', 'Notes')}</label>
                   <textarea value={form.notes || ''} onChange={e => set('notes', e.target.value)}
                     className={inputClass} rows={2} />
                 </div>
                 <div className="flex gap-2 pt-2">
-                  <button onClick={handleSave} className="bg-octane-gold text-octane-black px-4 py-2 rounded text-sm font-semibold hover:bg-octane-gold-light transition-colors">Guardar</button>
-                  <button onClick={() => { setEditing(false); setForm(vehicle); }} className="border border-octane-border text-octane-gray px-4 py-2 rounded text-sm hover:text-octane-white transition-colors">Cancelar</button>
+                  <button onClick={handleSave} className="bg-octane-gold text-octane-black px-4 py-2 rounded text-sm font-semibold hover:bg-octane-gold-light transition-colors">{t('Guardar', 'Save')}</button>
+                  <button onClick={() => { setEditing(false); setForm(vehicle); }} className="border border-octane-border text-octane-gray px-4 py-2 rounded text-sm hover:text-octane-white transition-colors">{t('Cancelar', 'Cancel')}</button>
                 </div>
               </div>
             ) : (
               <dl className="space-y-3 text-sm">
                 {[
-                  ['Matrícula', vehicle.license_plate], ['VIN', vehicle.vin], ['Cor', vehicle.color],
-                  ['Quilometragem', vehicle.mileage ? `${vehicle.mileage.toLocaleString()} km` : null],
-                  ['Combustível', vehicle.fuel_type], ['Estado', vehicle.status === 'em_stock' ? 'Em Stock' : vehicle.status === 'vendido' ? 'Vendido' : 'Reservado'],
-                  ['Comercial', vehicle.created_by_name],
-                  ...(user.role !== 'comercial' ? [['Investidor', vehicle.investor_name || 'Sem investidor']] : []),
-                  ['Observações', vehicle.notes],
+                  [t('Matrícula', 'Plate'), vehicle.license_plate], ['VIN', vehicle.vin], [t('Cor', 'Colour'), vehicle.color],
+                  [t('Quilometragem', 'Mileage'), vehicle.mileage ? `${vehicle.mileage.toLocaleString()} km` : null],
+                  [t('Combustível', 'Fuel'), vehicle.fuel_type], [t('Estado', 'Status'), vehicle.status === 'em_stock' ? t('Em Stock', 'In Stock') : vehicle.status === 'vendido' ? t('Vendido', 'Sold') : t('Reservado', 'Reserved')],
+                  [t('Comercial', 'Salesperson'), vehicle.created_by_name],
+                  ...(user.role !== 'comercial' ? [[t('Investidor', 'Investor'), vehicle.investor_name || t('Sem investidor', 'No investor')]] : []),
+                  [t('Observações', 'Notes'), vehicle.notes],
                 ].map(([l, v]) => v && (
                   <div key={l} className="flex justify-between border-b border-octane-border/50 pb-2">
                     <dt className="text-octane-gray">{l}</dt>
@@ -167,16 +169,16 @@ export default function VehicleDetailPage({ params }) {
 
           <div className="space-y-6">
             <div className="bg-octane-card border border-octane-border p-6 rounded-xl">
-              <h2 className="font-semibold mb-4 text-octane-gold text-sm uppercase tracking-wider">Financeiro</h2>
+              <h2 className="font-semibold mb-4 text-octane-gold text-sm uppercase tracking-wider">{t('Financeiro', 'Financials')}</h2>
               {editing ? (
                 <div className="space-y-3">
                   <div>
-                    <label className="text-xs text-octane-gray uppercase tracking-wider">Preço Compra (€)</label>
+                    <label className="text-xs text-octane-gray uppercase tracking-wider">{t('Preço Compra (€)', 'Purchase Price (€)')}</label>
                     <input type="number" step="0.01" value={form.purchase_price || ''} onChange={e => set('purchase_price', e.target.value)}
                       className={inputClass} />
                   </div>
                   <div>
-                    <label className="text-xs text-octane-gray uppercase tracking-wider">Preço Venda (€)</label>
+                    <label className="text-xs text-octane-gray uppercase tracking-wider">{t('Preço Venda (€)', 'Sale Price (€)')}</label>
                     <input type="number" step="0.01" value={form.sale_price || ''} onChange={e => set('sale_price', e.target.value)}
                       className={inputClass} />
                   </div>
@@ -184,31 +186,31 @@ export default function VehicleDetailPage({ params }) {
               ) : (
                 <dl className="space-y-3 text-sm">
                   <div className="flex justify-between border-b border-octane-border/50 pb-2">
-                    <dt className="text-octane-gray">Preço Compra</dt>
+                    <dt className="text-octane-gray">{t('Preço Compra', 'Purchase Price')}</dt>
                     <dd className="font-medium text-octane-white">€{vehicle.purchase_price?.toLocaleString()}</dd>
                   </div>
                   {vehicle.sale_price && (
                     <div className="flex justify-between border-b border-octane-border/50 pb-2">
-                      <dt className="text-octane-gray">Preço Venda</dt>
+                      <dt className="text-octane-gray">{t('Preço Venda', 'Sale Price')}</dt>
                       <dd className="font-medium text-octane-gold">€{vehicle.sale_price?.toLocaleString()}</dd>
                     </div>
                   )}
                   <div className="flex justify-between border-b border-octane-border/50 pb-2">
-                    <dt className="text-octane-gray">Total Custos</dt>
+                    <dt className="text-octane-gray">{t('Total Custos', 'Total Costs')}</dt>
                     <dd className="font-medium text-octane-orange">€{vehicle.total_costs?.toLocaleString()}</dd>
                   </div>
                   <div className="flex justify-between border-b border-octane-border/50 pb-2">
-                    <dt className="text-octane-gray">Custo Total</dt>
+                    <dt className="text-octane-gray">{t('Custo Total', 'Total Cost')}</dt>
                     <dd className="font-bold text-octane-white">€{totalCost.toLocaleString()}</dd>
                   </div>
                   {margin !== null && (
                     <>
                       <div className="flex justify-between border-b border-octane-border/50 pb-2">
-                        <dt className="text-octane-gray">Margem (€)</dt>
+                        <dt className="text-octane-gray">{t('Margem (€)', 'Margin (€)')}</dt>
                         <dd className={`font-bold ${margin >= 0 ? 'text-octane-green' : 'text-octane-red'}`}>€{margin.toLocaleString()}</dd>
                       </div>
                       <div className="flex justify-between">
-                        <dt className="text-octane-gray">Margem (%)</dt>
+                        <dt className="text-octane-gray">{t('Margem (%)', 'Margin (%)')}</dt>
                         <dd className={`font-bold ${marginPercent >= 0 ? 'text-octane-green' : 'text-octane-red'}`}>{marginPercent.toFixed(1)}%</dd>
                       </div>
                     </>
@@ -219,30 +221,30 @@ export default function VehicleDetailPage({ params }) {
 
             <div className="bg-octane-card border border-octane-border p-6 rounded-xl">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="font-semibold text-octane-gold text-sm uppercase tracking-wider">Custos</h2>
-                <button onClick={() => setShowCostForm(true)} className="text-octane-gold text-sm hover:text-octane-gold-light transition-colors">+ Adicionar</button>
+                <h2 className="font-semibold text-octane-gold text-sm uppercase tracking-wider">{t('Custos', 'Costs')}</h2>
+                <button onClick={() => setShowCostForm(true)} className="text-octane-gold text-sm hover:text-octane-gold-light transition-colors">{t('+ Adicionar', '+ Add')}</button>
               </div>
               {showCostForm && (
                 <div className="bg-octane-dark border border-octane-border p-4 rounded-lg mb-4 space-y-3">
                   <div className="grid grid-cols-2 gap-3">
                     <select value={newCost.type} onChange={e => setNewCost(c => ({ ...c, type: e.target.value }))} className={inputClass}>
-                      <option value="manutencao">Manutenção</option>
-                      <option value="revisao">Revisão</option>
-                      <option value="outro">Outro</option>
+                      <option value="manutencao">{t('Manutenção', 'Maintenance')}</option>
+                      <option value="revisao">{t('Revisão', 'Service')}</option>
+                      <option value="outro">{t('Outro', 'Other')}</option>
                     </select>
-                    <input type="number" step="0.01" placeholder="Valor (€)" value={newCost.amount}
+                    <input type="number" step="0.01" placeholder={t('Valor (€)', 'Amount (€)')} value={newCost.amount}
                       onChange={e => setNewCost(c => ({ ...c, amount: e.target.value }))} className={inputClass} />
                   </div>
                   <div>
-                    <label className="block text-xs text-octane-gray mb-1">Data</label>
+                    <label className="block text-xs text-octane-gray mb-1">{t('Data', 'Date')}</label>
                     <DateInput value={newCost.date} onChange={v => setNewCost(c => ({ ...c, date: v }))} className={inputClass} />
                   </div>
-                  <textarea placeholder="Descrição / Observações" value={newCost.description}
+                  <textarea placeholder={t('Descrição / Observações', 'Description / Notes')} value={newCost.description}
                     onChange={e => setNewCost(c => ({ ...c, description: e.target.value }))}
                     className={inputClass} rows={2} />
                   <div className="flex gap-2">
-                    <button onClick={addCost} className="bg-octane-gold text-octane-black px-4 py-2 rounded text-sm font-semibold hover:bg-octane-gold-light transition-colors">Adicionar</button>
-                    <button onClick={() => setShowCostForm(false)} className="border border-octane-border text-octane-gray px-4 py-2 rounded text-sm hover:text-octane-white transition-colors">Cancelar</button>
+                    <button onClick={addCost} className="bg-octane-gold text-octane-black px-4 py-2 rounded text-sm font-semibold hover:bg-octane-gold-light transition-colors">{t('Adicionar', 'Add')}</button>
+                    <button onClick={() => setShowCostForm(false)} className="border border-octane-border text-octane-gray px-4 py-2 rounded text-sm hover:text-octane-white transition-colors">{t('Cancelar', 'Cancel')}</button>
                   </div>
                 </div>
               )}
@@ -251,7 +253,7 @@ export default function VehicleDetailPage({ params }) {
                   {vehicle.costs.map(c => (
                     <div key={c.id} className="border-b border-octane-border/50 pb-3 text-sm">
                       <div className="flex justify-between">
-                        <span className="font-medium text-octane-white">{costTypeLabels[c.type]}</span>
+                        <span className="font-medium text-octane-white">{t(costTypeLabels[c.type], { manutencao: 'Maintenance', revisao: 'Service', outro: 'Other' }[c.type])}</span>
                         <span className="font-medium text-octane-gold">€{c.amount.toLocaleString()}</span>
                       </div>
                       {c.description && <p className="text-octane-gray text-xs mt-1">{c.description}</p>}
@@ -259,7 +261,7 @@ export default function VehicleDetailPage({ params }) {
                     </div>
                   ))}
                 </div>
-              ) : <p className="text-octane-gray text-sm">Sem custos registados</p>}
+              ) : <p className="text-octane-gray text-sm">{t('Sem custos registados', 'No costs recorded')}</p>}
             </div>
           </div>
         </div>

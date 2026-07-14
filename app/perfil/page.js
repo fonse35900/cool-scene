@@ -2,8 +2,8 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
+import { useLang } from '@/lib/LanguageContext';
 
-const roleLabels = { admin: 'Administrador', director: 'Diretor', comercial: 'Comercial', investidor: 'Investidor' };
 const inputClass = "w-full bg-octane-card border border-octane-border rounded-lg px-4 py-3 text-sm text-octane-white focus:ring-2 focus:ring-octane-gold focus:border-octane-gold focus:outline-none";
 
 export default function PerfilPage() {
@@ -11,6 +11,8 @@ export default function PerfilPage() {
   const [form, setForm] = useState({ email: '', phone: '', currentPassword: '', newPassword: '', confirmPassword: '' });
   const [msg, setMsg] = useState(null); // { type: 'ok'|'err', text }
   const router = useRouter();
+  const { t } = useLang();
+  const roleLabels = { admin: t('Administrador', 'Administrator'), director: t('Diretor', 'Director'), comercial: t('Comercial', 'Sales'), investidor: t('Investidor', 'Investor') };
 
   useEffect(() => {
     fetch('/api/users/me').then(r => r.ok ? r.json() : Promise.reject()).then(u => {
@@ -27,11 +29,11 @@ export default function PerfilPage() {
 
     if (form.newPassword) {
       if (form.newPassword !== form.confirmPassword) {
-        setMsg({ type: 'err', text: 'As passwords novas não coincidem' });
+        setMsg({ type: 'err', text: t('As passwords novas não coincidem', 'The new passwords do not match') });
         return;
       }
       if (!form.currentPassword) {
-        setMsg({ type: 'err', text: 'Introduza a password atual' });
+        setMsg({ type: 'err', text: t('Introduza a password atual', 'Enter your current password') });
         return;
       }
     }
@@ -48,7 +50,7 @@ export default function PerfilPage() {
     });
 
     if (res.ok) {
-      setMsg({ type: 'ok', text: 'Dados atualizados com sucesso' });
+      setMsg({ type: 'ok', text: t('Dados atualizados com sucesso', 'Details updated successfully') });
       setForm(f => ({ ...f, currentPassword: '', newPassword: '', confirmPassword: '' }));
     } else {
       setMsg({ type: 'err', text: (await res.json()).error });
@@ -61,7 +63,7 @@ export default function PerfilPage() {
     <div className="min-h-screen bg-octane-black">
       <Navbar user={user} />
       <div className="max-w-2xl mx-auto p-6">
-        <h1 className="text-2xl font-bold tracking-wide mb-6">O Meu Perfil</h1>
+        <h1 className="text-2xl font-bold tracking-wide mb-6">{t('O Meu Perfil', 'My Profile')}</h1>
 
         <div className="bg-octane-card border border-octane-border rounded-xl p-6 mb-6">
           <div className="flex items-center justify-between">
@@ -85,28 +87,28 @@ export default function PerfilPage() {
           )}
 
           <div>
-            <label className="block text-xs font-medium text-octane-gray uppercase tracking-wider mb-2">Email</label>
+            <label className="block text-xs font-medium text-octane-gray uppercase tracking-wider mb-2">{t('Email', 'Email')}</label>
             <input type="email" value={form.email} onChange={e => set('email', e.target.value)} className={inputClass} />
           </div>
           <div>
-            <label className="block text-xs font-medium text-octane-gray uppercase tracking-wider mb-2">Telefone</label>
+            <label className="block text-xs font-medium text-octane-gray uppercase tracking-wider mb-2">{t('Telefone', 'Phone')}</label>
             <input value={form.phone} onChange={e => set('phone', e.target.value)} className={inputClass} />
           </div>
 
           <div className="border-t border-octane-border pt-5">
-            <p className="text-sm font-semibold text-octane-white mb-4">Alterar Password</p>
+            <p className="text-sm font-semibold text-octane-white mb-4">{t('Alterar Password', 'Change Password')}</p>
             <div className="space-y-4">
               <div>
-                <label className="block text-xs font-medium text-octane-gray uppercase tracking-wider mb-2">Password Atual</label>
+                <label className="block text-xs font-medium text-octane-gray uppercase tracking-wider mb-2">{t('Password Atual', 'Current Password')}</label>
                 <input type="password" value={form.currentPassword} onChange={e => set('currentPassword', e.target.value)} className={inputClass} />
               </div>
               <div>
-                <label className="block text-xs font-medium text-octane-gray uppercase tracking-wider mb-2">Nova Password</label>
+                <label className="block text-xs font-medium text-octane-gray uppercase tracking-wider mb-2">{t('Nova Password', 'New Password')}</label>
                 <input type="password" value={form.newPassword} onChange={e => set('newPassword', e.target.value)}
-                  placeholder="Mínimo 6 caracteres" className={inputClass} />
+                  placeholder={t('Mínimo 6 caracteres', 'Minimum 6 characters')} className={inputClass} />
               </div>
               <div>
-                <label className="block text-xs font-medium text-octane-gray uppercase tracking-wider mb-2">Confirmar Nova Password</label>
+                <label className="block text-xs font-medium text-octane-gray uppercase tracking-wider mb-2">{t('Confirmar Nova Password', 'Confirm New Password')}</label>
                 <input type="password" value={form.confirmPassword} onChange={e => set('confirmPassword', e.target.value)} className={inputClass} />
               </div>
             </div>
@@ -114,7 +116,7 @@ export default function PerfilPage() {
 
           <button type="submit"
             className="bg-octane-gold text-octane-black px-6 py-2.5 rounded-lg hover:bg-octane-gold-light text-sm font-semibold transition-colors">
-            Guardar Alterações
+            {t('Guardar Alterações', 'Save Changes')}
           </button>
         </form>
       </div>

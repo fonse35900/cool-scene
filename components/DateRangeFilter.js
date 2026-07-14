@@ -1,4 +1,5 @@
 'use client';
+import { useLang } from '@/lib/LanguageContext';
 
 function startOfMonth(d) {
   return new Date(d.getFullYear(), d.getMonth(), 1);
@@ -12,7 +13,7 @@ function toISO(d) {
 
 const PRESETS = [
   {
-    label: 'Último mês',
+    id: 'last_month', label: 'Último mês', labelEn: 'Last month',
     range() {
       const now = new Date();
       const first = new Date(now.getFullYear(), now.getMonth() - 1, 1);
@@ -20,7 +21,7 @@ const PRESETS = [
     },
   },
   {
-    label: 'Últimos 3 meses',
+    id: 'last_3_months', label: 'Últimos 3 meses', labelEn: 'Last 3 months',
     range() {
       const now = new Date();
       const first = new Date(now.getFullYear(), now.getMonth() - 3, 1);
@@ -29,7 +30,7 @@ const PRESETS = [
     },
   },
   {
-    label: 'Últimos 365 dias',
+    id: 'last_365', label: 'Últimos 365 dias', labelEn: 'Last 365 days',
     range() {
       const now = new Date();
       const from = new Date(now);
@@ -46,10 +47,11 @@ const todayBtnClass = "text-xs px-2 py-1.5 rounded border border-octane-border t
 
 export default function DateRangeFilter({ value, onChange }) {
   const { from, to, preset } = value;
+  const { t } = useLang();
 
   function applyPreset(p) {
     const r = p.range();
-    onChange({ from: r.from, to: r.to, preset: p.label });
+    onChange({ from: r.from, to: r.to, preset: p.id });
   }
 
   function clearFilter() {
@@ -62,37 +64,37 @@ export default function DateRangeFilter({ value, onChange }) {
     <div className="bg-octane-card border border-octane-border p-4 rounded-xl mb-6">
       <div className="flex flex-wrap items-end gap-4">
         <div>
-          <p className="text-xs text-octane-gray uppercase tracking-wider mb-2">Intervalo de datas</p>
+          <p className="text-xs text-octane-gray uppercase tracking-wider mb-2">{t('Intervalo de datas', 'Date range')}</p>
           <div className="flex items-center gap-2">
             <input type="date" value={from}
               onChange={e => onChange({ from: e.target.value, to, preset: null })}
               className={dateInputClass} />
-            <button onClick={() => onChange({ from: todayISO(), to, preset: null })} className={todayBtnClass}>Hoje</button>
-            <span className="text-octane-gray text-sm">até</span>
+            <button onClick={() => onChange({ from: todayISO(), to, preset: null })} className={todayBtnClass}>{t('Hoje', 'Today')}</button>
+            <span className="text-octane-gray text-sm">{t('até', 'to')}</span>
             <input type="date" value={to}
               onChange={e => onChange({ from, to: e.target.value, preset: null })}
               className={dateInputClass} />
-            <button onClick={() => onChange({ from, to: todayISO(), preset: null })} className={todayBtnClass}>Hoje</button>
+            <button onClick={() => onChange({ from, to: todayISO(), preset: null })} className={todayBtnClass}>{t('Hoje', 'Today')}</button>
             {active && (
               <button onClick={clearFilter}
                 className="text-octane-red text-xs hover:bg-octane-red/10 px-2 py-1.5 rounded transition-colors">
-                ✕ Limpar
+                ✕ {t('Limpar', 'Clear')}
               </button>
             )}
           </div>
         </div>
 
         <div>
-          <p className="text-xs text-octane-gray uppercase tracking-wider mb-2">Períodos rápidos</p>
+          <p className="text-xs text-octane-gray uppercase tracking-wider mb-2">{t('Períodos rápidos', 'Quick periods')}</p>
           <div className="flex flex-wrap gap-2">
             {PRESETS.map(p => (
-              <button key={p.label} onClick={() => applyPreset(p)}
+              <button key={p.id} onClick={() => applyPreset(p)}
                 className={`px-3 py-1.5 rounded-full text-xs border transition-colors ${
-                  preset === p.label
+                  preset === p.id
                     ? 'bg-octane-gold text-octane-black border-octane-gold font-semibold'
                     : 'border-octane-border text-octane-gray hover:border-octane-gold hover:text-octane-gold'
                 }`}>
-                {p.label}
+                {t(p.label, p.labelEn)}
               </button>
             ))}
           </div>
@@ -100,7 +102,7 @@ export default function DateRangeFilter({ value, onChange }) {
 
         {active && (
           <div className="text-xs text-octane-gold border border-octane-gold/30 bg-octane-gold/5 px-3 py-1.5 rounded-full">
-            {from && to ? `${from} → ${to}` : from ? `a partir de ${from}` : `até ${to}`}
+            {from && to ? `${from} → ${to}` : from ? t(`a partir de ${from}`, `from ${from}`) : t(`até ${to}`, `until ${to}`)}
           </div>
         )}
       </div>
