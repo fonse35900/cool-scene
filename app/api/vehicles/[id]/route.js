@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import getDb from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth';
+import { recordAudit, fetchRow } from '@/lib/audit';
 
 export async function GET(req, { params }) {
   const user = await getCurrentUser();
@@ -101,11 +102,13 @@ export async function PUT(req, { params }) {
 
   const costEntries = [];
   if (data.new_cost) {
-    await db.prepare('INSERT INTO vehicle_costs (vehicle_id, type, amount, description, date) VALUES (?, ?, ?, ?, ?)').run(
+    const costRes = await db.prepare('INSERT INTO vehicle_costs (vehicle_id, type, amount, description, date) VALUES (?, ?, ?, ?, ?)').run(
       id, data.new_cost.type, data.new_cost.amount, data.new_cost.description || null,
       data.new_cost.date || new Date().toISOString()
     );
     costEntries.push({ field: 'cost', label: 'Custo adicionado', to: `${data.new_cost.type}: €${Number(data.new_cost.amount).toLocaleString('pt-PT')}` });
+    const newCostRow = await fetchRow(db, 'vehicle_costs', costRes.lastInsertRowid);
+    await recordAudit(db, { entity: 'vehicle_costs', entityId: costRes.lastInsertRowid, action: 'insert', actor: user, after: newCostRow });
   }
 
   // Record history entry if anything meaningful changed
@@ -115,6 +118,11 @@ export async function PUT(req, { params }) {
       INSERT INTO vehicle_history (vehicle_id, changed_by, changed_by_name, action, changes, created_at)
       VALUES (?, ?, ?, 'updated', ?, datetime('now'))
     `).run(id, user.id, user.name, JSON.stringify(allChanges));
+  }
+
+  if (changeList.length > 0) {
+    const after = await fetchRow(db, 'vehicles', id);
+    await recordAudit(db, { entity: 'vehicles', entityId: Number(id), action: 'update', actor: user, before: prev, after });
   }
 
   return NextResponse.json({ success: true });
@@ -128,6 +136,8 @@ export async function DELETE(req, { params }) {
 
   const { id } = await params;
   const db = getDb();
+  const before = await fetchRow(db, 'vehicles', id);
   await db.prepare('DELETE FROM vehicles WHERE id = ?').run(id);
+  await recordAudit(db, { entity: 'vehicles', entityId: Number(id), action: 'delete', actor: user, before });
   return NextResponse.json({ success: true });
 }

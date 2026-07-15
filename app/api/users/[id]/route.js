@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import getDb from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth';
+import { recordAudit, fetchRow } from '@/lib/audit';
 
 // Determines whether `actor` is allowed to manage `target` (edit/suspend/delete)
 function canManage(actor, target) {
@@ -29,6 +30,7 @@ export async function PUT(req, { params }) {
   const perm = canManage(actor, target);
   if (!perm) return NextResponse.json({ error: 'Sem permissão' }, { status: 403 });
 
+  const beforeUser = await fetchRow(db, 'users', targetId);
   const { name, email, phone, password, suspended } = await req.json();
 
   // Only a manager (not self) can suspend/reactivate
@@ -56,6 +58,9 @@ export async function PUT(req, { params }) {
     await db.prepare('UPDATE users SET password = ? WHERE id = ?').run(hash, targetId);
   }
 
+  const afterUser = await fetchRow(db, 'users', targetId);
+  await recordAudit(db, { entity: 'users', entityId: targetId, action: 'update', actor, before: beforeUser, after: afterUser });
+
   return NextResponse.json({ success: true });
 }
 
@@ -75,6 +80,8 @@ export async function DELETE(req, { params }) {
     return NextResponse.json({ error: 'Sem permissão para eliminar este utilizador' }, { status: 403 });
   }
 
+  const beforeUser = await fetchRow(db, 'users', targetId);
   await db.prepare('DELETE FROM users WHERE id = ?').run(targetId);
+  await recordAudit(db, { entity: 'users', entityId: targetId, action: 'delete', actor, before: beforeUser });
   return NextResponse.json({ success: true });
 }
