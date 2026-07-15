@@ -3,13 +3,16 @@ import getDb from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth';
 import { BRAND } from '@/lib/brand';
 
-// Public: company branding (name + logo). Used by login/navbar before auth.
+// Branding (name + logo). Returns the current user's company when authenticated,
+// otherwise the default (company 1) so the login page has a logo.
 export async function GET() {
   const db = getDb();
-  const row = await db.prepare('SELECT company_name, logo FROM settings WHERE id = 1').get();
+  const user = await getCurrentUser();
+  const companyId = user?.company_id || 1;
+  const company = await db.prepare('SELECT name, logo FROM companies WHERE id = ?').get(companyId);
   return NextResponse.json({
-    company_name: row?.company_name || BRAND.name,
-    logo: row?.logo || BRAND.logo,
+    company_name: company?.name || BRAND.name,
+    logo: company?.logo || BRAND.logo,
     tagline: BRAND.tagline,
   });
 }

@@ -24,8 +24,8 @@ export async function POST(req) {
   const hash = bcrypt.hashSync(password, 10);
 
   try {
-    const result = await db.prepare('INSERT INTO users (name, email, password, role, phone, director_id) VALUES (?, ?, ?, ?, ?, ?)').run(
-      name, email, hash, role, phone || null, assignedDirector
+    const result = await db.prepare('INSERT INTO users (name, email, password, role, phone, director_id, company_id) VALUES (?, ?, ?, ?, ?, ?, ?)').run(
+      name, email, hash, role, phone || null, assignedDirector, currentUser.company_id
     );
     const created = await fetchRow(db, 'users', result.lastInsertRowid);
     await recordAudit(db, { entity: 'users', entityId: result.lastInsertRowid, action: 'insert', actor: currentUser, after: created });

@@ -15,16 +15,13 @@ export async function GET(req) {
   const dateCondition = (dateFrom ? ' AND v.created_at >= ?' : '') + (dateTo ? ' AND v.created_at <= ?' : '');
   const dateParams = [...(dateFrom ? [dateFrom] : []), ...(dateTo ? [dateTo + ' 23:59:59'] : [])];
 
-  let userIds;
-  if (user.role === 'director') {
-    userIds = (await db.prepare('SELECT id FROM users WHERE director_id = ? OR id = ?').all(user.id, user.id)).map(u => u.id);
-  } else {
-    userIds = (await db.prepare('SELECT id FROM users').all()).map(u => u.id);
-  }
+  // Company-scoped: all users of the current user's company
+  let userIds = (await db.prepare('SELECT id FROM users WHERE company_id = ?').all(user.company_id)).map(u => u.id);
+  if (userIds.length === 0) userIds = [-1];
 
   const placeholders = userIds.map(() => '?').join(',');
-  const investorCondition = investorId ? ' AND i.id = ?' : '';
-  const investorParams = investorId ? [investorId] : [];
+  const investorCondition = ' AND i.company_id = ?' + (investorId ? ' AND i.id = ?' : '');
+  const investorParams = [user.company_id, ...(investorId ? [investorId] : [])];
 
   const perInvestor = await db.prepare(`
     SELECT

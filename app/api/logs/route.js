@@ -16,11 +16,11 @@ export async function GET(req) {
   const action = searchParams.get('action');
   const limit = Math.min(parseInt(searchParams.get('limit') || '200'), 500);
 
-  const conds = [];
-  const args = [];
+  const conds = ['company_id = ?'];
+  const args = [user.company_id];
   if (entity) { conds.push('entity = ?'); args.push(entity); }
   if (action) { conds.push('action = ?'); args.push(action); }
-  const where = conds.length ? 'WHERE ' + conds.join(' AND ') : '';
+  const where = 'WHERE ' + conds.join(' AND ');
 
   const rows = await db.prepare(
     `SELECT id, entity, entity_id, action, actor_name, label, before_data, after_data, undone, created_at

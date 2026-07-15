@@ -25,25 +25,16 @@ export async function GET(req) {
   const conditions = [];
   const params = [];
 
+  // Every query is scoped to the user's company
+  conditions.push('v.company_id = ?');
+  params.push(user.company_id);
+
   if (user.role === 'comercial') {
     conditions.push('v.created_by = ?');
     conditions.push("v.vehicle_type = 'stock'");
     params.push(user.id);
-  } else if (user.role === 'director') {
-    if (userId) {
-      conditions.push('v.created_by = ?');
-      params.push(parseInt(userId));
-    } else {
-      conditions.push('(v.created_by = ? OR v.created_by IN (SELECT id FROM users WHERE director_id = ?))');
-      params.push(user.id, user.id);
-    }
-    if (hasInvestor) {
-      conditions.push('v.investor_id IS NOT NULL');
-    } else if (vehicleType !== 'all') {
-      conditions.push('v.vehicle_type = ?');
-      params.push(vehicleType);
-    }
   } else {
+    // director / admin: whole company, optionally narrowed to one user
     if (userId) {
       conditions.push('v.created_by = ?');
       params.push(parseInt(userId));
@@ -87,8 +78,8 @@ export async function POST(req) {
     : new Date().toISOString();
 
   const result = await db.prepare(`
-    INSERT INTO vehicles (brand, model, year, license_plate, vin, color, mileage, fuel_type, purchase_price, sale_price, status, notes, investor_id, vehicle_type, created_by, created_at, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO vehicles (brand, model, year, license_plate, vin, color, mileage, fuel_type, purchase_price, sale_price, status, notes, investor_id, vehicle_type, created_by, company_id, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
     data.brand, data.model, data.year, data.license_plate || null,
     data.vin || null, data.color || null, data.mileage || null,
@@ -96,6 +87,7 @@ export async function POST(req) {
     'em_stock', data.notes || null,
     data.investor_id || null, vehicleType,
     (user.role !== 'comercial' && data.assigned_to) ? data.assigned_to : user.id,
+    user.company_id,
     createdAt, createdAt
   );
 

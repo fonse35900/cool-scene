@@ -29,7 +29,11 @@ export default function InvitePage({ params }) {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: form.name, password: form.password }),
     });
-    if (res.ok) { setDone(true); setTimeout(() => router.push('/investor'), 2000); }
+    if (res.ok) {
+      const data = await res.json();
+      setDone(true);
+      setTimeout(() => router.push(data.role === 'director' ? '/dashboard' : '/investor'), 2000);
+    }
     else setError((await res.json()).error);
   }
 
@@ -56,8 +60,10 @@ export default function InvitePage({ params }) {
         {invite && !done && (
           <>
             <div className="mb-6 text-center">
-              <p className="text-octane-gray text-sm">{t('Convite para','Invitation for')}</p>
-              <p className="text-octane-gold font-semibold">{invite.investor_name}</p>
+              <p className="text-octane-gray text-sm">
+                {invite.role === 'director' ? t('Convite para Diretor de','Invitation to be Director of') : t('Convite para','Invitation for')}
+              </p>
+              <p className="text-octane-gold font-semibold">{invite.role === 'director' ? invite.company_name : invite.investor_name}</p>
               <p className="text-octane-gray text-sm mt-1">{invite.email}</p>
             </div>
             <form onSubmit={handleSubmit} className="space-y-4">
