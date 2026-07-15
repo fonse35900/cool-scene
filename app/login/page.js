@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLang } from '@/lib/LanguageContext';
+import { useBranding } from '@/lib/BrandingContext';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -9,6 +10,7 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const router = useRouter();
   const { lang, setLang, t } = useLang();
+  const branding = useBranding();
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -30,7 +32,7 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-octane-black">
       <div className="bg-octane-dark border border-octane-border p-10 rounded-2xl shadow-2xl w-full max-w-md">
         <div className="text-center mb-8">
-          <img src="/logo-octane.jpeg" alt="OCTANE - Car Dealer & Collector" className="h-16 mx-auto mb-4" />
+          <img src={branding.logo} alt={branding.name} className="h-16 mx-auto mb-4 max-w-[240px] object-contain" />
           <div className="w-12 h-0.5 bg-octane-gold mx-auto"></div>
         </div>
         <div className="flex justify-center mb-6">

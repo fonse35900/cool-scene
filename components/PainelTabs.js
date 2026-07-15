@@ -9,6 +9,9 @@ export default function PainelTabs({ userRole }) {
   const tabs = [
     { href: '/perfil', label: t('Perfil', 'Profile') },
     ...(userRole === 'admin' || userRole === 'director' ? [
+      { href: '/users', label: t('Utilizadores', 'Users') },
+      { href: '/investors', label: t('Investidores', 'Investors') },
+      { href: '/empresa', label: t('Empresa', 'Company') },
       { href: '/backups', label: t('Backups', 'Backups') },
       { href: '/logs', label: t('Registo', 'Log') },
     ] : []),

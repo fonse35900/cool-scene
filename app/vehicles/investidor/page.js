@@ -271,7 +271,7 @@ export default function InvestorVehiclesPage() {
                       }`}>
                       {v.vehicle_type === 'stock' ? t('✓ No stock','✓ In stock') : t('+ Colocar à venda','+ List for sale')}
                     </button>
-                    <button onClick={() => router.push(`/vehicles/${v.id}?edit=1`)}
+                    <button onClick={() => router.push(`/vehicles/${v.id}?edit=1&from=investidor`)}
                       className="text-xs px-2.5 py-1 rounded border border-octane-border text-octane-gray hover:border-octane-gold hover:text-octane-gold transition-colors">
                       {t('Editar','Edit')}
                     </button>

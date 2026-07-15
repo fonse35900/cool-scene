@@ -2,6 +2,7 @@
 import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLang } from '@/lib/LanguageContext';
+import { useBranding } from '@/lib/BrandingContext';
 
 export default function InvitePage({ params }) {
   const { token } = use(params);
@@ -11,6 +12,7 @@ export default function InvitePage({ params }) {
   const [done, setDone] = useState(false);
   const router = useRouter();
   const { t } = useLang();
+  const branding = useBranding();
 
   useEffect(() => {
     fetch(`/api/invitations/${token}`)
@@ -35,7 +37,7 @@ export default function InvitePage({ params }) {
     <div className="min-h-screen flex items-center justify-center bg-octane-black">
       <div className="bg-octane-dark border border-octane-border p-10 rounded-2xl shadow-2xl w-full max-w-md">
         <div className="text-center mb-8">
-          <img src="/logo-octane.jpeg" alt="OCTANE" className="h-14 mx-auto mb-4" />
+          <img src={branding.logo} alt={branding.name} className="h-14 mx-auto mb-4 max-w-[220px] object-contain" />
           <div className="w-12 h-0.5 bg-octane-gold mx-auto mt-3"></div>
         </div>
 
