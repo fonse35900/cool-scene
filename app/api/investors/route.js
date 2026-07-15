@@ -9,7 +9,7 @@ export async function GET() {
   if (user.role === 'comercial') return NextResponse.json({ error: 'Sem permissão' }, { status: 403 });
 
   const db = getDb();
-  const investors = await db.prepare('SELECT * FROM investors ORDER BY name').all();
+  const investors = await db.prepare('SELECT * FROM investors WHERE company_id = ? ORDER BY name').all(user.company_id);
   return NextResponse.json(investors);
 }
 
@@ -22,8 +22,8 @@ export async function POST(req) {
 
   try {
     const result = await db.prepare(
-      'INSERT INTO investors (name, email, phone, notes) VALUES (?, ?, ?, ?)'
-    ).run(name, email || null, phone || null, notes || null);
+      'INSERT INTO investors (name, email, phone, notes, company_id) VALUES (?, ?, ?, ?, ?)'
+    ).run(name, email || null, phone || null, notes || null, user.company_id);
     const created = await fetchRow(db, 'investors', result.lastInsertRowid);
     await recordAudit(db, { entity: 'investors', entityId: result.lastInsertRowid, action: 'insert', actor: user, after: created });
     return NextResponse.json({ id: result.lastInsertRowid });

@@ -34,7 +34,7 @@ export default function BackupsPage() {
 
   useEffect(() => {
     fetch('/api/users/me').then(r => r.ok ? r.json() : Promise.reject()).then(u => {
-      if (u.role === 'comercial' || u.role === 'investidor') { router.push('/dashboard'); return; }
+      if (u.role !== 'admin') { router.push('/perfil'); return; }
       setUser(u);
     }).catch(() => router.push('/login'));
   }, [router]);
