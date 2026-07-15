@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
+import PainelTabs from '@/components/PainelTabs';
 import { useLang } from '@/lib/LanguageContext';
 
 function fmtDateTime(s) {
@@ -83,6 +84,7 @@ export default function LogsPage() {
     <div className="min-h-screen bg-octane-black">
       <Navbar user={user} />
       <div className="max-w-6xl mx-auto p-6">
+        <PainelTabs userRole={user.role} />
         <h1 className="text-2xl font-bold tracking-wide mb-6">{t('Registo de Atividade', 'Activity Log')}</h1>
 
         <div className="flex flex-wrap gap-3 mb-6">

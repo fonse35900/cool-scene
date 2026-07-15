@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
+import PainelTabs from '@/components/PainelTabs';
 import { useLang } from '@/lib/LanguageContext';
 
 const inputClass = "w-full bg-octane-card border border-octane-border rounded-lg px-4 py-3 text-sm text-octane-white focus:ring-2 focus:ring-octane-gold focus:border-octane-gold focus:outline-none";
@@ -63,7 +64,8 @@ export default function PerfilPage() {
     <div className="min-h-screen bg-octane-black">
       <Navbar user={user} />
       <div className="max-w-2xl mx-auto p-6">
-        <h1 className="text-2xl font-bold tracking-wide mb-6">{t('O Meu Perfil', 'My Profile')}</h1>
+        <h1 className="text-2xl font-bold tracking-wide mb-6">{t('Painel', 'Panel')}</h1>
+        <PainelTabs userRole={user.role} />
 
         <div className="bg-octane-card border border-octane-border rounded-xl p-6 mb-6">
           <div className="flex items-center justify-between">
