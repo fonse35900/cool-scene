@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import getDb from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth';
+import { recordAudit, fetchRow } from '@/lib/audit';
 
 export async function PUT(req, { params }) {
   const user = await getCurrentUser();
@@ -23,6 +24,9 @@ export async function PUT(req, { params }) {
     costId
   );
 
+  const after = await fetchRow(db, 'vehicle_costs', costId);
+  await recordAudit(db, { entity: 'vehicle_costs', entityId: Number(costId), action: 'update', actor: user, before: cost, after });
+
   return NextResponse.json({ success: true });
 }
 
@@ -33,9 +37,10 @@ export async function DELETE(req, { params }) {
   const { id, costId } = await params;
   const db = getDb();
 
-  const cost = await db.prepare('SELECT id FROM vehicle_costs WHERE id = ? AND vehicle_id = ?').get(costId, id);
+  const cost = await db.prepare('SELECT * FROM vehicle_costs WHERE id = ? AND vehicle_id = ?').get(costId, id);
   if (!cost) return NextResponse.json({ error: 'Custo não encontrado' }, { status: 404 });
 
   await db.prepare('DELETE FROM vehicle_costs WHERE id = ?').run(costId);
+  await recordAudit(db, { entity: 'vehicle_costs', entityId: Number(costId), action: 'delete', actor: user, before: cost });
   return NextResponse.json({ success: true });
 }

@@ -30,6 +30,7 @@ export default function Navbar({ user }) {
       { href: '/investors', label: t('Investidores', 'Investors') },
       { href: '/users', label: t('Utilizadores', 'Users') },
       { href: '/backups', label: t('Backups', 'Backups') },
+      { href: '/logs', label: t('Registo', 'Log') },
     ] : []),
     { href: '/reports', label: t('Relatórios', 'Reports') },
     { href: '/perfil', label: t('Perfil', 'Profile') },
