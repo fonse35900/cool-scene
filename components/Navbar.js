@@ -28,6 +28,7 @@ export default function Navbar({ user }) {
     ...(user.role !== 'comercial' ? [
       { href: '/investors', label: t('Investidores', 'Investors') },
       { href: '/users', label: t('Utilizadores', 'Users') },
+      { href: '/backups', label: t('Backups', 'Backups') },
     ] : []),
     { href: '/reports', label: t('Relatórios', 'Reports') },
     { href: '/perfil', label: t('Perfil', 'Profile') },
