@@ -92,6 +92,17 @@ export default function InvestorVehiclesPage() {
     loadVehicles();
   }
 
+  async function handleDelete(v) {
+    if (!confirm(t(`Apagar a viatura ${v.brand} ${v.model}? Esta ação não pode ser revertida.`, `Delete the vehicle ${v.brand} ${v.model}? This action cannot be undone.`))) return;
+    const res = await fetch(`/api/vehicles/${v.id}`, { method: 'DELETE' });
+    if (res.ok) {
+      if (expanded === v.id) setExpanded(null);
+      loadVehicles();
+    } else {
+      alert((await res.json()).error);
+    }
+  }
+
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
   if (!user) return null;
@@ -211,6 +222,16 @@ export default function InvestorVehiclesPage() {
                   <div className="text-right">
                     <p className="text-octane-gray text-xs">{t('Custos','Costs')}</p>
                     <p className="text-octane-orange font-semibold">€{v.total_costs.toLocaleString()}</p>
+                  </div>
+                  <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
+                    <button onClick={() => router.push(`/vehicles/${v.id}`)}
+                      className="text-xs px-2.5 py-1 rounded border border-octane-border text-octane-gray hover:border-octane-gold hover:text-octane-gold transition-colors">
+                      {t('Editar','Edit')}
+                    </button>
+                    <button onClick={() => handleDelete(v)}
+                      className="text-xs px-2.5 py-1 rounded border border-octane-red/40 text-octane-red hover:bg-octane-red/10 transition-colors">
+                      {t('Apagar','Delete')}
+                    </button>
                   </div>
                   <span className="text-octane-gray">{expanded === v.id ? '▲' : '▼'}</span>
                 </div>
