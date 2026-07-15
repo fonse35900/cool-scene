@@ -12,7 +12,10 @@ export default function PainelTabs({ userRole }) {
       { href: '/users', label: t('Utilizadores', 'Users') },
       { href: '/investors', label: t('Investidores', 'Investors') },
       { href: '/empresa', label: t('Empresa', 'Company') },
-      { href: '/backups', label: t('Backups', 'Backups') },
+      ...(userRole === 'admin' ? [
+        { href: '/empresas', label: t('Empresas', 'Companies') },
+        { href: '/backups', label: t('Backups', 'Backups') },
+      ] : []),
       { href: '/logs', label: t('Registo', 'Log') },
     ] : []),
   ];

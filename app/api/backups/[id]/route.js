@@ -4,7 +4,7 @@ import { getCurrentUser } from '@/lib/auth';
 import { getBackup, diffAdded } from '@/lib/backup';
 
 function allowed(user) {
-  return user && (user.role === 'admin' || user.role === 'director');
+  return user && user.role === 'admin';
 }
 
 // Detail of a backup: its summary plus what was added relative to the

@@ -21,7 +21,9 @@ export default function LoginPage() {
       body: JSON.stringify({ email, password }),
     });
     if (res.ok) {
-      router.push('/dashboard');
+      branding.reload();
+      const me = await res.json();
+      router.push(me.role === 'investidor' ? '/investor' : '/dashboard');
     } else {
       const data = await res.json();
       setError(data.error);
