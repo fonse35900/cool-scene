@@ -155,7 +155,7 @@ export default function VehiclesPage() {
                     </td>
                     <td className="p-3 text-octane-gray">{v.created_by_name}</td>
                     <td className="p-3">
-                      <button onClick={() => router.push(`/vehicles/${v.id}?edit=1`)}
+                      <button onClick={() => router.push(`/vehicles/${v.id}?edit=1&from=stock`)}
                         className="text-xs px-2.5 py-1 rounded border border-octane-border text-octane-gray hover:border-octane-gold hover:text-octane-gold transition-colors">
                         {t('Editar', 'Edit')}
                       </button>
