@@ -53,6 +53,10 @@ export default function VehicleDetailPage({ params }) {
         purchase_price: parseFloat(form.purchase_price), sale_price: form.sale_price ? parseFloat(form.sale_price) : null }),
     });
     setEditing(false);
+    // Return to the list the user came from (investor vehicles or stock)
+    const from = searchParams.get('from');
+    if (from === 'investidor') { router.push('/vehicles/investidor'); return; }
+    if (from === 'stock') { router.push('/vehicles'); return; }
     loadVehicle();
   }
 
