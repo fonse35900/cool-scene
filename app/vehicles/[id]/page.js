@@ -18,6 +18,7 @@ export default function VehicleDetailPage({ params }) {
   const [teamMembers, setTeamMembers] = useState([]);
   const [newCost, setNewCost] = useState({ type: 'manutencao', amount: '', description: '', date: '' });
   const [showCostForm, setShowCostForm] = useState(false);
+  const [editingCost, setEditingCost] = useState(null); // { id, type, amount, description, date }
   const router = useRouter();
   const { t } = useLang();
 
@@ -57,6 +58,28 @@ export default function VehicleDetailPage({ params }) {
     });
     setNewCost({ type: 'manutencao', amount: '', description: '', date: '' });
     setShowCostForm(false);
+    loadVehicle();
+  }
+
+  async function saveCostEdit() {
+    if (!editingCost) return;
+    await fetch(`/api/vehicles/${id}/costs/${editingCost.id}`, {
+      method: 'PUT', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: editingCost.type,
+        amount: parseFloat(editingCost.amount),
+        description: editingCost.description,
+        date: editingCost.date,
+      }),
+    });
+    setEditingCost(null);
+    loadVehicle();
+  }
+
+  async function deleteCost(costId) {
+    if (!confirm(t('Apagar este custo?', 'Delete this cost?'))) return;
+    await fetch(`/api/vehicles/${id}/costs/${costId}`, { method: 'DELETE' });
+    setEditingCost(null);
     loadVehicle();
   }
 
@@ -252,12 +275,44 @@ export default function VehicleDetailPage({ params }) {
                 <div className="space-y-3">
                   {vehicle.costs.map(c => (
                     <div key={c.id} className="border-b border-octane-border/50 pb-3 text-sm">
-                      <div className="flex justify-between">
-                        <span className="font-medium text-octane-white">{t(costTypeLabels[c.type], { manutencao: 'Maintenance', revisao: 'Service', outro: 'Other' }[c.type])}</span>
-                        <span className="font-medium text-octane-gold">€{c.amount.toLocaleString()}</span>
-                      </div>
-                      {c.description && <p className="text-octane-gray text-xs mt-1">{c.description}</p>}
-                      <p className="text-octane-gray/50 text-xs mt-1">{new Date(c.date).toLocaleDateString('pt-PT')}</p>
+                      {editingCost && editingCost.id === c.id ? (
+                        <div className="space-y-2 bg-octane-dark border border-octane-border p-3 rounded-lg">
+                          <div className="grid grid-cols-2 gap-2">
+                            <select value={editingCost.type} onChange={e => setEditingCost(ec => ({ ...ec, type: e.target.value }))} className={inputClass}>
+                              <option value="manutencao">{t('Manutenção', 'Maintenance')}</option>
+                              <option value="revisao">{t('Revisão', 'Service')}</option>
+                              <option value="outro">{t('Outro', 'Other')}</option>
+                            </select>
+                            <input type="number" step="0.01" value={editingCost.amount}
+                              onChange={e => setEditingCost(ec => ({ ...ec, amount: e.target.value }))} className={inputClass} />
+                          </div>
+                          <div>
+                            <label className="block text-xs text-octane-gray mb-1">{t('Data', 'Date')}</label>
+                            <DateInput value={(editingCost.date || '').split('T')[0]} onChange={v => setEditingCost(ec => ({ ...ec, date: v }))} className={inputClass} />
+                          </div>
+                          <textarea value={editingCost.description || ''} onChange={e => setEditingCost(ec => ({ ...ec, description: e.target.value }))}
+                            placeholder={t('Descrição / Observações', 'Description / Notes')} className={inputClass} rows={2} />
+                          <div className="flex gap-2">
+                            <button onClick={saveCostEdit} className="bg-octane-gold text-octane-black px-3 py-1.5 rounded text-xs font-semibold hover:bg-octane-gold-light transition-colors">{t('Guardar', 'Save')}</button>
+                            <button onClick={() => setEditingCost(null)} className="border border-octane-border text-octane-gray px-3 py-1.5 rounded text-xs hover:text-octane-white transition-colors">{t('Cancelar', 'Cancel')}</button>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="flex justify-between items-start">
+                            <span className="font-medium text-octane-white">{t(costTypeLabels[c.type], { manutencao: 'Maintenance', revisao: 'Service', outro: 'Other' }[c.type])}</span>
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium text-octane-gold">€{c.amount.toLocaleString()}</span>
+                              <button onClick={() => setEditingCost({ id: c.id, type: c.type, amount: c.amount, description: c.description || '', date: c.date })}
+                                className="text-octane-gray hover:text-octane-gold text-xs" title={t('Editar', 'Edit')}>✎</button>
+                              <button onClick={() => deleteCost(c.id)}
+                                className="text-octane-gray hover:text-octane-red text-xs" title={t('Apagar', 'Delete')}>✕</button>
+                            </div>
+                          </div>
+                          {c.description && <p className="text-octane-gray text-xs mt-1">{c.description}</p>}
+                          <p className="text-octane-gray/50 text-xs mt-1">{new Date(c.date).toLocaleDateString('pt-PT')}</p>
+                        </>
+                      )}
                     </div>
                   ))}
                 </div>

@@ -66,7 +66,7 @@ export async function PUT(req, { params }) {
       data.vin || null, data.color || null, data.mileage || null,
       data.fuel_type || null, data.purchase_price, data.sale_price || null,
       data.status || 'em_stock', data.notes || null, data.investor_id || null,
-      data.vehicle_type || 'stock', data.created_by || null, id
+      data.vehicle_type || 'stock', data.created_by || prev.created_by, id
     );
   } else {
     await db.prepare(`
