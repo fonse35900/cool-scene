@@ -4,7 +4,7 @@ import { getCurrentUser } from '@/lib/auth';
 import { createBackup, listRestorePoints, insertedSincePrevious } from '@/lib/backup';
 
 function allowed(user) {
-  return user && (user.role === 'admin' || user.role === 'director');
+  return user && user.role === 'admin';
 }
 
 export async function GET() {

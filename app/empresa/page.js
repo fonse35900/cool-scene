@@ -26,11 +26,12 @@ export default function EmpresaPage() {
   }, [router]);
 
   useEffect(() => {
-    fetch('/api/settings').then(r => r.json()).then(d => {
-      setName(d.company_name || '');
-      setLogo(d.logo || '');
+    fetch('/api/companies').then(r => r.json()).then(list => {
+      // Own company (director sees only theirs; admin gets the one matching their company_id)
+      const own = Array.isArray(list) ? (list.find(c => c.id === (user?.company_id)) || list[0]) : null;
+      if (own) { setName(own.name || ''); setLogo(own.logo || ''); }
     });
-  }, []);
+  }, [user]);
 
   function onFile(e) {
     const file = e.target.files?.[0];
@@ -48,9 +49,9 @@ export default function EmpresaPage() {
     e.preventDefault();
     setMsg(null);
     setBusy(true);
-    const res = await fetch('/api/settings', {
+    const res = await fetch('/api/companies', {
       method: 'PUT', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ company_name: name, logo }),
+      body: JSON.stringify({ name, logo }),
     });
     setBusy(false);
     if (res.ok) {

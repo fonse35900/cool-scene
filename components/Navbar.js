@@ -31,7 +31,7 @@ export default function Navbar({ user }) {
     { href: '/perfil', label: t('Painel', 'Panel') },
   ];
 
-  const painelPaths = ['/perfil', '/users', '/investors', '/empresa', '/backups', '/logs'];
+  const painelPaths = ['/perfil', '/users', '/investors', '/empresa', '/empresas', '/backups', '/logs'];
   const isActive = (href) => pathname === href || (href === '/perfil' && painelPaths.includes(pathname));
 
   const LangToggle = () => (
