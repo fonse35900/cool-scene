@@ -20,6 +20,7 @@ export default function InvestorVehiclesPage() {
   const [vehicleDetail, setVehicleDetail] = useState({});
   const [showCostForm, setShowCostForm] = useState(null);
   const [newCost, setNewCost] = useState({ type: 'manutencao', amount: '', description: '', date: '' });
+  const [editingCost, setEditingCost] = useState(null); // { id, vehicleId, type, amount, description, date }
   const [form, setForm] = useState({ brand: '', model: '', year: new Date().getFullYear(), license_plate: '', vin: '', color: '', mileage: '', fuel_type: 'Gasolina', notes: '', investor_id: '' });
   const [error, setError] = useState('');
   const router = useRouter();
@@ -90,6 +91,41 @@ export default function InvestorVehiclesPage() {
     setShowCostForm(null);
     loadDetail(vehicleId);
     loadVehicles();
+  }
+
+  async function saveCostEdit() {
+    if (!editingCost) return;
+    await fetch(`/api/vehicles/${editingCost.vehicleId}/costs/${editingCost.id}`, {
+      method: 'PUT', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: editingCost.type,
+        amount: parseFloat(editingCost.amount),
+        description: editingCost.description,
+        date: editingCost.date,
+      }),
+    });
+    setEditingCost(null);
+    loadDetail(editingCost.vehicleId);
+    loadVehicles();
+  }
+
+  async function deleteCost(vehicleId, costId) {
+    if (!confirm(t('Apagar esta despesa?', 'Delete this expense?'))) return;
+    await fetch(`/api/vehicles/${vehicleId}/costs/${costId}`, { method: 'DELETE' });
+    setEditingCost(null);
+    loadDetail(vehicleId);
+    loadVehicles();
+  }
+
+  async function handleDelete(v) {
+    if (!confirm(t(`Apagar a viatura ${v.brand} ${v.model}? Esta ação não pode ser revertida.`, `Delete the vehicle ${v.brand} ${v.model}? This action cannot be undone.`))) return;
+    const res = await fetch(`/api/vehicles/${v.id}`, { method: 'DELETE' });
+    if (res.ok) {
+      if (expanded === v.id) setExpanded(null);
+      loadVehicles();
+    } else {
+      alert((await res.json()).error);
+    }
   }
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
@@ -212,6 +248,16 @@ export default function InvestorVehiclesPage() {
                     <p className="text-octane-gray text-xs">{t('Custos','Costs')}</p>
                     <p className="text-octane-orange font-semibold">€{v.total_costs.toLocaleString()}</p>
                   </div>
+                  <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
+                    <button onClick={() => router.push(`/vehicles/${v.id}`)}
+                      className="text-xs px-2.5 py-1 rounded border border-octane-border text-octane-gray hover:border-octane-gold hover:text-octane-gold transition-colors">
+                      {t('Editar','Edit')}
+                    </button>
+                    <button onClick={() => handleDelete(v)}
+                      className="text-xs px-2.5 py-1 rounded border border-octane-red/40 text-octane-red hover:bg-octane-red/10 transition-colors">
+                      {t('Apagar','Delete')}
+                    </button>
+                  </div>
                   <span className="text-octane-gray">{expanded === v.id ? '▲' : '▼'}</span>
                 </div>
               </div>
@@ -284,12 +330,45 @@ export default function InvestorVehiclesPage() {
                         <div className="space-y-2">
                           {vehicleDetail[v.id].costs.map(c => (
                             <div key={c.id} className="border-b border-octane-border/30 pb-2 text-sm">
-                              <div className="flex justify-between">
-                                <span className="font-medium text-octane-white">{t(costTypeLabels[c.type], { manutencao:'Maintenance', revisao:'Service', outro:'Other' }[c.type])}</span>
-                                <span className="font-medium text-octane-orange">€{c.amount.toLocaleString()}</span>
-                              </div>
-                              {c.description && <p className="text-octane-gray text-xs mt-0.5">{c.description}</p>}
-                              <p className="text-octane-gray/50 text-xs">{new Date(c.date).toLocaleDateString('pt-PT')}</p>
+                              {editingCost && editingCost.id === c.id ? (
+                                <div className="space-y-2 bg-octane-card border border-octane-border p-2 rounded-lg">
+                                  <div className="grid grid-cols-2 gap-2">
+                                    <select value={editingCost.type} onChange={e => setEditingCost(ec => ({ ...ec, type: e.target.value }))}
+                                      className="w-full bg-octane-black border border-octane-border rounded px-2 py-1.5 text-sm text-octane-white">
+                                      <option value="manutencao">{t('Manutenção','Maintenance')}</option>
+                                      <option value="revisao">{t('Revisão','Service')}</option>
+                                      <option value="outro">{t('Outro','Other')}</option>
+                                    </select>
+                                    <input type="number" step="0.01" value={editingCost.amount}
+                                      onChange={e => setEditingCost(ec => ({ ...ec, amount: e.target.value }))}
+                                      className="w-full bg-octane-black border border-octane-border rounded px-2 py-1.5 text-sm text-octane-white" />
+                                  </div>
+                                  <DateInput value={(editingCost.date || '').split('T')[0]} onChange={val => setEditingCost(ec => ({ ...ec, date: val }))}
+                                    className="w-full bg-octane-black border border-octane-border rounded px-2 py-1.5 text-sm text-octane-white" />
+                                  <textarea value={editingCost.description || ''} onChange={e => setEditingCost(ec => ({ ...ec, description: e.target.value }))}
+                                    placeholder={t('Descrição / Observações','Description / Notes')}
+                                    className="w-full bg-octane-black border border-octane-border rounded px-2 py-1.5 text-sm text-octane-white" rows={2} />
+                                  <div className="flex gap-2">
+                                    <button onClick={saveCostEdit} className="bg-octane-gold text-octane-black px-3 py-1 rounded text-xs font-semibold hover:bg-octane-gold-light transition-colors">{t('Guardar','Save')}</button>
+                                    <button onClick={() => setEditingCost(null)} className="border border-octane-border text-octane-gray px-3 py-1 rounded text-xs hover:text-octane-white transition-colors">{t('Cancelar','Cancel')}</button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <>
+                                  <div className="flex justify-between items-start">
+                                    <span className="font-medium text-octane-white">{t(costTypeLabels[c.type], { manutencao:'Maintenance', revisao:'Service', outro:'Other' }[c.type])}</span>
+                                    <div className="flex items-center gap-2">
+                                      <span className="font-medium text-octane-orange">€{c.amount.toLocaleString()}</span>
+                                      <button onClick={() => setEditingCost({ id: c.id, vehicleId: v.id, type: c.type, amount: c.amount, description: c.description || '', date: c.date })}
+                                        className="text-octane-gray hover:text-octane-gold text-xs" title={t('Editar','Edit')}>✎</button>
+                                      <button onClick={() => deleteCost(v.id, c.id)}
+                                        className="text-octane-gray hover:text-octane-red text-xs" title={t('Apagar','Delete')}>✕</button>
+                                    </div>
+                                  </div>
+                                  {c.description && <p className="text-octane-gray text-xs mt-0.5">{c.description}</p>}
+                                  <p className="text-octane-gray/50 text-xs">{new Date(c.date).toLocaleDateString('pt-PT')}</p>
+                                </>
+                              )}
                             </div>
                           ))}
                           <div className="flex justify-between font-semibold text-sm pt-1">
@@ -298,7 +377,7 @@ export default function InvestorVehiclesPage() {
                           </div>
                         </div>
                       ) : (
-                        <p className="text-octane-gray text-sm">Sem despesas registadas</p>
+                        <p className="text-octane-gray text-sm">{t('Sem despesas registadas', 'No expenses recorded')}</p>
                       )}
                     </div>
                   </div>
