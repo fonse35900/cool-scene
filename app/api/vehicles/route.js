@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import getDb from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth';
+import { recordAudit, fetchRow } from '@/lib/audit';
 
 export async function GET(req) {
   const user = await getCurrentUser();
@@ -105,6 +106,9 @@ export async function POST(req) {
   `).run(
     result.lastInsertRowid, user.id, user.name, 'Viatura registada', createdAt
   );
+
+  const created = await fetchRow(db, 'vehicles', result.lastInsertRowid);
+  await recordAudit(db, { entity: 'vehicles', entityId: result.lastInsertRowid, action: 'insert', actor: user, after: created });
 
   return NextResponse.json({ id: result.lastInsertRowid });
 }
