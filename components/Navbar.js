@@ -21,19 +21,20 @@ export default function Navbar({ user }) {
 
   const links = user.role === 'investidor' ? [
     { href: '/investor', label: t('Portal do Investidor', 'Investor Portal') },
-    { href: '/perfil', label: t('Perfil', 'Profile') },
+    { href: '/perfil', label: t('Painel', 'Panel') },
   ] : [
     { href: '/dashboard', label: t('Dashboard', 'Dashboard') },
     { href: '/vehicles', label: t('Viaturas', 'Vehicles') },
     ...(user.role !== 'comercial' ? [
       { href: '/investors', label: t('Investidores', 'Investors') },
       { href: '/users', label: t('Utilizadores', 'Users') },
-      { href: '/backups', label: t('Backups', 'Backups') },
-      { href: '/logs', label: t('Registo', 'Log') },
     ] : []),
     { href: '/reports', label: t('Relatórios', 'Reports') },
-    { href: '/perfil', label: t('Perfil', 'Profile') },
+    { href: '/perfil', label: t('Painel', 'Panel') },
   ];
+
+  const painelPaths = ['/perfil', '/backups', '/logs'];
+  const isActive = (href) => pathname === href || (href === '/perfil' && painelPaths.includes(pathname));
 
   const LangToggle = () => (
     <div className="flex items-center border border-octane-border rounded-full overflow-hidden text-xs">
@@ -59,7 +60,7 @@ export default function Navbar({ user }) {
             {links.map(l => (
               <a key={l.href} href={l.href}
                 className={`px-3 py-2 rounded text-sm font-medium tracking-wide transition-colors ${
-                  pathname === l.href
+                  isActive(l.href)
                     ? 'text-octane-gold border-b-2 border-octane-gold'
                     : 'text-octane-gray hover:text-octane-white'
                 }`}>
@@ -82,7 +83,7 @@ export default function Navbar({ user }) {
         {links.map(l => (
           <a key={l.href} href={l.href}
             className={`px-3 py-1 rounded text-xs font-medium ${
-              pathname === l.href ? 'text-octane-gold' : 'text-octane-gray hover:text-octane-white'
+              isActive(l.href) ? 'text-octane-gold' : 'text-octane-gray hover:text-octane-white'
             }`}>
             {l.label}
           </a>
