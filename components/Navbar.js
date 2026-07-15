@@ -1,11 +1,13 @@
 'use client';
 import { useRouter, usePathname } from 'next/navigation';
 import { useLang } from '@/lib/LanguageContext';
+import { useBranding } from '@/lib/BrandingContext';
 
 export default function Navbar({ user }) {
   const router = useRouter();
   const pathname = usePathname();
   const { lang, setLang, t } = useLang();
+  const branding = useBranding();
 
   const roleLabels = {
     admin: t('Administrador', 'Administrator'),
@@ -25,15 +27,11 @@ export default function Navbar({ user }) {
   ] : [
     { href: '/dashboard', label: t('Dashboard', 'Dashboard') },
     { href: '/vehicles', label: t('Viaturas', 'Vehicles') },
-    ...(user.role !== 'comercial' ? [
-      { href: '/investors', label: t('Investidores', 'Investors') },
-      { href: '/users', label: t('Utilizadores', 'Users') },
-    ] : []),
     { href: '/reports', label: t('Relatórios', 'Reports') },
     { href: '/perfil', label: t('Painel', 'Panel') },
   ];
 
-  const painelPaths = ['/perfil', '/backups', '/logs'];
+  const painelPaths = ['/perfil', '/users', '/investors', '/empresa', '/backups', '/logs'];
   const isActive = (href) => pathname === href || (href === '/perfil' && painelPaths.includes(pathname));
 
   const LangToggle = () => (
@@ -54,7 +52,7 @@ export default function Navbar({ user }) {
       <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-8">
           <a href={user.role === 'investidor' ? '/investor' : '/dashboard'}>
-            <img src="/logo-octane.jpeg" alt="OCTANE" className="h-8" />
+            <img src={branding.logo} alt={branding.name} className="h-8 max-w-[200px] object-contain" />
           </a>
           <div className="hidden md:flex gap-1">
             {links.map(l => (

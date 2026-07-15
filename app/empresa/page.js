@@ -1,0 +1,115 @@
+'use client';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import Navbar from '@/components/Navbar';
+import PainelTabs from '@/components/PainelTabs';
+import { useLang } from '@/lib/LanguageContext';
+import { useBranding } from '@/lib/BrandingContext';
+
+const inputClass = "w-full bg-octane-card border border-octane-border rounded-lg px-4 py-3 text-sm text-octane-white focus:ring-2 focus:ring-octane-gold focus:border-octane-gold focus:outline-none";
+
+export default function EmpresaPage() {
+  const [user, setUser] = useState(null);
+  const [name, setName] = useState('');
+  const [logo, setLogo] = useState('');
+  const [msg, setMsg] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const router = useRouter();
+  const { t } = useLang();
+  const branding = useBranding();
+
+  useEffect(() => {
+    fetch('/api/users/me').then(r => r.ok ? r.json() : Promise.reject()).then(u => {
+      if (u.role !== 'admin' && u.role !== 'director') { router.push('/perfil'); return; }
+      setUser(u);
+    }).catch(() => router.push('/login'));
+  }, [router]);
+
+  useEffect(() => {
+    fetch('/api/settings').then(r => r.json()).then(d => {
+      setName(d.company_name || '');
+      setLogo(d.logo || '');
+    });
+  }, []);
+
+  function onFile(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 1_000_000) {
+      setMsg({ type: 'err', text: t('Ficheiro demasiado grande (máx. 1MB).', 'File too large (max 1MB).') });
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => setLogo(reader.result);
+    reader.readAsDataURL(file);
+  }
+
+  async function save(e) {
+    e.preventDefault();
+    setMsg(null);
+    setBusy(true);
+    const res = await fetch('/api/settings', {
+      method: 'PUT', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ company_name: name, logo }),
+    });
+    setBusy(false);
+    if (res.ok) {
+      setMsg({ type: 'ok', text: t('Guardado com sucesso.', 'Saved successfully.') });
+      branding.reload();
+    } else {
+      setMsg({ type: 'err', text: (await res.json()).error });
+    }
+  }
+
+  if (!user) return null;
+
+  return (
+    <div className="min-h-screen bg-octane-black">
+      <Navbar user={user} />
+      <div className="max-w-2xl mx-auto p-6">
+        <h1 className="text-2xl font-bold tracking-wide mb-6">{t('Painel', 'Panel')}</h1>
+        <PainelTabs userRole={user.role} />
+
+        <form onSubmit={save} className="bg-octane-card border border-octane-border rounded-xl p-6 space-y-6">
+          {msg && (
+            <div className={`p-3 rounded text-sm border ${
+              msg.type === 'ok'
+                ? 'bg-octane-green/10 border-octane-green/30 text-octane-green'
+                : 'bg-octane-red/10 border-octane-red/30 text-octane-red'
+            }`}>{msg.text}</div>
+          )}
+
+          <div>
+            <label className="block text-xs font-medium text-octane-gray uppercase tracking-wider mb-2">{t('Nome da Empresa', 'Company Name')}</label>
+            <input value={name} onChange={e => setName(e.target.value)} required className={inputClass} />
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-octane-gray uppercase tracking-wider mb-2">{t('Logótipo', 'Logo')}</label>
+            <div className="flex items-center gap-4 mb-3">
+              <div className="bg-octane-dark border border-octane-border rounded-lg p-3 h-20 flex items-center justify-center min-w-[160px]">
+                {logo
+                  ? <img src={logo} alt={t('Pré-visualização', 'Preview')} className="max-h-14 max-w-[220px] object-contain" />
+                  : <span className="text-octane-gray text-xs">{t('Sem logótipo', 'No logo')}</span>}
+              </div>
+              <div>
+                <input type="file" accept="image/png,image/jpeg,image/svg+xml,image/webp" onChange={onFile}
+                  className="block text-sm text-octane-gray file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-octane-gold file:text-octane-black file:text-sm file:font-semibold hover:file:bg-octane-gold-light file:cursor-pointer" />
+                <p className="text-xs text-octane-gray/60 mt-2">{t('PNG, JPG, SVG ou WEBP. Máx. 1MB.', 'PNG, JPG, SVG or WEBP. Max 1MB.')}</p>
+              </div>
+            </div>
+          </div>
+
+          <button type="submit" disabled={busy}
+            className="bg-octane-gold text-octane-black px-6 py-2.5 rounded-lg hover:bg-octane-gold-light text-sm font-semibold transition-colors disabled:opacity-40">
+            {busy ? t('A guardar...', 'Saving...') : t('Guardar Alterações', 'Save Changes')}
+          </button>
+        </form>
+
+        <p className="text-xs text-octane-gray/60 mt-4">
+          {t('O nome e o logótipo são aplicados em toda a aplicação (menu, login e convites).', 'The name and logo are applied across the whole app (menu, login and invitations).')}
+        </p>
+      </div>
+    </div>
+  );
+}

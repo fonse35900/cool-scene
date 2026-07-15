@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import DateInput from '@/components/DateInput';
+import PainelTabs from '@/components/PainelTabs';
 import { useLang } from '@/lib/LanguageContext';
 
 const inputClass = "w-full bg-octane-card border border-octane-border rounded-lg px-4 py-3 text-sm text-octane-white focus:ring-2 focus:ring-octane-gold focus:border-octane-gold focus:outline-none";
@@ -168,6 +169,7 @@ export default function InvestorsPage() {
     <div className="min-h-screen bg-octane-black">
       <Navbar user={user} />
       <div className="max-w-5xl mx-auto p-6">
+        <PainelTabs userRole={user.role} />
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold tracking-wide">{t('Investidores', 'Investors')}</h1>
           <button onClick={() => setShowForm(!showForm)}
