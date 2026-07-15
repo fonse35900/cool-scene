@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect, use } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import DateInput from '@/components/DateInput';
 import { useLang } from '@/lib/LanguageContext';
@@ -20,6 +20,7 @@ export default function VehicleDetailPage({ params }) {
   const [showCostForm, setShowCostForm] = useState(false);
   const [editingCost, setEditingCost] = useState(null); // { id, type, amount, description, date }
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { t } = useLang();
 
   useEffect(() => {
@@ -39,6 +40,11 @@ export default function VehicleDetailPage({ params }) {
   }
 
   useEffect(() => { if (user) loadVehicle(); }, [user, id]);
+
+  // Open directly in edit mode when arriving with ?edit=1
+  useEffect(() => {
+    if (vehicle && searchParams.get('edit') === '1') setEditing(true);
+  }, [vehicle, searchParams]);
 
   async function handleSave() {
     await fetch(`/api/vehicles/${id}`, {
