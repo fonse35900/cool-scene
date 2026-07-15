@@ -128,6 +128,20 @@ export default function InvestorVehiclesPage() {
     }
   }
 
+  async function toggleForSale(v) {
+    const toStock = v.vehicle_type !== 'stock';
+    const msg = toStock
+      ? t(`Colocar ${v.brand} ${v.model} à venda no stock Octane?`, `List ${v.brand} ${v.model} for sale in the Octane stock?`)
+      : t(`Retirar ${v.brand} ${v.model} do stock Octane (voltar a viatura pessoal)?`, `Remove ${v.brand} ${v.model} from the Octane stock (back to personal vehicle)?`);
+    if (!confirm(msg)) return;
+    const res = await fetch(`/api/vehicles/${v.id}`, {
+      method: 'PUT', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...v, vehicle_type: toStock ? 'stock' : 'investidor' }),
+    });
+    if (res.ok) { loadDetail(v.id); loadVehicles(); }
+    else alert((await res.json()).error);
+  }
+
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
   if (!user) return null;
@@ -249,6 +263,14 @@ export default function InvestorVehiclesPage() {
                     <p className="text-octane-orange font-semibold">€{v.total_costs.toLocaleString()}</p>
                   </div>
                   <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
+                    <button onClick={() => toggleForSale(v)}
+                      className={`text-xs px-2.5 py-1 rounded border transition-colors ${
+                        v.vehicle_type === 'stock'
+                          ? 'border-octane-green/40 text-octane-green hover:bg-octane-green/10'
+                          : 'border-octane-gold/50 text-octane-gold hover:bg-octane-gold hover:text-octane-black'
+                      }`}>
+                      {v.vehicle_type === 'stock' ? t('✓ No stock','✓ In stock') : t('+ Colocar à venda','+ List for sale')}
+                    </button>
                     <button onClick={() => router.push(`/vehicles/${v.id}`)}
                       className="text-xs px-2.5 py-1 rounded border border-octane-border text-octane-gray hover:border-octane-gold hover:text-octane-gold transition-colors">
                       {t('Editar','Edit')}
