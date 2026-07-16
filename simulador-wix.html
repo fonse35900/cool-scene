@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador de Importa&ccedil;&atilde;o de Viaturas - Portugal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Syne', sans-serif;
+            background: #ffffff;
+            color: #0D1B2A;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            padding: 40px 0 30px;
+        }
+
+        header .logo {
+            max-width: 280px;
+            margin-bottom: 20px;
+        }
+
+        header h1 {
+            font-size: 1.8rem;
+            color: #0D1B2A;
+            margin-bottom: 8px;
+        }
+
+        header p {
+            color: #4a5568;
+            font-size: 0.95rem;
+        }
+
+        .card {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            padding: 30px;
+            margin-bottom: 24px;
+        }
+
+        .card h2 {
+            font-size: 1.15rem;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e0ddd5;
+            color: #0D1B2A;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+
+        label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: #0D1B2A;
+        }
+
+        select, input {
+            padding: 10px 12px;
+            border: 1.5px solid #ddd;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            transition: border-color 0.2s;
+            background: #fafafa;
+        }
+
+        select:focus, input:focus {
+            outline: none;
+            border-color: #F26C21;
+            background: #fff;
+        }
+
+        .toggle-group {
+            display: flex;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1.5px solid #ddd;
+        }
+
+        .toggle-group button {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            background: #fafafa;
+            font-size: 0.9rem;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+            color: #555;
+        }
+
+        .toggle-group button.active {
+            background: #0D1B2A;
+            color: #fff;
+        }
+
+        .toggle-group button:not(:last-child) {
+            border-right: 1px solid #ddd;
+        }
+
+        .btn-calcular {
+            width: 100%;
+            padding: 14px;
+            background: #F26C21;
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.05rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-top: 10px;
+        }
+
+        .btn-calcular:hover {
+            background: #d95a15;
+        }
+
+        #resultados {
+            display: none;
+        }
+
+        .resultado-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .resultado-header .total {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: #F26C21;
+        }
+
+        .resultado-header .total-label {
+            font-size: 0.85rem;
+            color: #777;
+            margin-bottom: 4px;
+        }
+
+        .resultado-linhas {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .resultado-linha {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background: #f8f8f8;
+            border-radius: 8px;
+        }
+
+        .resultado-linha .nome {
+            font-size: 0.9rem;
+            color: #0D1B2A;
+        }
+
+        .resultado-linha .valor {
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: #0D1B2A;
+        }
+
+        .resultado-linha.destaque {
+            background: #fff4ed;
+            border: 1.5px solid #f5c9a8;
+        }
+
+        .resultado-linha.destaque .valor {
+            color: #F26C21;
+        }
+
+        .resultado-linha .info {
+            font-size: 0.75rem;
+            color: #888;
+        }
+
+        .nota {
+            margin-top: 16px;
+            padding: 12px;
+            background: #eef1f5;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            color: #0D1B2A;
+            line-height: 1.5;
+        }
+
+        .separator {
+            height: 1px;
+            background: #e0e0e0;
+            margin: 4px 0;
+        }
+
+        @media (max-width: 600px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            header h1 {
+                font-size: 1.4rem;
+            }
+            .resultado-header .total {
+                font-size: 1.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Simulador de Importa&#231;&#227;o de Viaturas</h1>
+            <p>Calcule os custos de importa&#231;&#227;o de ve&#237;culos para Portugal</p>
+        </header>
+
+        <div class="card">
+            <h2>Dados do Ve&iacute;culo</h2>
+            <div class="form-grid">
+                <div class="form-group full-width">
+                    <label>Origem da importa&ccedil;&atilde;o</label>
+                    <div class="toggle-group" id="origemToggle">
+                        <button class="active" data-value="ue" onclick="setOrigem('ue')">Uni&atilde;o Europeia</button>
+                        <button data-value="fora_ue" onclick="setOrigem('fora_ue')">Fora da UE</button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Tipo de combust&iacute;vel</label>
+                    <select id="combustivel">
+                        <option value="gasolina">Gasolina</option>
+                        <option value="diesel">Gas&oacute;leo (Diesel)</option>
+                        <option value="hibrido_gasolina">H&iacute;brido (Gasolina)</option>
+                        <option value="hibrido_diesel">H&iacute;brido (Gas&oacute;leo)</option>
+                        <option value="eletrico">El&eacute;trico</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Tipo de ve&iacute;culo</label>
+                    <select id="tipoVeiculo">
+                        <option value="ligeiro_passageiros">Ligeiro de passageiros</option>
+                        <option value="ligeiro_mercadorias">Ligeiro de mercadorias</option>
+                    </select>
+                </div>
+
+                <div class="form-group" id="cilindradaGroup">
+                    <label>Cilindrada (cm&sup3;)</label>
+                    <input type="number" id="cilindrada" placeholder="Ex: 1598" min="0" max="20000">
+                </div>
+
+                <div class="form-group" id="co2Group">
+                    <label>Emiss&otilde;es CO2 (g/km) &mdash; NEDC</label>
+                    <input type="number" id="co2" placeholder="Ex: 120" min="0" max="500">
+                </div>
+
+                <div class="form-group">
+                    <label>Ano da 1&ordf; matr&iacute;cula</label>
+                    <select id="anoMatricula"></select>
+                </div>
+
+                <div class="form-group">
+                    <label>Valor de aquisi&ccedil;&atilde;o (&euro;)</label>
+                    <input type="number" id="valorAquisicao" placeholder="Ex: 15000" min="0">
+                </div>
+
+                <div class="form-group" id="wltpGroup" style="display:none;">
+                    <label>Emiss&otilde;es WLTP? (ve&iacute;culos desde 2020)</label>
+                    <select id="wltp">
+                        <option value="nao">N&atilde;o (NEDC)</option>
+                        <option value="sim">Sim (WLTP)</option>
+                    </select>
+                </div>
+            </div>
+
+            <button class="btn-calcular" onclick="calcular()">Calcular custos de importa&ccedil;&atilde;o</button>
+        </div>
+
+        <div class="card" id="resultados">
+            <h2>Resultados da Simula&ccedil;&atilde;o</h2>
+            <div class="resultado-header">
+                <div class="total-label">Custo total estimado de importa&ccedil;&atilde;o</div>
+                <div class="total" id="totalGeral">&euro; 0</div>
+            </div>
+            <div class="resultado-linhas" id="linhasResultado"></div>
+            <div class="nota">
+                <strong>Nota:</strong> Os valores apresentados s&atilde;o estimativas baseadas nas tabelas do ISV e IUC em vigor.
+                Os valores reais podem variar consoante a avalia&ccedil;&atilde;o da Autoridade Tribut&aacute;ria e Aduaneira.
+                Para ve&iacute;culos usados, o ISV beneficia de uma redu&ccedil;&atilde;o conforme a idade do ve&iacute;culo.
+                Consulte sempre um despachante oficial para valores definitivos.
+            </div>
+        </div>
+    </div>
+
+    <script>
+    let origem = 'ue';
+
+    function setOrigem(val) {
+        origem = val;
+        document.querySelectorAll('#origemToggle button').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.value === val);
+        });
+    }
+
+    (function populateAnos() {
+        const sel = document.getElementById('anoMatricula');
+        const anoAtual = new Date().getFullYear();
+        for (let a = anoAtual; a >= 2000; a--) {
+            const opt = document.createElement('option');
+            opt.value = a;
+            opt.textContent = a;
+            sel.appendChild(opt);
+        }
+    })();
+
+    document.getElementById('combustivel').addEventListener('change', function() {
+        const isEletrico = this.value === 'eletrico';
+        document.getElementById('cilindradaGroup').style.display = isEletrico ? 'none' : '';
+        document.getElementById('co2Group').style.display = isEletrico ? 'none' : '';
+    });
+
+    // Tabela ISV 2024 &mdash; Componente Cilindrada (gasolina)
+    function isvCilindradaGasolina(cc) {
+        if (cc <= 1000) return cc * 1.00;
+        if (cc <= 1250) return 1000 * 1.00 + (cc - 1000) * 1.07;
+        if (cc <= 1500) return 1000 * 1.00 + 250 * 1.07 + (cc - 1250) * 1.14;
+        if (cc <= 1750) return 1000 * 1.00 + 250 * 1.07 + 250 * 1.14 + (cc - 1500) * 4.87;
+        if (cc <= 2000) return 1000 * 1.00 + 250 * 1.07 + 250 * 1.14 + 250 * 4.87 + (cc - 1750) * 6.44;
+        if (cc <= 2500) return 1000 * 1.00 + 250 * 1.07 + 250 * 1.14 + 250 * 4.87 + 250 * 6.44 + (cc - 2000) * 10.32;
+        return 1000 * 1.00 + 250 * 1.07 + 250 * 1.14 + 250 * 4.87 + 250 * 6.44 + 500 * 10.32 + (cc - 2500) * 16.62;
+    }
+
+    // Tabela ISV 2024 &mdash; Componente Cilindrada (diesel) &mdash; agravamento
+    function isvCilindradaDiesel(cc) {
+        return isvCilindradaGasolina(cc) * 1.10;
+    }
+
+    // Tabela ISV 2024 &mdash; Componente Ambiental CO2 (gasolina, NEDC)
+    function isvCO2Gasolina(co2) {
+        if (co2 <= 99) return co2 * 4.34;
+        if (co2 <= 115) return 99 * 4.34 + (co2 - 99) * 7.57;
+        if (co2 <= 145) return 99 * 4.34 + 16 * 7.57 + (co2 - 115) * 49.16;
+        if (co2 <= 175) return 99 * 4.34 + 16 * 7.57 + 30 * 49.16 + (co2 - 145) * 55.34;
+        if (co2 <= 195) return 99 * 4.34 + 16 * 7.57 + 30 * 49.16 + 30 * 55.34 + (co2 - 175) * 143.44;
+        return 99 * 4.34 + 16 * 7.57 + 30 * 49.16 + 30 * 55.34 + 20 * 143.44 + (co2 - 195) * 199.28;
+    }
+
+    // Componente ambiental diesel &mdash; agravamento
+    function isvCO2Diesel(co2) {
+        return isvCO2Gasolina(co2) * 1.10;
+    }
+
+    // Redu&ccedil;&atilde;o por idade do ve&iacute;culo (percentagem do ISV a pagar)
+    function reducaoIdade(anoMatricula) {
+        const anoAtual = new Date().getFullYear();
+        const idade = anoAtual - anoMatricula;
+        if (idade <= 0) return 1.00;
+        if (idade === 1) return 0.90;
+        if (idade === 2) return 0.80;
+        if (idade === 3) return 0.70;
+        if (idade === 4) return 0.60;
+        if (idade === 5) return 0.52;
+        if (idade === 6) return 0.44;
+        if (idade === 7) return 0.37;
+        if (idade === 8) return 0.31;
+        if (idade === 9) return 0.25;
+        return 0.20;
+    }
+
+    // IUC anual estimado (tabela simplificada para ligeiros gasolina/diesel)
+    function calcularIUC(cc, co2, combustivel, anoMatricula) {
+        if (combustivel === 'eletrico') return 0;
+        if (anoMatricula < 2007) {
+            // Tabela A &mdash; por cilindrada
+            if (cc <= 1000) return 19.90;
+            if (cc <= 1300) return 39.55;
+            if (cc <= 1750) return 62.40;
+            if (cc <= 2600) return 158.31;
+            if (cc <= 3500) return 287.49;
+            return 512.23;
+        }
+        // Tabela B &mdash; cilindrada + CO2 + idade
+        let parcCil = 0;
+        if (cc <= 1250) parcCil = 28.43;
+        else if (cc <= 1750) parcCil = 56.98;
+        else if (cc <= 2500) parcCil = 113.38;
+        else parcCil = 387.81;
+
+        let parcCO2 = 0;
+        if (co2 <= 120) parcCO2 = 60.44;
+        else if (co2 <= 180) parcCO2 = 90.49;
+        else if (co2 <= 250) parcCO2 = 207.80;
+        else parcCO2 = 363.25;
+
+        let agravDiesel = combustivel.includes('diesel') ? 1.10 : 1.00;
+        return (parcCil + parcCO2) * agravDiesel;
+    }
+
+    function formatMoney(val) {
+        return val.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function calcular() {
+        const combustivel = document.getElementById('combustivel').value;
+        const cilindrada = parseInt(document.getElementById('cilindrada').value) || 0;
+        const co2 = parseInt(document.getElementById('co2').value) || 0;
+        const anoMatricula = parseInt(document.getElementById('anoMatricula').value);
+        const valorAquisicao = parseFloat(document.getElementById('valorAquisicao').value) || 0;
+        const isEletrico = combustivel === 'eletrico';
+
+        const linhas = [];
+        let totalImportacao = 0;
+
+        // Valor de aquisi&ccedil;&atilde;o
+        linhas.push({ nome: 'Valor de aquisi&ccedil;&atilde;o do ve&iacute;culo', valor: valorAquisicao });
+
+        // Direitos aduaneiros (s&oacute; fora da UE)
+        let direitosAduaneiros = 0;
+        if (origem === 'fora_ue') {
+            direitosAduaneiros = valorAquisicao * 0.065;
+            linhas.push({ nome: 'Direitos aduaneiros (6.5%)', valor: direitosAduaneiros, info: 'Aplic&aacute;vel a importa&ccedil;&otilde;es fora da UE' });
+        }
+
+        // IVA (s&oacute; fora da UE &mdash; dentro da UE j&aacute; foi pago no pa&iacute;s de origem para usados)
+        let iva = 0;
+        if (origem === 'fora_ue') {
+            iva = (valorAquisicao + direitosAduaneiros) * 0.23;
+            linhas.push({ nome: 'IVA (23%)', valor: iva, info: 'Sobre valor + direitos aduaneiros' });
+        }
+
+        // ISV
+        let isv = 0;
+        if (!isEletrico) {
+            let compCilindrada = 0;
+            let compCO2 = 0;
+
+            if (combustivel.includes('diesel')) {
+                compCilindrada = isvCilindradaDiesel(cilindrada);
+                compCO2 = isvCO2Diesel(co2);
+            } else {
+                compCilindrada = isvCilindradaGasolina(cilindrada);
+                compCO2 = isvCO2Gasolina(co2);
+            }
+
+            // H&iacute;bridos plug-in: redu&ccedil;&atilde;o de 75% na componente ambiental
+            if (combustivel.startsWith('hibrido') && co2 <= 50) {
+                compCO2 *= 0.25;
+            }
+
+            isv = compCilindrada + compCO2;
+            if (isv < 0) isv = 0;
+
+            // Redu&ccedil;&atilde;o por idade
+            const fatorIdade = reducaoIdade(anoMatricula);
+            isv = isv * fatorIdade;
+
+            linhas.push({ nome: 'ISV &mdash; Componente cilindrada', valor: compCilindrada * fatorIdade, info: cilindrada + ' cm&sup3;' });
+            linhas.push({ nome: 'ISV &mdash; Componente ambiental (CO2)', valor: compCO2 * fatorIdade, info: co2 + ' g/km' });
+            linhas.push({
+                nome: 'ISV Total (com redu&ccedil;&atilde;o ' + Math.round((1 - fatorIdade) * 100) + '% pela idade)',
+                valor: isv,
+                destaque: true,
+                info: 'Redu&ccedil;&atilde;o por ve&iacute;culo de ' + (new Date().getFullYear() - anoMatricula) + ' ano(s)'
+            });
+        } else {
+            linhas.push({ nome: 'ISV', valor: 0, info: 'Ve&iacute;culos el&eacute;tricos isentos de ISV' });
+        }
+
+        // Transporte estimado
+        let transporte = origem === 'fora_ue' ? 1500 : 600;
+        linhas.push({ nome: 'Transporte estimado', valor: transporte, info: origem === 'fora_ue' ? 'Estimativa fora da UE' : 'Estimativa dentro da UE' });
+
+        // Despachante / legaliza&ccedil;&atilde;o
+        let despachante = 350;
+        linhas.push({ nome: 'Despachante / Legaliza&ccedil;&atilde;o (estimativa)', valor: despachante });
+
+        // Inspe&ccedil;&atilde;o / Homologa&ccedil;&atilde;o
+        let inspecao = 120;
+        linhas.push({ nome: 'Inspe&ccedil;&atilde;o e homologa&ccedil;&atilde;o (estimativa)', valor: inspecao });
+
+        // IUC anual
+        let iuc = calcularIUC(cilindrada, co2, combustivel, anoMatricula);
+
+        // Total
+        totalImportacao = valorAquisicao + direitosAduaneiros + iva + isv + transporte + despachante + inspecao;
+
+        // Render
+        const container = document.getElementById('linhasResultado');
+        container.innerHTML = '';
+
+        linhas.forEach(l => {
+            const div = document.createElement('div');
+            div.className = 'resultado-linha' + (l.destaque ? ' destaque' : '');
+            div.innerHTML = `
+                <div>
+                    <div class="nome">${l.nome}</div>
+                    ${l.info ? '<div class="info">' + l.info + '</div>' : ''}
+                </div>
+                <div class="valor">&euro; ${formatMoney(l.valor)}</div>
+            `;
+            container.appendChild(div);
+        });
+
+        // Separator
+        const sep = document.createElement('div');
+        sep.className = 'separator';
+        container.appendChild(sep);
+
+        // IUC
+        const iucDiv = document.createElement('div');
+        iucDiv.className = 'resultado-linha';
+        iucDiv.innerHTML = `
+            <div>
+                <div class="nome">IUC anual estimado</div>
+                <div class="info">Imposto &Uacute;nico de Circula&ccedil;&atilde;o (pago anualmente)</div>
+            </div>
+            <div class="valor">&euro; ${formatMoney(iuc)}</div>
+        `;
+        container.appendChild(iucDiv);
+
+        document.getElementById('totalGeral').textContent = '\u20AC ' + formatMoney(totalImportacao);
+        document.getElementById('resultados').style.display = 'block';
+        document.getElementById('resultados').scrollIntoView({ behavior: 'smooth' });
+    }
+    </script>
+</body>
+</html>
