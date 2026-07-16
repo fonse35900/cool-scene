@@ -29,10 +29,11 @@ export default async function RootLayout({ children }) {
   const css = paletteCss(palette);
   return (
     <html lang="pt">
-      <head>
-        {css && <style id="octane-palette-ssr" dangerouslySetInnerHTML={{ __html: css }} />}
-      </head>
       <body className="bg-octane-black min-h-screen text-octane-white">
+        {/* Palette injected at the top of body (a :root style still applies globally)
+            so we don't render a manual <head>, which can interfere with Next's
+            automatic stylesheet injection. */}
+        {css && <style id="octane-palette-ssr" dangerouslySetInnerHTML={{ __html: css }} />}
         <Providers>{children}</Providers>
       </body>
     </html>
