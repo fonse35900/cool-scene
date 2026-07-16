@@ -19,6 +19,7 @@ export async function GET(req, { params }) {
     role: invite.role || 'investidor',
     investor_name: invite.investor_name,
     company_name: invite.company_name,
+    company_id: invite.company_id,
   });
 }
 
