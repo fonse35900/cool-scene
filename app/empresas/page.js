@@ -58,6 +58,28 @@ export default function EmpresasPage() {
     }
   }
 
+  async function toggleSuspend(c) {
+    setError('');
+    const res = await fetch('/api/companies', {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: c.id, suspended: c.suspended ? 0 : 1 }),
+    });
+    if (res.ok) load();
+    else setError((await res.json()).error);
+  }
+
+  async function deleteCompany(c) {
+    if (!confirm(t(`Eliminar a empresa "${c.name}" e todos os seus dados? Esta ação é irreversível.`,
+      `Delete the company "${c.name}" and all its data? This action cannot be undone.`))) return;
+    setError('');
+    const res = await fetch('/api/companies', {
+      method: 'DELETE', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: c.id }),
+    });
+    if (res.ok) load();
+    else setError((await res.json()).error);
+  }
+
   if (!user) return null;
 
   return (
@@ -83,12 +105,17 @@ export default function EmpresasPage() {
 
         <div className="space-y-3">
           {companies.map(c => (
-            <div key={c.id} className="bg-octane-card border border-octane-border rounded-xl p-4">
+            <div key={c.id} className={`bg-octane-card border rounded-xl p-4 ${c.suspended ? 'border-octane-red/40 opacity-70' : 'border-octane-border'}`}>
               <div className="flex items-center justify-between flex-wrap gap-2 mb-3">
                 <div className="flex items-center gap-3">
                   {c.logo && <img src={c.logo} alt={c.name} className="h-7 max-w-[120px] object-contain" />}
                   <span className="font-semibold text-octane-white">{c.name}</span>
                   <span className="text-octane-gray text-xs">#{c.id}</span>
+                  {c.suspended === 1 && (
+                    <span className="text-[10px] uppercase tracking-wider bg-octane-red/15 text-octane-red border border-octane-red/30 px-2 py-0.5 rounded-full">
+                      {t('Suspensa', 'Suspended')}
+                    </span>
+                  )}
                 </div>
                 <div className="text-xs text-octane-gray">
                   {c.director_name
@@ -96,6 +123,19 @@ export default function EmpresasPage() {
                     : <span className="text-octane-gold">{t('Sem diretor atribuído', 'No director assigned')}</span>}
                 </div>
               </div>
+
+              {c.id !== 1 && (
+                <div className="flex justify-end gap-2 mb-3">
+                  <button onClick={() => toggleSuspend(c)}
+                    className="text-xs border border-octane-border text-octane-gray hover:text-octane-white hover:border-octane-gray px-3 py-1.5 rounded transition-colors">
+                    {c.suspended ? t('Reativar', 'Reactivate') : t('Suspender', 'Suspend')}
+                  </button>
+                  <button onClick={() => deleteCompany(c)}
+                    className="text-xs border border-octane-red/50 text-octane-red hover:bg-octane-red/10 px-3 py-1.5 rounded transition-colors">
+                    {t('Eliminar', 'Delete')}
+                  </button>
+                </div>
+              )}
 
               {!c.director_name && (
                 <div className="border-t border-octane-border pt-3">

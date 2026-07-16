@@ -61,3 +61,40 @@ export async function PUT(req) {
     .run(name ?? null, logo ?? null, targetId);
   return NextResponse.json({ success: true });
 }
+
+// Suspend / reactivate a company (admin only). A suspended company's users
+// cannot log in.
+export async function PATCH(req) {
+  const user = await getCurrentUser();
+  if (!user || user.role !== 'admin') return NextResponse.json({ error: 'Sem permissão' }, { status: 403 });
+
+  const { id, suspended } = await req.json();
+  if (!id) return NextResponse.json({ error: 'ID obrigatório' }, { status: 400 });
+  if (Number(id) === 1) return NextResponse.json({ error: 'Não é possível suspender esta empresa' }, { status: 400 });
+
+  const db = getDb();
+  await db.prepare('UPDATE companies SET suspended = ? WHERE id = ?').run(suspended ? 1 : 0, id);
+  return NextResponse.json({ success: true });
+}
+
+// Delete a company and all of its data (admin only).
+export async function DELETE(req) {
+  const user = await getCurrentUser();
+  if (!user || user.role !== 'admin') return NextResponse.json({ error: 'Sem permissão' }, { status: 403 });
+
+  const { id } = await req.json();
+  if (!id) return NextResponse.json({ error: 'ID obrigatório' }, { status: 400 });
+  if (Number(id) === 1) return NextResponse.json({ error: 'Não é possível eliminar esta empresa' }, { status: 400 });
+
+  const db = getDb();
+  // Remove costs of the company's vehicles, then the company's data.
+  await db.prepare('DELETE FROM vehicle_costs WHERE vehicle_id IN (SELECT id FROM vehicles WHERE company_id = ?)').run(id);
+  await db.prepare('DELETE FROM vehicle_history WHERE vehicle_id IN (SELECT id FROM vehicles WHERE company_id = ?)').run(id);
+  await db.prepare('DELETE FROM vehicles WHERE company_id = ?').run(id);
+  await db.prepare('DELETE FROM investors WHERE company_id = ?').run(id);
+  await db.prepare('DELETE FROM invitations WHERE company_id = ?').run(id);
+  await db.prepare('DELETE FROM audit_log WHERE company_id = ?').run(id);
+  await db.prepare('DELETE FROM users WHERE company_id = ?').run(id);
+  await db.prepare('DELETE FROM companies WHERE id = ?').run(id);
+  return NextResponse.json({ success: true });
+}
