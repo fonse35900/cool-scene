@@ -14,7 +14,8 @@ export async function GET(req) {
   const { searchParams } = new URL(req.url);
   const requested = searchParams.get('company');
   const companyId = user?.company_id || (requested ? parseInt(requested) : 1);
-  const company = await db.prepare('SELECT name, logo, branding_configured FROM companies WHERE id = ?').get(companyId);
+  const company = await db.prepare('SELECT name, logo, branding_configured, palette FROM companies WHERE id = ?').get(companyId);
+  const palette = company?.palette || 'octane';
 
   // The default brand (OCTANE) logo/name is only ever used for company 1. Every
   // other company shows strictly its own branding: its logo if it set one, and
@@ -26,6 +27,7 @@ export async function GET(req) {
       logo: company?.logo || BRAND.logo,
       tagline: BRAND.tagline,
       configured: true,
+      palette,
     });
   }
 
@@ -35,6 +37,7 @@ export async function GET(req) {
     logo: company.logo || null,
     tagline: BRAND.tagline,
     configured,
+    palette,
   });
 }
 
