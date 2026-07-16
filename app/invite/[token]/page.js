@@ -2,7 +2,6 @@
 import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLang } from '@/lib/LanguageContext';
-import { useBranding } from '@/lib/BrandingContext';
 
 export default function InvitePage({ params }) {
   const { token } = use(params);
@@ -12,16 +11,11 @@ export default function InvitePage({ params }) {
   const [done, setDone] = useState(false);
   const router = useRouter();
   const { t } = useLang();
-  const branding = useBranding();
 
   useEffect(() => {
     fetch(`/api/invitations/${token}`)
       .then(r => r.ok ? r.json() : r.json().then(d => Promise.reject(d.error)))
-      .then(data => {
-        setInvite(data);
-        // Reflect the invited company's branding (neutral for a not-yet-configured company)
-        if (data.company_id) branding.reload(data.company_id);
-      })
+      .then(setInvite)
       .catch(e => setError(typeof e === 'string' ? e : t('Convite inválido ou já utilizado','Invalid or already used invitation')));
   }, [token]);
 
@@ -45,11 +39,9 @@ export default function InvitePage({ params }) {
     <div className="min-h-screen flex items-center justify-center bg-octane-black">
       <div className="bg-octane-dark border border-octane-border p-10 rounded-2xl shadow-2xl w-full max-w-md">
         <div className="text-center mb-8">
-          {branding.logo
-            ? <img src={branding.logo} alt={branding.name} className="h-14 mx-auto mb-4 max-w-[220px] object-contain" />
-            : branding.name
-              ? <div className="text-2xl font-semibold tracking-wide text-octane-white mb-4">{branding.name}</div>
-              : <div className="h-14 mb-4" />}
+          {invite?.company_logo
+            ? <img src={invite.company_logo} alt={invite.company_name || ''} className="h-14 mx-auto mb-4 max-w-[220px] object-contain" />
+            : <div className="h-14 mb-4" />}
           <div className="w-12 h-0.5 bg-octane-gold mx-auto mt-3"></div>
         </div>
 
