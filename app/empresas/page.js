@@ -68,6 +68,19 @@ export default function EmpresasPage() {
     else setError((await res.json()).error);
   }
 
+  async function loadDemo(c) {
+    if (!confirm(t(`Carregar dados de demonstração na empresa "${c.name}"? Serão criados investidores, comerciais e viaturas de exemplo.`,
+      `Load demonstration data into "${c.name}"? Sample investors, sales staff and vehicles will be created.`))) return;
+    setError('');
+    const res = await fetch('/api/companies/seed-demo', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ company_id: c.id }),
+    });
+    const data = await res.json();
+    if (res.ok) { alert(t('Dados de demonstração carregados com sucesso.', 'Demonstration data loaded successfully.')); load(); }
+    else setError(data.error);
+  }
+
   async function deleteCompany(c) {
     if (!confirm(t(`Eliminar a empresa "${c.name}" e todos os seus dados? Esta ação é irreversível.`,
       `Delete the company "${c.name}" and all its data? This action cannot be undone.`))) return;
@@ -126,6 +139,10 @@ export default function EmpresasPage() {
 
               {c.id !== 1 && (
                 <div className="flex justify-end gap-2 mb-3">
+                  <button onClick={() => loadDemo(c)}
+                    className="text-xs border border-octane-border text-octane-gray hover:text-octane-white hover:border-octane-gray px-3 py-1.5 rounded transition-colors">
+                    {t('Dados demo', 'Demo data')}
+                  </button>
                   <button onClick={() => toggleSuspend(c)}
                     className="text-xs border border-octane-border text-octane-gray hover:text-octane-white hover:border-octane-gray px-3 py-1.5 rounded transition-colors">
                     {c.suspended ? t('Reativar', 'Reactivate') : t('Suspender', 'Suspend')}
