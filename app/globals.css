@@ -26,12 +26,12 @@
 
 body {
   font-family: 'Montserrat', sans-serif;
-  background-color: #0B0D10;
-  color: #F5F5F0;
+  background-color: var(--color-octane-black);
+  color: var(--color-octane-white);
 }
 
 input, select, textarea {
-  color: #F5F5F0;
+  color: var(--color-octane-white);
 }
 
 input::placeholder, textarea::placeholder {

@@ -42,7 +42,7 @@ export async function PUT(req) {
     return NextResponse.json({ error: 'Sem permissão' }, { status: 403 });
   }
 
-  const { id, name, logo } = await req.json();
+  const { id, name, logo, palette } = await req.json();
   const targetId = user.role === 'admin' && id ? id : user.company_id;
 
   // A director can only edit their own company
@@ -54,11 +54,14 @@ export async function PUT(req) {
     return NextResponse.json({ error: 'Logótipo demasiado grande (máx. ~1MB)' }, { status: 400 });
   }
 
+  const validPalettes = ['octane', 'blue', 'rainbow', 'mono'];
+  const paletteVal = palette && validPalettes.includes(palette) ? palette : null;
+
   const db = getDb();
   // Saving name/logo marks the company's branding as configured, so it stops
   // showing the neutral placeholder and starts using its own name/logo.
-  await db.prepare('UPDATE companies SET name = COALESCE(?, name), logo = COALESCE(?, logo), branding_configured = 1 WHERE id = ?')
-    .run(name ?? null, logo ?? null, targetId);
+  await db.prepare('UPDATE companies SET name = COALESCE(?, name), logo = COALESCE(?, logo), palette = COALESCE(?, palette), branding_configured = 1 WHERE id = ?')
+    .run(name ?? null, logo ?? null, paletteVal, targetId);
   return NextResponse.json({ success: true });
 }
 
