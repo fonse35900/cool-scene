@@ -39,8 +39,11 @@ function HistoryPanel({ vehicleId }) {
           <div key={h.id} className={`border rounded-lg p-3 ${isLatest ? 'border-octane-gold/40 bg-octane-gold/5' : 'border-octane-border bg-octane-dark/40'}`}>
             <div className="flex items-center justify-between flex-wrap gap-2 mb-1">
               <div className="flex items-center gap-2">
-                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${h.action === 'created' ? 'bg-octane-green/15 text-octane-green' : 'bg-blue-500/15 text-blue-400'}`}>
-                  {h.action === 'created' ? t('Registo', 'Created') : t('Alteração', 'Change')}
+                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                  h.action === 'created' ? 'bg-octane-green/15 text-octane-green'
+                  : h.action === 'undo' ? 'bg-octane-red/15 text-octane-red'
+                  : 'bg-blue-500/15 text-blue-400'}`}>
+                  {h.action === 'created' ? t('Registo', 'Created') : h.action === 'undo' ? t('Anulação', 'Reversal') : t('Alteração', 'Change')}
                 </span>
                 {isLatest && <span className="text-xs text-octane-gold font-medium">● {t('Atual (contabilizada)', 'Current (accounted)')}</span>}
               </div>

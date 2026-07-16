@@ -21,8 +21,10 @@ export async function GET(req, { params }) {
   const costs = await db.prepare('SELECT * FROM vehicle_costs WHERE vehicle_id = ? ORDER BY date DESC').all(id);
   const totalCosts = costs.reduce((sum, c) => sum + c.amount, 0);
 
+  // Order by id (chronological insert order) so entries stay correctly ordered
+  // regardless of timestamp format; the newest (highest id) is the current one.
   const history = await db.prepare(
-    'SELECT * FROM vehicle_history WHERE vehicle_id = ? ORDER BY created_at DESC, id DESC'
+    'SELECT * FROM vehicle_history WHERE vehicle_id = ? ORDER BY id DESC'
   ).all(id);
 
   return NextResponse.json({ ...vehicle, costs, total_costs: totalCosts, history });
