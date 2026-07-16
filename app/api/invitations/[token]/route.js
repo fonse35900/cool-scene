@@ -7,19 +7,23 @@ export async function GET(req, { params }) {
   const { token } = await params;
   const db = getDb();
   const invite = await db.prepare(`
-    SELECT i.*, inv.name as investor_name, c.name as company_name
+    SELECT i.*, inv.name as investor_name,
+      c.name as company_name, c.logo as company_logo, c.branding_configured as company_configured
     FROM invitations i
     LEFT JOIN investors inv ON i.investor_id = inv.id
     LEFT JOIN companies c ON i.company_id = c.id
     WHERE i.token = ? AND i.accepted_at IS NULL
   `).get(token);
   if (!invite) return NextResponse.json({ error: 'Convite inválido ou já utilizado' }, { status: 404 });
+  // Only company 1 uses the default logo; every other company shows strictly
+  // its own logo (or none), so an invite never displays another company's brand.
   return NextResponse.json({
     email: invite.email,
     role: invite.role || 'investidor',
     investor_name: invite.investor_name,
     company_name: invite.company_name,
     company_id: invite.company_id,
+    company_logo: invite.company_id === 1 ? invite.company_logo : (invite.company_logo || null),
   });
 }
 
