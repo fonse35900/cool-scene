@@ -55,7 +55,9 @@ export async function PUT(req) {
   }
 
   const db = getDb();
-  await db.prepare('UPDATE companies SET name = COALESCE(?, name), logo = COALESCE(?, logo) WHERE id = ?')
+  // Saving name/logo marks the company's branding as configured, so it stops
+  // showing the neutral placeholder and starts using its own name/logo.
+  await db.prepare('UPDATE companies SET name = COALESCE(?, name), logo = COALESCE(?, logo), branding_configured = 1 WHERE id = ?')
     .run(name ?? null, logo ?? null, targetId);
   return NextResponse.json({ success: true });
 }
