@@ -64,6 +64,20 @@ export default function EmpresaPage() {
     }
   }
 
+  async function loadDemo() {
+    if (!confirm(t('Carregar dados de demonstração nesta empresa? Serão criados investidores, comerciais e viaturas de exemplo.',
+      'Load demonstration data into this company? Sample investors, sales staff and vehicles will be created.'))) return;
+    setMsg(null);
+    setBusy(true);
+    const res = await fetch('/api/companies/seed-demo', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}),
+    });
+    setBusy(false);
+    const data = await res.json();
+    if (res.ok) setMsg({ type: 'ok', text: t('Dados de demonstração carregados com sucesso. Atualize as páginas para os ver.', 'Demonstration data loaded successfully. Refresh the pages to see it.') });
+    else setMsg({ type: 'err', text: data.error });
+  }
+
   if (!user) return null;
 
   return (
@@ -134,6 +148,18 @@ export default function EmpresaPage() {
         <p className="text-xs text-octane-gray/60 mt-4">
           {t('O nome, o logótipo e a palete de cores são aplicados em toda a aplicação (menu, login e convites).', 'The name, logo and color palette are applied across the whole app (menu, login and invitations).')}
         </p>
+
+        <div className="mt-6 bg-octane-card border border-octane-border rounded-xl p-5">
+          <h2 className="text-sm font-semibold mb-1">{t('Dados de Demonstração', 'Demonstration Data')}</h2>
+          <p className="text-xs text-octane-gray mb-4">
+            {t('Preenche esta empresa com investidores, comerciais e viaturas de exemplo para experimentar todos os menus. Só carrega uma vez.',
+              'Fill this company with sample investors, sales staff and vehicles to try out every menu. Loads only once.')}
+          </p>
+          <button type="button" onClick={loadDemo} disabled={busy}
+            className="border border-octane-gold text-octane-gold px-5 py-2.5 rounded-lg hover:bg-octane-gold hover:text-octane-black text-sm font-semibold transition-colors disabled:opacity-40">
+            {t('Carregar dados de demonstração', 'Load demonstration data')}
+          </button>
+        </div>
       </div>
     </div>
   );
