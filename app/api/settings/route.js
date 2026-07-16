@@ -16,19 +16,25 @@ export async function GET(req) {
   const companyId = user?.company_id || (requested ? parseInt(requested) : 1);
   const company = await db.prepare('SELECT name, logo, branding_configured FROM companies WHERE id = ?').get(companyId);
 
-  // Until a company's director configures its branding, show neutral placeholders
-  // (no logo, no name) instead of inheriting the default brand. Company 1 and any
-  // already-configured company keep their branding.
-  const configured = company ? company.branding_configured === 1 : true;
-  if (company && !configured) {
-    return NextResponse.json({ company_name: '', logo: null, tagline: BRAND.tagline, configured: false });
+  // The default brand (OCTANE) logo/name is only ever used for company 1. Every
+  // other company shows strictly its own branding: its logo if it set one, and
+  // otherwise nothing (no logo) so it never inherits another company's identity.
+  // Until a company configures its branding, name is neutral too.
+  if (companyId === 1 || !company) {
+    return NextResponse.json({
+      company_name: company?.name || BRAND.name,
+      logo: company?.logo || BRAND.logo,
+      tagline: BRAND.tagline,
+      configured: true,
+    });
   }
 
+  const configured = company.branding_configured === 1;
   return NextResponse.json({
-    company_name: company?.name || BRAND.name,
-    logo: company?.logo || BRAND.logo,
+    company_name: configured ? (company.name || '') : '',
+    logo: company.logo || null,
     tagline: BRAND.tagline,
-    configured: true,
+    configured,
   });
 }
 
