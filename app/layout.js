@@ -1,33 +1,20 @@
 import './globals.css';
 import Providers from '@/components/Providers';
 import { BRAND } from '@/lib/brand';
-import getDb from '@/lib/db';
-import { getCurrentUser } from '@/lib/auth';
-import { paletteCss, DEFAULT_PALETTE } from '@/lib/palettes';
+import { paletteCss } from '@/lib/palettes';
+import { getServerBranding } from '@/lib/serverBranding';
 
 export const metadata = {
   title: BRAND.metaTitle,
   description: BRAND.metaDescription,
 };
 
-// Resolve the current company's palette on the server so the correct colors are
-// present in the very first paint on every page, avoiding a flash of the
-// previous palette on navigation.
-async function getInitialPalette() {
-  try {
-    const user = await getCurrentUser();
-    if (!user?.company_id) return DEFAULT_PALETTE;
-    const db = getDb();
-    const company = await db.prepare('SELECT palette FROM companies WHERE id = ?').get(user.company_id);
-    return company?.palette || DEFAULT_PALETTE;
-  } catch {
-    return DEFAULT_PALETTE;
-  }
-}
-
 export default async function RootLayout({ children }) {
-  const palette = await getInitialPalette();
-  const css = paletteCss(palette);
+  // Resolve branding (logo/name/palette) on the server so the correct identity
+  // is present in the very first paint on every page, avoiding a flash of the
+  // default brand or previous palette when navigating between pages.
+  const branding = await getServerBranding();
+  const css = paletteCss(branding.palette);
   return (
     <html lang="pt">
       <body className="bg-octane-black min-h-screen text-octane-white">
@@ -35,7 +22,7 @@ export default async function RootLayout({ children }) {
             so we don't render a manual <head>, which can interfere with Next's
             automatic stylesheet injection. */}
         {css && <style id="octane-palette-ssr" dangerouslySetInnerHTML={{ __html: css }} />}
-        <Providers>{children}</Providers>
+        <Providers initialBranding={branding}>{children}</Providers>
       </body>
     </html>
   );
