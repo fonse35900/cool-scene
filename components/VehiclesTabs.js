@@ -7,7 +7,7 @@ export default function VehiclesTabs({ userRole }) {
   const { t } = useLang();
 
   const tabs = [
-    { href: '/vehicles', label: t('Stock Octane', 'Octane Stock') },
+    { href: '/vehicles', label: t('Stock', 'Stock') },
     ...(userRole !== 'comercial' ? [{ href: '/vehicles/investidor', label: t('Viaturas de Investidores', 'Investor Vehicles') }] : []),
   ];
 
