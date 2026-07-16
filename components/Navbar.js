@@ -52,7 +52,11 @@ export default function Navbar({ user }) {
       <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-8">
           <a href={user.role === 'investidor' ? '/investor' : '/dashboard'}>
-            <img src={branding.logo} alt={branding.name} className="h-8 max-w-[200px] object-contain" />
+            {branding.logo
+              ? <img src={branding.logo} alt={branding.name} className="h-8 max-w-[200px] object-contain" />
+              : branding.name
+                ? <span className="text-lg font-semibold tracking-wide text-octane-white">{branding.name}</span>
+                : <span className="inline-block w-8 h-8 rounded bg-octane-gold" />}
           </a>
           <div className="hidden md:flex gap-1">
             {links.map(l => (

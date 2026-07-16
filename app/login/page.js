@@ -34,7 +34,11 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-octane-black">
       <div className="bg-octane-dark border border-octane-border p-10 rounded-2xl shadow-2xl w-full max-w-md">
         <div className="text-center mb-8">
-          <img src={branding.logo} alt={branding.name} className="h-16 mx-auto mb-4 max-w-[240px] object-contain" />
+          {branding.logo
+            ? <img src={branding.logo} alt={branding.name} className="h-16 mx-auto mb-4 max-w-[240px] object-contain" />
+            : branding.name
+              ? <div className="text-2xl font-semibold tracking-wide text-octane-white mb-4">{branding.name}</div>
+              : <div className="h-16 mb-4" />}
           <div className="w-12 h-0.5 bg-octane-gold mx-auto"></div>
         </div>
         <div className="flex justify-center mb-6">
