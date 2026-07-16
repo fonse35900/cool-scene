@@ -28,6 +28,7 @@ export default function Navbar({ user }) {
     { href: '/dashboard', label: t('Dashboard', 'Dashboard') },
     { href: '/vehicles', label: t('Viaturas', 'Vehicles') },
     { href: '/reports', label: t('Relatórios', 'Reports') },
+    { href: '/simulador', label: t('Simulador', 'Simulator') },
     { href: '/perfil', label: t('Painel', 'Panel') },
   ];
 
