@@ -14,7 +14,7 @@ export default function NewVehiclePage() {
   const [investors, setInvestors] = useState([]);
   const [teamMembers, setTeamMembers] = useState([]);
   const [form, setForm] = useState({
-    date: todayISO(),
+    date: todayISO(), sale_date: '',
     brand: '', model: '', year: new Date().getFullYear(), license_plate: '', vin: '',
     color: '', mileage: '', fuel_type: 'Gasolina', purchase_price: '', sale_price: '',
     notes: '', investor_id: '', assigned_to: '',
@@ -45,6 +45,8 @@ export default function NewVehiclePage() {
       body: JSON.stringify({
         ...form,
         created_at: form.date,
+        purchase_date: form.date,
+        sale_date: form.sale_date || null,
         year: parseInt(form.year),
         mileage: form.mileage ? parseInt(form.mileage) : null,
         purchase_price: parseFloat(form.purchase_price),
@@ -68,11 +70,20 @@ export default function NewVehiclePage() {
         <h1 className="text-2xl font-bold mb-6 tracking-wide">{t('Nova Viatura', 'New Vehicle')}</h1>
         <form onSubmit={handleSubmit} className="bg-octane-card border border-octane-border p-6 rounded-xl space-y-5">
           {error && <div className="bg-octane-red/10 border border-octane-red/30 text-octane-red p-3 rounded text-sm">{error}</div>}
-          <div>
-            <label className={labelClass}>{t('Data', 'Date')} *</label>
-            <div className="flex items-center gap-2">
-              <input type="date" value={form.date} onChange={e => set('date', e.target.value)} required className={inputClass} />
-              <button type="button" onClick={() => set('date', todayISO())} className={todayBtnClass}>{t('Hoje', 'Today')}</button>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className={labelClass}>{t('Data de Compra', 'Purchase Date')} *</label>
+              <div className="flex items-center gap-2">
+                <input type="date" value={form.date} onChange={e => set('date', e.target.value)} required className={inputClass} />
+                <button type="button" onClick={() => set('date', todayISO())} className={todayBtnClass}>{t('Hoje', 'Today')}</button>
+              </div>
+            </div>
+            <div>
+              <label className={labelClass}>{t('Data de Venda', 'Sale Date')}</label>
+              <div className="flex items-center gap-2">
+                <input type="date" value={form.sale_date} onChange={e => set('sale_date', e.target.value)} className={inputClass} />
+                <button type="button" onClick={() => set('sale_date', todayISO())} className={todayBtnClass}>{t('Hoje', 'Today')}</button>
+              </div>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">

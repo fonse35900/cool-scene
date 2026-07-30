@@ -64,6 +64,7 @@ export async function GET(req) {
     return {
       id: v.id, brand: v.brand, model: v.model, year: v.year,
       purchase_price: v.purchase_price, sale_price: v.sale_price,
+      purchase_date: v.purchase_date, sale_date: v.sale_date,
       costs: v.total_vehicle_costs, margin, margin_percent: marginPercent,
       created_by_name: v.created_by_name,
       investor_name: v.investor_name,
@@ -73,6 +74,7 @@ export async function GET(req) {
   // All vehicles for margin drill-down
   const allVehiclesDetail = (await db.prepare(`
     SELECT v.id, v.brand, v.model, v.year, v.status, v.purchase_price, v.sale_price,
+      v.purchase_date, v.sale_date,
       u.name as created_by_name, i.name as investor_name,
       COALESCE((SELECT SUM(amount) FROM vehicle_costs WHERE vehicle_id=v.id),0) as total_vehicle_costs
     FROM vehicles v JOIN users u ON v.created_by=u.id
@@ -83,6 +85,7 @@ export async function GET(req) {
     id: v.id, brand: v.brand, model: v.model, year: v.year, status: v.status,
     purchase_price: v.purchase_price,
     sale_price: v.sale_price,
+    purchase_date: v.purchase_date, sale_date: v.sale_date,
     costs: v.total_vehicle_costs,
     margin: v.status === 'vendido' && v.sale_price != null
       ? v.sale_price - v.purchase_price - v.total_vehicle_costs
