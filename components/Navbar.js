@@ -2,6 +2,7 @@
 import { useRouter, usePathname } from 'next/navigation';
 import { useLang } from '@/lib/LanguageContext';
 import { useBranding } from '@/lib/BrandingContext';
+import Breadcrumbs from '@/components/Breadcrumbs';
 
 export default function Navbar({ user }) {
   const router = useRouter();
@@ -49,6 +50,7 @@ export default function Navbar({ user }) {
   );
 
   return (
+    <>
     <nav className="bg-octane-dark border-b border-octane-border">
       <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-8">
@@ -93,5 +95,7 @@ export default function Navbar({ user }) {
         ))}
       </div>
     </nav>
+    <Breadcrumbs role={user.role} />
+    </>
   );
 }
