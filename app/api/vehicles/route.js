@@ -77,13 +77,17 @@ export async function POST(req) {
     ? (data.created_at.length === 10 ? data.created_at + ' 12:00:00' : data.created_at)
     : new Date().toISOString();
 
+  // Purchase date defaults to the registration date; sale date only when sold
+  const purchaseDate = data.purchase_date || createdAt.slice(0, 10);
+
   const result = await db.prepare(`
-    INSERT INTO vehicles (brand, model, year, license_plate, vin, color, mileage, fuel_type, purchase_price, sale_price, status, notes, investor_id, vehicle_type, created_by, company_id, created_at, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO vehicles (brand, model, year, license_plate, vin, color, mileage, fuel_type, purchase_price, sale_price, purchase_date, sale_date, status, notes, investor_id, vehicle_type, created_by, company_id, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
     data.brand, data.model, data.year, data.license_plate || null,
     data.vin || null, data.color || null, data.mileage || null,
     data.fuel_type || null, data.purchase_price || 0, null,
+    purchaseDate, null,
     'em_stock', data.notes || null,
     data.investor_id || null, vehicleType,
     (user.role !== 'comercial' && data.assigned_to) ? data.assigned_to : user.id,
