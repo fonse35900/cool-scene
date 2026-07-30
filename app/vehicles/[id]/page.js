@@ -211,9 +211,17 @@ export default function VehicleDetailPage({ params }) {
                       className={inputClass} />
                   </div>
                   <div>
+                    <label className="text-xs text-octane-gray uppercase tracking-wider">{t('Data de Compra', 'Purchase Date')}</label>
+                    <DateInput value={(form.purchase_date || '').split('T')[0]} onChange={v => set('purchase_date', v)} className={inputClass} />
+                  </div>
+                  <div>
                     <label className="text-xs text-octane-gray uppercase tracking-wider">{t('Preço Venda (€)', 'Sale Price (€)')}</label>
                     <input type="number" step="0.01" value={form.sale_price || ''} onChange={e => set('sale_price', e.target.value)}
                       className={inputClass} />
+                  </div>
+                  <div>
+                    <label className="text-xs text-octane-gray uppercase tracking-wider">{t('Data de Venda', 'Sale Date')}</label>
+                    <DateInput value={(form.sale_date || '').split('T')[0]} onChange={v => set('sale_date', v)} className={inputClass} />
                   </div>
                 </div>
               ) : (
@@ -222,10 +230,22 @@ export default function VehicleDetailPage({ params }) {
                     <dt className="text-octane-gray">{t('Preço Compra', 'Purchase Price')}</dt>
                     <dd className="font-medium text-octane-white">€{vehicle.purchase_price?.toLocaleString()}</dd>
                   </div>
+                  {vehicle.purchase_date && (
+                    <div className="flex justify-between border-b border-octane-border/50 pb-2">
+                      <dt className="text-octane-gray">{t('Data de Compra', 'Purchase Date')}</dt>
+                      <dd className="font-medium text-octane-white">{new Date(vehicle.purchase_date).toLocaleDateString('pt-PT')}</dd>
+                    </div>
+                  )}
                   {vehicle.sale_price && (
                     <div className="flex justify-between border-b border-octane-border/50 pb-2">
                       <dt className="text-octane-gray">{t('Preço Venda', 'Sale Price')}</dt>
                       <dd className="font-medium text-octane-gold">€{vehicle.sale_price?.toLocaleString()}</dd>
+                    </div>
+                  )}
+                  {vehicle.sale_date && (
+                    <div className="flex justify-between border-b border-octane-border/50 pb-2">
+                      <dt className="text-octane-gray">{t('Data de Venda', 'Sale Date')}</dt>
+                      <dd className="font-medium text-octane-gold">{new Date(vehicle.sale_date).toLocaleDateString('pt-PT')}</dd>
                     </div>
                   )}
                   <div className="flex justify-between border-b border-octane-border/50 pb-2">

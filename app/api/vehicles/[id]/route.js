@@ -35,6 +35,7 @@ const FIELD_LABELS = {
   brand: 'Marca', model: 'Modelo', year: 'Ano', license_plate: 'Matrícula',
   vin: 'VIN', color: 'Cor', mileage: 'Quilometragem', fuel_type: 'Combustível',
   purchase_price: 'Preço de Compra', sale_price: 'Preço de Venda',
+  purchase_date: 'Data de Compra', sale_date: 'Data de Venda',
   status: 'Estado', notes: 'Observações', investor_id: 'Investidor',
   vehicle_type: 'Tipo', created_by: 'Responsável',
 };
@@ -59,35 +60,45 @@ export async function PUT(req, { params }) {
   const prev = await db.prepare('SELECT * FROM vehicles WHERE id = ?').get(id);
   if (!prev) return NextResponse.json({ error: 'Viatura não encontrada' }, { status: 404 });
 
+  const newStatus = data.status || 'em_stock';
+  // Purchase date keeps its value unless a new one is sent
+  const purchaseDate = data.purchase_date || prev.purchase_date || null;
+  // Sale date: use provided; else keep; else default to today when it becomes sold
+  let saleDate = data.sale_date !== undefined ? (data.sale_date || null) : (prev.sale_date || null);
+  if (newStatus === 'vendido' && !saleDate) saleDate = new Date().toISOString().slice(0, 10);
+  if (newStatus !== 'vendido') saleDate = data.sale_date || prev.sale_date || null;
+
   if (user.role !== 'comercial') {
     await db.prepare(`
       UPDATE vehicles SET brand=?, model=?, year=?, license_plate=?, vin=?, color=?,
-      mileage=?, fuel_type=?, purchase_price=?, sale_price=?, status=?, notes=?, investor_id=?,
+      mileage=?, fuel_type=?, purchase_price=?, sale_price=?, purchase_date=?, sale_date=?, status=?, notes=?, investor_id=?,
       vehicle_type=?, created_by=?, updated_at=datetime('now') WHERE id=?
     `).run(
       data.brand, data.model, data.year, data.license_plate || null,
       data.vin || null, data.color || null, data.mileage || null,
       data.fuel_type || null, data.purchase_price, data.sale_price || null,
-      data.status || 'em_stock', data.notes || null, data.investor_id || null,
+      purchaseDate, saleDate,
+      newStatus, data.notes || null, data.investor_id || null,
       data.vehicle_type || 'stock', data.created_by || prev.created_by, id
     );
   } else {
     await db.prepare(`
       UPDATE vehicles SET brand=?, model=?, year=?, license_plate=?, vin=?, color=?,
-      mileage=?, fuel_type=?, purchase_price=?, sale_price=?, status=?, notes=?,
+      mileage=?, fuel_type=?, purchase_price=?, sale_price=?, purchase_date=?, sale_date=?, status=?, notes=?,
       updated_at=datetime('now') WHERE id=?
     `).run(
       data.brand, data.model, data.year, data.license_plate || null,
       data.vin || null, data.color || null, data.mileage || null,
       data.fuel_type || null, data.purchase_price, data.sale_price || null,
-      data.status || 'em_stock', data.notes || null, id
+      purchaseDate, saleDate,
+      newStatus, data.notes || null, id
     );
   }
 
   // Compute field-level changes (comerciais cannot change investor/type/responsible)
   const editableFields = user.role !== 'comercial'
-    ? ['brand', 'model', 'year', 'license_plate', 'vin', 'color', 'mileage', 'fuel_type', 'purchase_price', 'sale_price', 'status', 'notes', 'investor_id', 'vehicle_type', 'created_by']
-    : ['brand', 'model', 'year', 'license_plate', 'vin', 'color', 'mileage', 'fuel_type', 'purchase_price', 'sale_price', 'status', 'notes'];
+    ? ['brand', 'model', 'year', 'license_plate', 'vin', 'color', 'mileage', 'fuel_type', 'purchase_price', 'sale_price', 'purchase_date', 'sale_date', 'status', 'notes', 'investor_id', 'vehicle_type', 'created_by']
+    : ['brand', 'model', 'year', 'license_plate', 'vin', 'color', 'mileage', 'fuel_type', 'purchase_price', 'sale_price', 'purchase_date', 'sale_date', 'status', 'notes'];
 
   const norm = v => (v === undefined || v === '' ? null : v);
   const changeList = [];

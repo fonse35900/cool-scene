@@ -231,8 +231,10 @@ export default function VehicleReportsPage() {
                       <tr className="border-b border-octane-border">
                         <Th label={t('Viatura', 'Vehicle')} col="brand" sort={salesSort.sort} toggle={salesSort.toggle} />
                         <Th label={t('Comercial', 'Salesperson')} col="created_by_name" sort={salesSort.sort} toggle={salesSort.toggle} />
+                        <Th label={t('Data Compra', 'Purchase Date')} col="purchase_date" sort={salesSort.sort} toggle={salesSort.toggle} />
                         <Th label={t('Preço Compra', 'Purchase Price')} col="purchase_price" sort={salesSort.sort} toggle={salesSort.toggle} />
                         <Th label={t('Custos', 'Costs')} col="costs" sort={salesSort.sort} toggle={salesSort.toggle} />
+                        <Th label={t('Data Venda', 'Sale Date')} col="sale_date" sort={salesSort.sort} toggle={salesSort.toggle} />
                         <Th label={t('Preço Venda', 'Sale Price')} col="sale_price" sort={salesSort.sort} toggle={salesSort.toggle} />
                         <Th label={t('Margem (€)', 'Margin (€)')} col="margin" sort={salesSort.sort} toggle={salesSort.toggle} />
                         <Th label={t('Margem (%)', 'Margin (%)')} col="margin_percent" sort={salesSort.sort} toggle={salesSort.toggle} />
@@ -243,8 +245,10 @@ export default function VehicleReportsPage() {
                         <tr key={v.id} className="border-t border-octane-border">
                           <td className="p-3 font-medium text-octane-white">{v.brand} {v.model} ({v.year})</td>
                           <td className="p-3 text-octane-gray">{v.created_by_name}</td>
+                          <td className="p-3 text-octane-gray whitespace-nowrap">{v.purchase_date ? new Date(v.purchase_date).toLocaleDateString('pt-PT') : '-'}</td>
                           <td className="p-3 text-octane-white">€{v.purchase_price.toLocaleString()}</td>
                           <td className="p-3 text-octane-orange">€{v.costs.toLocaleString()}</td>
+                          <td className="p-3 text-octane-gray whitespace-nowrap">{v.sale_date ? new Date(v.sale_date).toLocaleDateString('pt-PT') : '-'}</td>
                           <td className="p-3 text-octane-gold">€{v.sale_price.toLocaleString()}</td>
                           <td className={`p-3 font-medium ${v.margin >= 0 ? 'text-octane-green' : 'text-octane-red'}`}>€{v.margin.toLocaleString()}</td>
                           <td className={`p-3 font-medium ${v.margin_percent >= 0 ? 'text-octane-green' : 'text-octane-red'}`}>{v.margin_percent.toFixed(1)}%</td>
