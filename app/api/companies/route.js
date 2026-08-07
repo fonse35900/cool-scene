@@ -54,7 +54,7 @@ export async function PUT(req) {
     return NextResponse.json({ error: 'Logótipo demasiado grande (máx. ~1MB)' }, { status: 400 });
   }
 
-  const validPalettes = ['octane', 'blue', 'rainbow', 'mono'];
+  const validPalettes = ['octane', 'gold', 'rainbow', 'mono'];
   const paletteVal = palette && validPalettes.includes(palette) ? palette : null;
 
   const db = getDb();
