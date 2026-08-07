@@ -1,11 +1,12 @@
 import './globals.css';
 import Providers from '@/components/Providers';
+import { BRAND } from '@/lib/brand';
 import { paletteCss } from '@/lib/palettes';
 import { getServerBranding } from '@/lib/serverBranding';
 
 export const metadata = {
-  title: 'OCTANE - Car Dealer & Collector',
-  description: 'Gestão de viaturas OCTANE',
+  title: BRAND.metaTitle,
+  description: BRAND.metaDescription,
 };
 
 export default async function RootLayout({ children }) {
