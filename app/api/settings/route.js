@@ -15,7 +15,9 @@ export async function GET(req) {
   const requested = searchParams.get('company');
   const companyId = user?.company_id || (requested ? parseInt(requested) : 1);
   const company = await db.prepare('SELECT name, logo, branding_configured, palette FROM companies WHERE id = ?').get(companyId);
-  const palette = company?.palette || 'octane';
+  // Pre-login (no authenticated user) always uses the build's base theme, so the
+  // login screen keeps a consistent look regardless of any company's palette.
+  const palette = user ? (company?.palette || 'octane') : 'octane';
 
   // The default brand (OCTANE) logo/name is only ever used for company 1. Every
   // other company shows strictly its own branding: its logo if it set one, and

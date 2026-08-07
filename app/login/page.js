@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLang } from '@/lib/LanguageContext';
 import { useBranding } from '@/lib/BrandingContext';
+import { BRAND } from '@/lib/brand';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -34,11 +35,9 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-octane-black">
       <div className="bg-octane-dark border border-octane-border p-10 rounded-2xl shadow-2xl w-full max-w-md">
         <div className="text-center mb-8">
-          {branding.logo
-            ? <img src={branding.logo} alt={branding.name} className="h-16 mx-auto mb-4 max-w-[240px] object-contain" />
-            : branding.name
-              ? <div className="text-2xl font-semibold tracking-wide text-octane-white mb-4">{branding.name}</div>
-              : <div className="h-16 mb-4" />}
+          {/* Login always shows the build's own brand (e.g. KYRGA), not a
+              per-company logo, so the first screen is consistent. */}
+          <img src={BRAND.logo} alt={BRAND.name} className="h-16 mx-auto mb-4 max-w-[240px] object-contain" />
           <div className="w-12 h-0.5 bg-octane-gold mx-auto"></div>
         </div>
         <div className="flex justify-center mb-6">
