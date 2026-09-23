@@ -29,6 +29,8 @@ export default function InvestorsPage() {
   // Contributions per investor
   const [contributions, setContributions] = useState({});
   const [contribForm, setContribForm] = useState({});
+  // Sort state per investor for the capital movements list: { [invId]: {col, dir} }
+  const [contribSort, setContribSort] = useState({});
 
   // Invitations per investor
   const [invitations, setInvitations] = useState({});
@@ -166,6 +168,34 @@ export default function InvestorsPage() {
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
   const setCF = (investorId, k, v) => setContribForm(cf => ({ ...cf, [investorId]: { ...(cf[investorId] || {}), [k]: v } }));
 
+  function toggleContribSort(investorId, col) {
+    setContribSort(s => {
+      const cur = s[investorId];
+      const dir = cur?.col === col && cur.dir === 'asc' ? 'desc' : 'asc';
+      return { ...s, [investorId]: { col, dir } };
+    });
+  }
+
+  function sortContribs(investorId, items) {
+    const s = contribSort[investorId];
+    if (!s) return items;
+    const val = (c) => {
+      switch (s.col) {
+        case 'date': return c.date ? new Date(c.date).getTime() : 0;
+        case 'type': return c.amount < 0 ? 1 : 0;          // depósito antes de levantamento
+        case 'amount': return Math.abs(c.amount);
+        case 'notes': return (c.notes || '').toLowerCase();
+        default: return 0;
+      }
+    };
+    return [...items].sort((a, b) => {
+      const av = val(a), bv = val(b);
+      if (av < bv) return s.dir === 'asc' ? -1 : 1;
+      if (av > bv) return s.dir === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }
+
   if (!user) return null;
 
   return (
@@ -268,8 +298,27 @@ export default function InvestorsPage() {
                     return (
                   <div>
                     <h3 className="text-sm font-semibold text-octane-gold uppercase tracking-wider mb-3">{t('Capital Investido', 'Invested Capital')}</h3>
+                    {items.length > 0 && (() => {
+                      const s = contribSort[inv.id];
+                      const arrow = (col) => s?.col === col ? (s.dir === 'asc' ? ' ▲' : ' ▼') : '';
+                      const SortH = ({ col, label, cls }) => (
+                        <button onClick={() => toggleContribSort(inv.id, col)}
+                          className={`text-left text-xs uppercase tracking-wider hover:text-octane-gold transition-colors ${s?.col === col ? 'text-octane-gold' : 'text-octane-gray'} ${cls}`}>
+                          {label}{arrow(col)}
+                        </button>
+                      );
+                      return (
+                        <div className="flex items-center px-3 pb-1 gap-0">
+                          <SortH col="date" label={t('Data', 'Date')} cls="w-24" />
+                          <SortH col="type" label={t('Tipo', 'Type')} cls="w-28" />
+                          <SortH col="amount" label={t('Valor', 'Amount')} cls="w-28 text-right" />
+                          <SortH col="notes" label={t('Notas', 'Notes')} cls="flex-1 mx-3" />
+                          <span className="w-16" />
+                        </div>
+                      );
+                    })()}
                     <div className="space-y-2 mb-3">
-                      {items.map(c => {
+                      {sortContribs(inv.id, items).map(c => {
                         const isWithdrawal = c.amount < 0;
                         return (
                         <div key={c.id} className={`flex items-center justify-between rounded-lg px-3 py-2 text-sm border-l-2 ${isWithdrawal ? 'bg-octane-red/5 border-octane-red' : 'bg-octane-green/5 border-octane-green'}`}>
