@@ -35,6 +35,23 @@ export default function InvestorReportsPage() {
   );
   const salesSort = useSort(report?.salesDetails, 'brand');
 
+  // Per-vehicle rentability aggregates (margin, days in stock, TAN).
+  const rentability = useMemo(() => {
+    const rows = report?.salesDetails ?? [];
+    if (rows.length === 0) return null;
+    const withDays = rows.filter(r => r.days_in_stock !== null && r.days_in_stock !== undefined);
+    const withTan = rows.filter(r => r.tan !== null && r.tan !== undefined);
+    const avg = (arr, key) => arr.length ? arr.reduce((s, r) => s + r[key], 0) / arr.length : null;
+    return {
+      count: rows.length,
+      avgMarginPct: avg(rows, 'margin_percent'),
+      totalMargin: rows.reduce((s, r) => s + r.margin, 0),
+      avgDays: avg(withDays, 'days_in_stock'),
+      avgTan: avg(withTan, 'tan'),
+      bestTan: withTan.length ? withTan.reduce((b, r) => r.tan > b.tan ? r : b) : null,
+    };
+  }, [report]);
+
   useEffect(() => {
     fetch('/api/users/me').then(r => r.ok ? r.json() : Promise.reject()).then(u => {
       if (u.role === 'comercial') { router.push('/reports/viaturas'); return; }
@@ -254,9 +271,43 @@ export default function InvestorReportsPage() {
               </div>
             )}
 
+            {rentability && (
+              <div className="mb-6">
+                <h2 className="text-sm font-semibold mb-3 text-octane-gold uppercase tracking-wider">{t('Rentabilidade por Viatura', 'Rentability per Vehicle')}</h2>
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                  <div className="bg-octane-card border border-octane-border p-4 rounded-xl">
+                    <p className="text-xs text-octane-gray uppercase tracking-wider mb-1">{t('Viaturas Vendidas', 'Vehicles Sold')}</p>
+                    <p className="text-2xl font-bold text-octane-white">{rentability.count}</p>
+                  </div>
+                  <div className="bg-octane-card border border-octane-border p-4 rounded-xl">
+                    <p className="text-xs text-octane-gray uppercase tracking-wider mb-1">{t('Margem Total', 'Total Margin')}</p>
+                    <p className={`text-xl font-bold ${rentability.totalMargin >= 0 ? 'text-octane-green' : 'text-octane-red'}`}>{fmt(rentability.totalMargin)}</p>
+                  </div>
+                  <div className="bg-octane-card border border-octane-border p-4 rounded-xl">
+                    <p className="text-xs text-octane-gray uppercase tracking-wider mb-1">{t('Margem Média', 'Avg. Margin')} %</p>
+                    <p className={`text-xl font-bold ${rentability.avgMarginPct >= 0 ? 'text-octane-green' : 'text-octane-red'}`}>{rentability.avgMarginPct != null ? `${rentability.avgMarginPct.toFixed(1)}%` : '-'}</p>
+                  </div>
+                  <div className="bg-octane-card border border-octane-border p-4 rounded-xl">
+                    <p className="text-xs text-octane-gray uppercase tracking-wider mb-1">{t('Dias Médios em Stock', 'Avg. Days in Stock')}</p>
+                    <p className="text-xl font-bold text-octane-white">{rentability.avgDays != null ? `${Math.round(rentability.avgDays)} ${t('dias','days')}` : '-'}</p>
+                  </div>
+                  <div className="bg-octane-card border border-octane-border p-4 rounded-xl">
+                    <p className="text-xs text-octane-gray uppercase tracking-wider mb-1">{t('TAN Média', 'Avg. Nominal Rate')}</p>
+                    <p className={`text-xl font-bold ${rentability.avgTan == null ? 'text-octane-gray' : rentability.avgTan >= 0 ? 'text-octane-green' : 'text-octane-red'}`}>{rentability.avgTan != null ? `${rentability.avgTan.toFixed(1)}%` : '-'}</p>
+                  </div>
+                </div>
+                {rentability.bestTan && (
+                  <p className="text-xs text-octane-gray mt-2">
+                    {t('Melhor rentabilidade anualizada', 'Best annualised return')}: <span className="text-octane-gold font-medium">{rentability.bestTan.brand} {rentability.bestTan.model}</span> — {rentability.bestTan.tan.toFixed(1)}% TAN ({rentability.bestTan.days_in_stock} {t('dias','days')})
+                  </p>
+                )}
+              </div>
+            )}
+
             {report.salesDetails.length > 0 && (
               <div className="bg-octane-card border border-octane-border rounded-xl">
-                <h2 className="font-semibold p-4 pb-0 text-octane-gold text-sm uppercase tracking-wider">{t('Detalhe de Vendas', 'Sales Detail')}</h2>
+                <h2 className="font-semibold p-4 pb-1 text-octane-gold text-sm uppercase tracking-wider">{t('Detalhe de Vendas', 'Sales Detail')}</h2>
+                <p className="text-octane-gray text-xs px-4 pb-3">{t('TAN = margem % anualizada face aos dias em stock (margem % × 365 ÷ dias)', 'Nominal rate = margin % annualised over days in stock (margin % × 365 ÷ days)')}</p>
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
@@ -269,6 +320,8 @@ export default function InvestorReportsPage() {
                         <Th label={t('Preço Venda', 'Sale Price')} col="sale_price" sort={salesSort.sort} toggle={salesSort.toggle} />
                         <Th label={t('Margem (€)', 'Margin (€)')} col="margin" sort={salesSort.sort} toggle={salesSort.toggle} />
                         <Th label={t('Margem (%)', 'Margin (%)')} col="margin_percent" sort={salesSort.sort} toggle={salesSort.toggle} />
+                        <Th label={t('Dias em Stock', 'Days in Stock')} col="days_in_stock" sort={salesSort.sort} toggle={salesSort.toggle} />
+                        <Th label={t('TAN (%)', 'Nominal Rate (%)')} col="tan" sort={salesSort.sort} toggle={salesSort.toggle} />
                       </tr>
                     </thead>
                     <tbody>
@@ -282,6 +335,8 @@ export default function InvestorReportsPage() {
                           <td className="p-3 text-octane-gold">€{v.sale_price.toLocaleString()}</td>
                           <td className={`p-3 font-medium ${v.margin >= 0 ? 'text-octane-green' : 'text-octane-red'}`}>€{v.margin.toLocaleString()}</td>
                           <td className={`p-3 font-medium ${v.margin_percent >= 0 ? 'text-octane-green' : 'text-octane-red'}`}>{v.margin_percent.toFixed(1)}%</td>
+                          <td className="p-3 text-octane-white">{v.days_in_stock != null ? `${v.days_in_stock}` : '-'}</td>
+                          <td className={`p-3 font-medium ${v.tan == null ? 'text-octane-gray' : v.tan >= 0 ? 'text-octane-green' : 'text-octane-red'}`}>{v.tan != null ? `${v.tan.toFixed(1)}%` : '-'}</td>
                         </tr>
                       ))}
                     </tbody>
