@@ -17,6 +17,9 @@ export default function InvestorReportsPage() {
   const [selectedInvestor, setSelectedInvestor] = useState('');
   const [report, setReport] = useState(null);
   const [dateRange, setDateRange] = useState({ from: '', to: '', preset: null });
+  // Financial position: include vehicles still in stock in the KPIs, or count
+  // only realised (sold) vehicles.
+  const [includeStock, setIncludeStock] = useState(true);
   const router = useRouter();
   const { t } = useLang();
 
@@ -348,24 +351,48 @@ export default function InvestorReportsPage() {
             {/* {t('Posição Financeira por Investidor', 'Financial Position by Investor')} */}
             {report.posicaoFinanceira?.length > 0 && (
               <div className="mt-8">
-                <h2 className="text-lg font-semibold mb-4 text-octane-gold uppercase tracking-wider text-sm">{t('Posição Financeira por Investidor', 'Financial Position by Investor')}</h2>
+                <div className="flex flex-wrap items-center justify-between mb-4 gap-3">
+                  <h2 className="text-lg font-semibold text-octane-gold uppercase tracking-wider text-sm">{t('Posição Financeira por Investidor', 'Financial Position by Investor')}</h2>
+                  <button onClick={() => setIncludeStock(s => !s)}
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
+                      includeStock
+                        ? 'bg-octane-gold text-octane-black border-octane-gold'
+                        : 'border-octane-border text-octane-gray hover:border-octane-gold hover:text-octane-gold'
+                    }`}>
+                    <span className={`w-2 h-2 rounded-full ${includeStock ? 'bg-octane-black' : 'bg-octane-gray'}`}></span>
+                    {includeStock
+                      ? t('A contar com viaturas em stock', 'Counting in-stock vehicles')
+                      : t('Só viaturas vendidas (realizado)', 'Sold vehicles only (realised)')}
+                  </button>
+                </div>
                 <div className="space-y-4">
-                  {report.posicaoFinanceira.map(inv => (
+                  {report.posicaoFinanceira.map(inv => {
+                    // When excluding in-stock, only realised (sold) vehicles feed
+                    // the purchase/cost KPIs; contributions and non-stock vehicle
+                    // expenses are unaffected.
+                    const relevant = includeStock
+                      ? inv.stockVehicles
+                      : inv.stockVehicles.filter(v => v.status === 'vendido' && v.sale_price);
+                    const totalPurchased = relevant.reduce((s, v) => s + v.purchase_price, 0);
+                    const totalStockCosts = relevant.reduce((s, v) => s + v.total_costs, 0);
+                    const totalSalesRevenue = relevant.filter(v => v.status === 'vendido' && v.sale_price).reduce((s, v) => s + v.sale_price, 0);
+                    const balance = inv.contributions - totalPurchased - totalStockCosts - inv.totalInvestorCosts + totalSalesRevenue;
+                    return (
                     <div key={inv.id} className="bg-octane-card border border-octane-border rounded-xl overflow-hidden">
                       <div className="flex flex-wrap items-center justify-between p-4 border-b border-octane-border gap-4">
                         <h3 className="font-semibold text-octane-white text-base">{inv.name}</h3>
-                        <div className={`text-xl font-bold px-4 py-1 rounded-lg ${inv.balance >= 0 ? 'bg-octane-green/10 text-octane-green' : 'bg-octane-red/10 text-octane-red'}`}>
-                          {t('Saldo','Balance')}: {fmt(inv.balance)}
+                        <div className={`text-xl font-bold px-4 py-1 rounded-lg ${balance >= 0 ? 'bg-octane-green/10 text-octane-green' : 'bg-octane-red/10 text-octane-red'}`}>
+                          {t('Saldo','Balance')}: {fmt(balance)}
                         </div>
                       </div>
 
                       <div className="grid grid-cols-2 md:grid-cols-5 divide-x divide-octane-border border-b border-octane-border">
                         {[
                           { l: 'Capital Investido', v: inv.contributions, c: 'text-octane-gold' },
-                          { l: 'Viaturas Compradas', v: -inv.totalPurchased, c: 'text-octane-red' },
-                          { l: 'Custos de Stock', v: -inv.totalStockCosts, c: 'text-octane-red' },
+                          { l: 'Viaturas Compradas', v: -totalPurchased, c: 'text-octane-red' },
+                          { l: 'Custos de Stock', v: -totalStockCosts, c: 'text-octane-red' },
                           { l: t('Despesas Viaturas','Vehicle Expenses'), v: -inv.totalInvestorCosts, c: 'text-octane-red' },
-                          { l: t('Receita Vendas','Sales Revenue'), v: inv.totalSalesRevenue, c: 'text-octane-green' },
+                          { l: t('Receita Vendas','Sales Revenue'), v: totalSalesRevenue, c: 'text-octane-green' },
                         ].map(s => (
                           <div key={s.l} className="p-3 text-center">
                             <p className="text-xs text-octane-gray uppercase tracking-wider mb-1">{s.l}</p>
@@ -430,7 +457,8 @@ export default function InvestorReportsPage() {
                         </div>
                       )}
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}
