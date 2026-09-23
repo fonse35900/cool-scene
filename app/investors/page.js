@@ -103,12 +103,15 @@ export default function InvestorsPage() {
       .catch(() => setContributions(c => ({ ...c, [investorId]: [] })));
   }
 
-  async function addContribution(investorId) {
+  // direction: 1 = depósito (soma), -1 = levantamento (subtrai). Levantamentos
+  // são guardados com valor negativo na mesma tabela.
+  async function addMovement(investorId, direction) {
     const f = contribForm[investorId] || {};
     if (!f.amount) { alert('Insira um valor'); return; }
+    const signed = Math.abs(parseFloat(f.amount)) * direction;
     const res = await fetch('/api/investor/contributions', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ investor_id: investorId, amount: parseFloat(f.amount), notes: f.notes || '', date: f.date || new Date().toISOString().split('T')[0] }),
+      body: JSON.stringify({ investor_id: investorId, amount: signed, notes: f.notes || '', date: f.date || new Date().toISOString().split('T')[0] }),
     });
     if (res.ok) {
       setContribForm(cf => ({ ...cf, [investorId]: {} }));
@@ -258,22 +261,52 @@ export default function InvestorsPage() {
                 <div className="border-t border-octane-border p-4 space-y-6">
 
                   {/* Contributions */}
+                  {(() => {
+                    const items = contributions[inv.id] || [];
+                    const totalDep = items.filter(c => c.amount >= 0).reduce((s, c) => s + c.amount, 0);
+                    const totalLev = items.filter(c => c.amount < 0).reduce((s, c) => s + Math.abs(c.amount), 0);
+                    return (
                   <div>
                     <h3 className="text-sm font-semibold text-octane-gold uppercase tracking-wider mb-3">{t('Capital Investido', 'Invested Capital')}</h3>
                     <div className="space-y-2 mb-3">
-                      {(contributions[inv.id] || []).map(c => (
-                        <div key={c.id} className="flex items-center justify-between bg-octane-dark rounded-lg px-3 py-2 text-sm">
-                          <span className="text-octane-gray">{c.date ? new Date(c.date).toLocaleDateString('pt-PT') : '-'}</span>
-                          <span className="text-octane-white font-medium">{fmt(c.amount)}</span>
+                      {items.map(c => {
+                        const isWithdrawal = c.amount < 0;
+                        return (
+                        <div key={c.id} className={`flex items-center justify-between rounded-lg px-3 py-2 text-sm border-l-2 ${isWithdrawal ? 'bg-octane-red/5 border-octane-red' : 'bg-octane-green/5 border-octane-green'}`}>
+                          <span className="text-octane-gray w-24">{c.date ? new Date(c.date).toLocaleDateString('pt-PT') : '-'}</span>
+                          <span className={`text-xs font-semibold uppercase tracking-wider w-28 ${isWithdrawal ? 'text-octane-red' : 'text-octane-green'}`}>
+                            {isWithdrawal ? t('Levantamento', 'Withdrawal') : t('Depósito', 'Deposit')}
+                          </span>
+                          <span className={`font-medium w-28 text-right ${isWithdrawal ? 'text-octane-red' : 'text-octane-green'}`}>
+                            {isWithdrawal ? '−' : '+'}{fmt(Math.abs(c.amount))}
+                          </span>
                           <span className="text-octane-gray flex-1 mx-3">{c.notes || ''}</span>
                           <button onClick={() => deleteContribution(inv.id, c.id)} className="text-octane-red text-xs hover:underline">{t('Remover', 'Remove')}</button>
                         </div>
-                      ))}
-                      {(contributions[inv.id] || []).length === 0 && (
-                        <p className="text-octane-gray text-sm">{t('Sem depósitos registados', 'No deposits recorded')}</p>
+                        );
+                      })}
+                      {items.length === 0 && (
+                        <p className="text-octane-gray text-sm">{t('Sem movimentos registados', 'No movements recorded')}</p>
                       )}
                     </div>
-                    {/* Add contribution */}
+
+                    {/* Totals */}
+                    <div className="grid grid-cols-3 gap-3 mb-4">
+                      <div className="bg-octane-green/10 border border-octane-green/30 rounded-lg px-3 py-2">
+                        <p className="text-xs text-octane-green uppercase tracking-wider">{t('Total Depósitos', 'Total Deposits')}</p>
+                        <p className="text-octane-green font-bold">{fmt(totalDep)}</p>
+                      </div>
+                      <div className="bg-octane-red/10 border border-octane-red/30 rounded-lg px-3 py-2">
+                        <p className="text-xs text-octane-red uppercase tracking-wider">{t('Total Levantamentos', 'Total Withdrawals')}</p>
+                        <p className="text-octane-red font-bold">{fmt(totalLev)}</p>
+                      </div>
+                      <div className="bg-octane-dark border border-octane-border rounded-lg px-3 py-2">
+                        <p className="text-xs text-octane-gray uppercase tracking-wider">{t('Saldo', 'Balance')}</p>
+                        <p className="text-octane-white font-bold">{fmt(totalDep - totalLev)}</p>
+                      </div>
+                    </div>
+
+                    {/* Add movement */}
                     <div className="flex gap-2 items-end">
                       <div>
                         <label className="block text-xs text-octane-gray mb-1">{t('Data', 'Date')}</label>
@@ -294,12 +327,18 @@ export default function InvestorsPage() {
                           onChange={e => setCF(inv.id, 'notes', e.target.value)}
                           className="bg-octane-black border border-octane-border rounded px-3 py-2 text-sm text-octane-white w-full" />
                       </div>
-                      <button onClick={() => addContribution(inv.id)}
-                        className="bg-octane-gold text-octane-black px-4 py-2 rounded text-sm font-semibold hover:bg-octane-gold-light transition-colors whitespace-nowrap">
+                      <button onClick={() => addMovement(inv.id, 1)}
+                        className="bg-octane-green text-octane-black px-4 py-2 rounded text-sm font-semibold hover:opacity-90 transition-opacity whitespace-nowrap">
                         {t('+ Depósito', '+ Deposit')}
+                      </button>
+                      <button onClick={() => addMovement(inv.id, -1)}
+                        className="bg-octane-red text-octane-white px-4 py-2 rounded text-sm font-semibold hover:opacity-90 transition-opacity whitespace-nowrap">
+                        {t('− Levantamento', '− Withdrawal')}
                       </button>
                     </div>
                   </div>
+                    );
+                  })()}
 
                   {/* Invitations */}
                   <div>

@@ -19,6 +19,7 @@ function Card({ label, value, color }) {
 
 const typeLabels = {
   contribuicao: 'Depósito',
+  levantamento: 'Levantamento',
   compra: 'Compra',
   custo_stock: 'Custo',
   venda: 'Venda',
@@ -28,6 +29,7 @@ const typeLabels = {
 const typeColors = {
   contribuicao: 'text-octane-green',
   venda: 'text-octane-green',
+  levantamento: 'text-octane-red',
   compra: 'text-octane-red',
   custo_stock: 'text-octane-red',
   despesa_viatura: 'text-octane-red',
@@ -200,7 +202,7 @@ export default function InvestorPage() {
                       <td className="p-3 text-octane-gray whitespace-nowrap">{m.date ? new Date(m.date).toLocaleDateString('pt-PT') : '-'}</td>
                       <td className="p-3">
                         <span className={`text-xs font-medium px-2 py-0.5 rounded ${typeColors[m.type] || 'text-octane-white'}`}>
-                          {(t(typeLabels[m.type], { contribuicao: 'Deposit', compra: 'Purchase', custo_stock: 'Cost', venda: 'Sale', despesa_viatura: 'Vehicle Expense' }[m.type])) || m.type}
+                          {(t(typeLabels[m.type], { contribuicao: 'Deposit', levantamento: 'Withdrawal', compra: 'Purchase', custo_stock: 'Cost', venda: 'Sale', despesa_viatura: 'Vehicle Expense' }[m.type])) || m.type}
                         </span>
                       </td>
                       <td className="p-3 text-octane-white">{m.label}</td>
