@@ -54,6 +54,9 @@ export default function InvestorPage() {
   // Transaction history: filter group ('all' | 'capital' | 'viaturas') and sort.
   const [histFilter, setHistFilter] = useState('all');
   const [histSort, setHistSort] = useState({ col: 'date', dir: 'asc' });
+  // Tab between the movement history and the vehicles table; vehicle sort.
+  const [activeTab, setActiveTab] = useState('historico');
+  const [vehSort, setVehSort] = useState({ col: '_vehicle', dir: 'asc' });
   const router = useRouter();
   const { t } = useLang();
 
@@ -128,6 +131,60 @@ export default function InvestorPage() {
       finalBalance: byDate.length ? byDate[byDate.length - 1].balance : 0,
     };
   }, [data, histFilter, histSort]);
+
+  const vehView = useMemo(() => {
+    const rows = (data?.stockVehicles ?? []).map(v => {
+      const cost = v.purchase_price + v.total_costs;
+      const margin = v.sale_price ? v.sale_price - v.purchase_price - v.total_costs : null;
+      const marginPct = (margin !== null && cost > 0) ? margin / cost * 100 : null;
+      const start = v.purchase_date || v.created_at;
+      const end = v.sale_date || v.updated_at;
+      let days = null;
+      const parse = (x) => { const d = new Date(x); return isNaN(d) ? null : d; };
+      if (v.status === 'vendido' && start && end) {
+        const a = parse(start), b = parse(end);
+        if (a && b) { const d = Math.round((b - a) / 86400000); days = d >= 0 ? d : null; }
+      } else if (start) {
+        const a = parse(start);
+        if (a) { const d = Math.round((Date.now() - a) / 86400000); days = d >= 0 ? d : null; }
+      }
+      const tan = (marginPct !== null && days && days > 0) ? marginPct * (365 / days) : null;
+      return { ...v, _vehicle: `${v.brand} ${v.model}`, _margin: margin, _marginPct: marginPct, _days: days, _tan: tan };
+    });
+    const num = (x) => (x == null ? -Infinity : x);
+    const val = (v) => {
+      switch (vehSort.col) {
+        case '_vehicle': return v._vehicle.toLowerCase();
+        case 'status': return v.status;
+        case 'purchase_price': return v.purchase_price;
+        case 'total_costs': return v.total_costs;
+        case 'sale_price': return num(v.sale_price);
+        case '_margin': return num(v._margin);
+        case '_marginPct': return num(v._marginPct);
+        case '_days': return num(v._days);
+        case '_tan': return num(v._tan);
+        default: return 0;
+      }
+    };
+    const sorted = [...rows].sort((a, b) => {
+      const av = val(a), bv = val(b);
+      if (av < bv) return vehSort.dir === 'asc' ? -1 : 1;
+      if (av > bv) return vehSort.dir === 'asc' ? 1 : -1;
+      return 0;
+    });
+    const sold = rows.filter(v => v._margin !== null);
+    const tPurchase = rows.reduce((s, v) => s + v.purchase_price, 0);
+    const tCosts = rows.reduce((s, v) => s + v.total_costs, 0);
+    const tSale = rows.filter(v => v.sale_price).reduce((s, v) => s + v.sale_price, 0);
+    const tMargin = sold.reduce((s, v) => s + v._margin, 0);
+    const soldCostBase = sold.reduce((s, v) => s + v.purchase_price + v.total_costs, 0);
+    const tMarginPct = soldCostBase > 0 ? tMargin / soldCostBase * 100 : null;
+    const daysRows = rows.filter(v => v._days != null);
+    const avgDays = daysRows.length ? daysRows.reduce((s, v) => s + v._days, 0) / daysRows.length : null;
+    const tanRows = rows.filter(v => v._tan != null);
+    const avgTan = tanRows.length ? tanRows.reduce((s, v) => s + v._tan, 0) / tanRows.length : null;
+    return { sorted, count: rows.length, tPurchase, tCosts, tSale, tMargin, tMarginPct, avgDays, avgTan };
+  }, [data, vehSort]);
 
   if (!user || loading) return null;
   if (!data || !data.summary) return (
@@ -221,8 +278,27 @@ export default function InvestorPage() {
           </div>
         </div>
 
+        {/* Tabs: history vs. vehicles */}
+        {(timeline.length > 0 || stockVehicles.length > 0) && (
+          <div className="flex gap-1 border-b border-octane-border">
+            {[
+              { k: 'historico', l: t('Histórico de Movimentos', 'Transaction History') },
+              { k: 'viaturas', l: t('Viaturas em Stock / Vendidas', 'Vehicles In Stock / Sold') },
+            ].map(tab => (
+              <button key={tab.k} onClick={() => setActiveTab(tab.k)}
+                className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
+                  activeTab === tab.k
+                    ? 'border-octane-gold text-octane-gold'
+                    : 'border-transparent text-octane-gray hover:text-octane-white'
+                }`}>
+                {tab.l}
+              </button>
+            ))}
+          </div>
+        )}
+
         {/* Timeline */}
-        {timeline.length > 0 && (() => {
+        {activeTab === 'historico' && timeline.length > 0 && (() => {
           const arrow = (col) => histSort.col === col ? (histSort.dir === 'asc' ? ' ▲' : ' ▼') : '';
           const toggleSort = (col) => setHistSort(s => ({ col, dir: s.col === col && s.dir === 'asc' ? 'desc' : 'asc' }));
           const cols = [
@@ -234,8 +310,7 @@ export default function InvestorPage() {
           ];
           return (
           <div>
-            <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
-              <h2 className="text-lg font-semibold">{t('Histórico de Movimentos', 'Transaction History')}</h2>
+            <div className="flex flex-wrap items-center justify-end gap-3 mb-3">
               <div className="flex gap-2">
                 {[
                   { k: 'all', l: t('Todos', 'All') },
@@ -309,45 +384,82 @@ export default function InvestorPage() {
         })()}
 
         {/* Stock Vehicles */}
-        {stockVehicles.length > 0 && (
+        {activeTab === 'viaturas' && stockVehicles.length > 0 && (() => {
+          const arrow = (col) => vehSort.col === col ? (vehSort.dir === 'asc' ? ' ▲' : ' ▼') : '';
+          const toggleSort = (col) => setVehSort(s => ({ col, dir: s.col === col && s.dir === 'asc' ? 'desc' : 'asc' }));
+          const cols = [
+            { col: '_vehicle', label: t('Viatura', 'Vehicle') },
+            { col: 'status', label: t('Estado', 'Status') },
+            { col: 'purchase_price', label: t('Compra', 'Purchase') },
+            { col: 'total_costs', label: t('Custos', 'Costs') },
+            { col: 'sale_price', label: t('Venda', 'Sale') },
+            { col: '_margin', label: t('Margem', 'Margin') },
+            { col: '_marginPct', label: t('Margem %', 'Margin %') },
+            { col: '_days', label: t('Dias em Stock', 'Days in Stock') },
+            { col: '_tan', label: t('TAN %', 'Nominal %') },
+          ];
+          return (
           <div>
-            <h2 className="text-lg font-semibold mb-3">{t('Viaturas em Stock / Vendidas', 'Vehicles In Stock / Sold')}</h2>
+            <p className="text-octane-gray text-xs mb-2">{t('TAN = margem % anualizada face aos dias em stock. Dias em stock: até à venda, ou até hoje se ainda em stock.', 'Nominal rate = margin % annualised over days in stock. Days: until sale, or until today if still in stock.')}</p>
             <div className="bg-octane-card border border-octane-border rounded-xl overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-octane-border">
-                    {[t('Viatura', 'Vehicle'), t('Estado', 'Status'), t('Compra', 'Purchase'), t('Custos', 'Costs'), t('Venda', 'Sale'), t('Margem', 'Margin')].map(h => (
-                      <th key={h} className="text-left p-3 font-medium text-octane-gray text-xs uppercase tracking-wider">{h}</th>
+                    {cols.map(c => (
+                      <th key={c.col} className="text-left p-3 font-medium text-xs uppercase tracking-wider">
+                        <button onClick={() => toggleSort(c.col)}
+                          className={`hover:text-octane-gold transition-colors ${vehSort.col === c.col ? 'text-octane-gold' : 'text-octane-gray'}`}>
+                          {c.label}{arrow(c.col)}
+                        </button>
+                      </th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
-                  {stockVehicles.map(v => {
-                    const margin = v.sale_price ? v.sale_price - v.purchase_price - v.total_costs : null;
-                    return (
-                      <tr key={v.id} className="border-t border-octane-border">
-                        <td className="p-3 font-medium text-octane-white">{v.brand} {v.model} <span className="text-octane-gray">({v.year})</span></td>
-                        <td className="p-3">
-                          <span className={`text-xs px-2 py-0.5 rounded font-medium ${
-                            v.status === 'vendido' ? 'bg-octane-green/10 text-octane-green' :
-                            v.status === 'reservado' ? 'bg-octane-gold/10 text-octane-gold' :
-                            'bg-octane-gray/10 text-octane-gray'
-                          }`}>{({ vendido: t('Vendido','Sold'), reservado: t('Reservado','Reserved'), em_stock: t('Em Stock','In Stock') })[v.status] || v.status}</span>
-                        </td>
-                        <td className="p-3 text-octane-white">{fmt(v.purchase_price)}</td>
-                        <td className="p-3 text-octane-red">{fmt(v.total_costs)}</td>
-                        <td className="p-3 text-octane-white">{v.sale_price ? fmt(v.sale_price) : '-'}</td>
-                        <td className={`p-3 font-medium ${margin === null ? 'text-octane-gray' : margin >= 0 ? 'text-octane-green' : 'text-octane-red'}`}>
-                          {margin === null ? '-' : fmt(margin)}
-                        </td>
-                      </tr>
-                    );
-                  })}
+                  {vehView.sorted.map(v => (
+                    <tr key={v.id} className="border-t border-octane-border">
+                      <td className="p-3 font-medium text-octane-white whitespace-nowrap">{v.brand} {v.model} <span className="text-octane-gray">({v.year})</span></td>
+                      <td className="p-3">
+                        <span className={`text-xs px-2 py-0.5 rounded font-medium ${
+                          v.status === 'vendido' ? 'bg-octane-green/10 text-octane-green' :
+                          v.status === 'reservado' ? 'bg-octane-gold/10 text-octane-gold' :
+                          'bg-octane-gray/10 text-octane-gray'
+                        }`}>{({ vendido: t('Vendido','Sold'), reservado: t('Reservado','Reserved'), em_stock: t('Em Stock','In Stock') })[v.status] || v.status}</span>
+                      </td>
+                      <td className="p-3 text-octane-white whitespace-nowrap">{fmt(v.purchase_price)}</td>
+                      <td className="p-3 text-octane-red whitespace-nowrap">{fmt(v.total_costs)}</td>
+                      <td className="p-3 text-octane-white whitespace-nowrap">{v.sale_price ? fmt(v.sale_price) : '-'}</td>
+                      <td className={`p-3 font-medium whitespace-nowrap ${v._margin === null ? 'text-octane-gray' : v._margin >= 0 ? 'text-octane-green' : 'text-octane-red'}`}>
+                        {v._margin === null ? '-' : fmt(v._margin)}
+                      </td>
+                      <td className={`p-3 font-medium whitespace-nowrap ${v._marginPct === null ? 'text-octane-gray' : v._marginPct >= 0 ? 'text-octane-green' : 'text-octane-red'}`}>
+                        {v._marginPct === null ? '-' : `${v._marginPct.toFixed(1)}%`}
+                      </td>
+                      <td className="p-3 text-octane-white whitespace-nowrap">{v._days != null ? v._days : '-'}</td>
+                      <td className={`p-3 font-medium whitespace-nowrap ${v._tan == null ? 'text-octane-gray' : v._tan >= 0 ? 'text-octane-green' : 'text-octane-red'}`}>
+                        {v._tan != null ? `${v._tan.toFixed(1)}%` : '-'}
+                      </td>
+                    </tr>
+                  ))}
                 </tbody>
+                <tfoot>
+                  <tr className="border-t-2 border-octane-gold/40 bg-octane-dark font-bold">
+                    <td className="p-3 text-octane-white uppercase text-xs tracking-wider whitespace-nowrap">{t('Total','Total')} ({vehView.count})</td>
+                    <td className="p-3"></td>
+                    <td className="p-3 text-octane-white whitespace-nowrap">{fmt(vehView.tPurchase)}</td>
+                    <td className="p-3 text-octane-red whitespace-nowrap">{fmt(vehView.tCosts)}</td>
+                    <td className="p-3 text-octane-white whitespace-nowrap">{fmt(vehView.tSale)}</td>
+                    <td className={`p-3 whitespace-nowrap ${vehView.tMargin >= 0 ? 'text-octane-green' : 'text-octane-red'}`}>{fmt(vehView.tMargin)}</td>
+                    <td className={`p-3 whitespace-nowrap ${vehView.tMarginPct == null ? 'text-octane-gray' : vehView.tMarginPct >= 0 ? 'text-octane-green' : 'text-octane-red'}`}>{vehView.tMarginPct != null ? `${vehView.tMarginPct.toFixed(1)}%` : '-'}</td>
+                    <td className="p-3 text-octane-white whitespace-nowrap">{vehView.avgDays != null ? `${Math.round(vehView.avgDays)} ${t('méd.','avg')}` : '-'}</td>
+                    <td className={`p-3 whitespace-nowrap ${vehView.avgTan == null ? 'text-octane-gray' : vehView.avgTan >= 0 ? 'text-octane-green' : 'text-octane-red'}`}>{vehView.avgTan != null ? `${vehView.avgTan.toFixed(1)}% ${t('méd.','avg')}` : '-'}</td>
+                  </tr>
+                </tfoot>
               </table>
             </div>
           </div>
-        )}
+          );
+        })()}
 
         {/* Investor Vehicles */}
         {investorVehicles.length > 0 && (
