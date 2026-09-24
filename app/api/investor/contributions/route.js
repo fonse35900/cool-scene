@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import getDb from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth';
+import { recordAudit, fetchRow } from '@/lib/audit';
 
 export async function GET(req) {
   const user = await getCurrentUser();
@@ -29,6 +30,8 @@ export async function POST(req) {
     const result = await db.prepare(
       'INSERT INTO investor_contributions (investor_id, amount, notes, date) VALUES (?, ?, ?, ?)'
     ).run(investor_id, amount, notes || null, date || new Date().toISOString());
+    const created = await fetchRow(db, 'investor_contributions', result.lastInsertRowid);
+    await recordAudit(db, { entity: 'investor_contributions', entityId: result.lastInsertRowid, action: 'insert', actor: user, after: created });
     return NextResponse.json({ id: result.lastInsertRowid });
   } catch (e) {
     console.error('contributions POST error:', e);
@@ -43,6 +46,8 @@ export async function DELETE(req) {
   }
   const { id } = await req.json();
   const db = getDb();
+  const before = await fetchRow(db, 'investor_contributions', id);
   await db.prepare('DELETE FROM investor_contributions WHERE id = ?').run(id);
+  await recordAudit(db, { entity: 'investor_contributions', entityId: Number(id), action: 'delete', actor: user, before });
   return NextResponse.json({ success: true });
 }

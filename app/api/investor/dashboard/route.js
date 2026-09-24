@@ -50,9 +50,16 @@ export async function GET(req) {
 
   const movements = [];
 
-  contributions.forEach(c => movements.push({
-    date: c.date, type: 'contribuicao', label: c.notes || 'Depósito de capital', amount: c.amount, sign: 1,
-  }));
+  contributions.forEach(c => {
+    const isWithdrawal = c.amount < 0;
+    movements.push({
+      date: c.date,
+      type: isWithdrawal ? 'levantamento' : 'contribuicao',
+      label: c.notes || (isWithdrawal ? 'Levantamento de capital' : 'Depósito de capital'),
+      amount: Math.abs(c.amount),
+      sign: isWithdrawal ? -1 : 1,
+    });
+  });
 
   stockVehicles.forEach(v => {
     movements.push({
