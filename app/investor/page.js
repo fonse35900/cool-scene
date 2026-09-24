@@ -3,6 +3,10 @@ import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import { useLang } from '@/lib/LanguageContext';
+import {
+  ResponsiveContainer, AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
+  XAxis, YAxis, CartesianGrid, Tooltip as RTooltip,
+} from 'recharts';
 
 function fmt(n) {
   return new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(n ?? 0);
@@ -186,6 +190,31 @@ export default function InvestorPage() {
     return { sorted, count: rows.length, tPurchase, tCosts, tSale, tMargin, tMarginPct, avgDays, avgTan };
   }, [data, vehSort]);
 
+  const dashData = useMemo(() => {
+    const tl = data?.timeline ?? [];
+    const balanceSeries = tl.map(m => ({
+      label: m.date ? new Date(m.date).toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit', year: '2-digit' }) : '',
+      saldo: Math.round(m.balance),
+    }));
+    const s = data?.summary;
+    const allocation = s ? [
+      { name: t('Capital', 'Capital'), value: Math.round(s.totalContributions) },
+      { name: t('Compras', 'Purchases'), value: Math.round(s.totalPurchased) },
+      { name: t('Custos', 'Costs'), value: Math.round(s.totalStockCosts + s.totalInvestorVehicleCosts) },
+      { name: t('Receita', 'Revenue'), value: Math.round(s.totalSalesRevenue) },
+    ].filter(x => x.value !== 0) : [];
+    const sv = data?.stockVehicles ?? [];
+    const statusCounts = [
+      { name: t('Em Stock', 'In Stock'), value: sv.filter(v => v.status === 'em_stock').length, color: 'var(--color-octane-gray)' },
+      { name: t('Vendido', 'Sold'), value: sv.filter(v => v.status === 'vendido').length, color: 'var(--color-octane-green)' },
+      { name: t('Reservado', 'Reserved'), value: sv.filter(v => v.status === 'reservado').length, color: 'var(--color-octane-gold)' },
+    ].filter(x => x.value > 0);
+    const marginPerVehicle = sv.filter(v => v.status === 'vendido' && v.sale_price)
+      .map(v => ({ name: `${v.brand} ${v.model}`, margem: Math.round(v.sale_price - v.purchase_price - v.total_costs) }))
+      .sort((a, b) => b.margem - a.margem);
+    return { balanceSeries, allocation, statusCounts, marginPerVehicle };
+  }, [data, t]);
+
   if (!user || loading) return null;
   if (!data || !data.summary) return (
     <div className="min-h-screen bg-octane-black flex items-center justify-center text-octane-gray">
@@ -284,6 +313,7 @@ export default function InvestorPage() {
             {[
               { k: 'historico', l: t('Histórico de Movimentos', 'Transaction History') },
               { k: 'viaturas', l: t('Viaturas em Stock / Vendidas', 'Vehicles In Stock / Sold') },
+              { k: 'dashboard', l: t('Dashboard', 'Dashboard') },
             ].map(tab => (
               <button key={tab.k} onClick={() => setActiveTab(tab.k)}
                 className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
@@ -296,6 +326,98 @@ export default function InvestorPage() {
             ))}
           </div>
         )}
+
+        {/* Dashboard */}
+        {activeTab === 'dashboard' && (() => {
+          const eurK = (n) => Math.abs(n) >= 1000 ? `€${(n / 1000).toFixed(0)}k` : `€${n}`;
+          const axisTick = { fill: 'var(--color-octane-gray)', fontSize: 11 };
+          const tipStyle = { background: 'var(--color-octane-dark)', border: '1px solid var(--color-octane-border)', borderRadius: 8, fontSize: 12, color: 'var(--color-octane-white)' };
+          const grid = 'var(--color-octane-border)';
+          const hasAny = dashData.balanceSeries.length || dashData.allocation.length || dashData.statusCounts.length || dashData.marginPerVehicle.length;
+          if (!hasAny) return <div className="bg-octane-card border border-octane-border rounded-xl p-8 text-center text-octane-gray">{t('Sem dados para apresentar.', 'No data to display.')}</div>;
+          const ChartCard = ({ title, children }) => (
+            <div className="bg-octane-card border border-octane-border rounded-xl p-5">
+              <h3 className="text-xs font-semibold text-octane-gold uppercase tracking-wider mb-4">{title}</h3>
+              {children}
+            </div>
+          );
+          return (
+            <div className="space-y-4">
+              {dashData.balanceSeries.length > 1 && (
+                <ChartCard title={t('Evolução do Saldo', 'Balance Evolution')}>
+                  <ResponsiveContainer width="100%" height={280}>
+                    <AreaChart data={dashData.balanceSeries} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
+                      <defs>
+                        <linearGradient id="saldoFill" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="var(--color-octane-gold)" stopOpacity={0.35} />
+                          <stop offset="100%" stopColor="var(--color-octane-gold)" stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke={grid} />
+                      <XAxis dataKey="label" tick={axisTick} interval="preserveStartEnd" minTickGap={40} stroke={grid} />
+                      <YAxis tick={axisTick} tickFormatter={eurK} width={54} stroke={grid} />
+                      <RTooltip contentStyle={tipStyle} formatter={(v) => [fmt(v), t('Saldo', 'Balance')]} />
+                      <Area type="monotone" dataKey="saldo" stroke="var(--color-octane-gold)" strokeWidth={2} fill="url(#saldoFill)" />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </ChartCard>
+              )}
+
+              <div className="grid md:grid-cols-2 gap-4">
+                {dashData.allocation.length > 0 && (
+                  <ChartCard title={t('Composição Financeira', 'Financial Composition')}>
+                    <ResponsiveContainer width="100%" height={260}>
+                      <BarChart data={dashData.allocation} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke={grid} vertical={false} />
+                        <XAxis dataKey="name" tick={axisTick} stroke={grid} />
+                        <YAxis tick={axisTick} tickFormatter={eurK} width={54} stroke={grid} />
+                        <RTooltip contentStyle={tipStyle} formatter={(v) => fmt(v)} cursor={{ fill: 'var(--color-octane-border)', opacity: 0.3 }} />
+                        <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                          {dashData.allocation.map((e, i) => {
+                            const c = e.name === t('Capital', 'Capital') ? 'var(--color-octane-gold)'
+                              : e.name === t('Receita', 'Revenue') ? 'var(--color-octane-green)'
+                              : 'var(--color-octane-red)';
+                            return <Cell key={i} fill={c} />;
+                          })}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </ChartCard>
+                )}
+
+                {dashData.statusCounts.length > 0 && (
+                  <ChartCard title={t('Estado das Viaturas', 'Vehicle Status')}>
+                    <ResponsiveContainer width="100%" height={260}>
+                      <PieChart>
+                        <Pie data={dashData.statusCounts} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={90} innerRadius={45} paddingAngle={2}
+                          label={({ name, value }) => `${name}: ${value}`} labelLine={false} fontSize={11}>
+                          {dashData.statusCounts.map((e, i) => <Cell key={i} fill={e.color} />)}
+                        </Pie>
+                        <RTooltip contentStyle={tipStyle} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </ChartCard>
+                )}
+              </div>
+
+              {dashData.marginPerVehicle.length > 0 && (
+                <ChartCard title={t('Margem por Viatura Vendida', 'Margin per Sold Vehicle')}>
+                  <ResponsiveContainer width="100%" height={Math.max(200, dashData.marginPerVehicle.length * 34)}>
+                    <BarChart data={dashData.marginPerVehicle} layout="vertical" margin={{ top: 5, right: 20, left: 10, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke={grid} horizontal={false} />
+                      <XAxis type="number" tick={axisTick} tickFormatter={eurK} stroke={grid} />
+                      <YAxis type="category" dataKey="name" tick={axisTick} width={140} stroke={grid} />
+                      <RTooltip contentStyle={tipStyle} formatter={(v) => [fmt(v), t('Margem', 'Margin')]} cursor={{ fill: 'var(--color-octane-border)', opacity: 0.3 }} />
+                      <Bar dataKey="margem" radius={[0, 4, 4, 0]}>
+                        {dashData.marginPerVehicle.map((e, i) => <Cell key={i} fill={e.margem >= 0 ? 'var(--color-octane-green)' : 'var(--color-octane-red)'} />)}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </ChartCard>
+              )}
+            </div>
+          );
+        })()}
 
         {/* Timeline */}
         {activeTab === 'historico' && timeline.length > 0 && (() => {
