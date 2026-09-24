@@ -391,15 +391,20 @@ export default function InvestorsPage() {
 
                   {/* Invitations */}
                   <div>
-                    <h3 className="text-sm font-semibold text-octane-gold uppercase tracking-wider mb-3">{t('Acesso do Investidor', 'Investor Access')}</h3>
+                    <h3 className="text-sm font-semibold text-octane-gold uppercase tracking-wider mb-1">{t('Acessos do Investidor', 'Investor Access')}</h3>
+                    <p className="text-xs text-octane-gray mb-3">{t('Pode gerar vários acessos (contas separadas) para o mesmo investidor, cada um com o seu email e link próprios.', 'You can create several separate-account accesses for the same investor, each with its own email and link.')}</p>
                     {(invitations[inv.id] || []).map(i => (
-                      <div key={i.id} className="flex items-center justify-between bg-octane-dark rounded-lg px-3 py-2 text-sm mb-2">
-                        <span className="text-octane-white">{i.email}</span>
-                        <span className={`text-xs px-2 py-0.5 rounded ${i.accepted_at ? 'bg-octane-green/10 text-octane-green' : 'bg-octane-gold/10 text-octane-gold'}`}>
+                      <div key={i.id} className="flex items-center gap-2 bg-octane-dark rounded-lg px-3 py-2 text-sm mb-2">
+                        <span className="text-octane-white flex-1 break-all">{i.email}</span>
+                        <span className={`text-xs px-2 py-0.5 rounded whitespace-nowrap ${i.accepted_at ? 'bg-octane-green/10 text-octane-green' : 'bg-octane-gold/10 text-octane-gold'}`}>
                           {i.accepted_at ? t('Ativo', 'Active') : t('Pendente', 'Pending')}
                         </span>
+                        {!i.accepted_at && i.token && (
+                          <button onClick={() => navigator.clipboard.writeText(`${window.location.origin}/invite/${i.token}`)}
+                            className="text-octane-gold text-xs hover:underline whitespace-nowrap">{t('Copiar link', 'Copy link')}</button>
+                        )}
                         {!i.accepted_at && (
-                          <button onClick={() => deleteInvite(inv.id, i.id)} className="text-octane-red text-xs hover:underline ml-3">{t('Cancelar', 'Cancel')}</button>
+                          <button onClick={() => deleteInvite(inv.id, i.id)} className="text-octane-red text-xs hover:underline whitespace-nowrap">{t('Cancelar', 'Cancel')}</button>
                         )}
                       </div>
                     ))}
@@ -423,7 +428,7 @@ export default function InvestorsPage() {
                         className="bg-octane-black border border-octane-border rounded px-3 py-2 text-sm text-octane-white flex-1" />
                       <button onClick={() => sendInvite(inv.id)}
                         className="border border-octane-gold text-octane-gold px-4 py-2 rounded text-sm font-semibold hover:bg-octane-gold hover:text-octane-black transition-colors whitespace-nowrap">
-                        {t('Gerar Convite', 'Generate Invite')}
+                        {t('+ Adicionar acesso', '+ Add access')}
                       </button>
                     </div>
                   </div>
