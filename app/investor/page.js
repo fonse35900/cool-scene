@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import { useLang } from '@/lib/LanguageContext';
@@ -37,6 +37,12 @@ const typeColors = {
 
 const inputCls = "w-full bg-octane-card border border-octane-border rounded-lg px-4 py-3 text-sm text-octane-white focus:ring-2 focus:ring-octane-gold focus:outline-none";
 
+// Movement groups for the transaction-history filter.
+const HIST_GROUPS = {
+  capital: ['contribuicao', 'levantamento'],
+  viaturas: ['compra', 'venda', 'custo_stock', 'despesa_viatura'],
+};
+
 export default function InvestorPage() {
   const [user, setUser] = useState(null);
   const [data, setData] = useState(null);
@@ -45,6 +51,9 @@ export default function InvestorPage() {
   const [settingsForm, setSettingsForm] = useState({ email: '', phone: '', currentPassword: '', newPassword: '', confirmPassword: '' });
   const [settingsMsg, setSettingsMsg] = useState('');
   const [settingsErr, setSettingsErr] = useState('');
+  // Transaction history: filter group ('all' | 'capital' | 'viaturas') and sort.
+  const [histFilter, setHistFilter] = useState('all');
+  const [histSort, setHistSort] = useState({ col: 'date', dir: 'asc' });
   const router = useRouter();
   const { t } = useLang();
 
@@ -90,6 +99,35 @@ export default function InvestorPage() {
       .then(d => { setData(d); setLoading(false); })
       .catch(() => setLoading(false));
   }, [user]);
+
+  const histView = useMemo(() => {
+    const tl = data?.timeline ?? [];
+    const filtered = histFilter === 'all' ? tl : tl.filter(m => HIST_GROUPS[histFilter].includes(m.type));
+    const signed = m => m.sign * m.amount;
+    const val = m => {
+      switch (histSort.col) {
+        case 'date': return m.date ? new Date(m.date).getTime() : 0;
+        case 'type': return m.type;
+        case 'label': return (m.label || '').toLowerCase();
+        case 'amount': return signed(m);
+        case 'balance': return m.balance;
+        default: return 0;
+      }
+    };
+    const sorted = [...filtered].sort((a, b) => {
+      const av = val(a), bv = val(b);
+      if (av < bv) return histSort.dir === 'asc' ? -1 : 1;
+      if (av > bv) return histSort.dir === 'asc' ? 1 : -1;
+      return 0;
+    });
+    const byDate = [...filtered].sort((a, b) => new Date(a.date) - new Date(b.date));
+    return {
+      sorted,
+      count: filtered.length,
+      totalAmount: filtered.reduce((s, m) => s + signed(m), 0),
+      finalBalance: byDate.length ? byDate[byDate.length - 1].balance : 0,
+    };
+  }, [data, histFilter, histSort]);
 
   if (!user || loading) return null;
   if (!data || !data.summary) return (
@@ -184,20 +222,53 @@ export default function InvestorPage() {
         </div>
 
         {/* Timeline */}
-        {timeline.length > 0 && (
+        {timeline.length > 0 && (() => {
+          const arrow = (col) => histSort.col === col ? (histSort.dir === 'asc' ? ' ▲' : ' ▼') : '';
+          const toggleSort = (col) => setHistSort(s => ({ col, dir: s.col === col && s.dir === 'asc' ? 'desc' : 'asc' }));
+          const cols = [
+            { col: 'date', label: t('Data', 'Date') },
+            { col: 'type', label: t('Tipo', 'Type') },
+            { col: 'label', label: t('Descrição', 'Description') },
+            { col: 'amount', label: t('Valor', 'Amount') },
+            { col: 'balance', label: t('Saldo Acumulado', 'Running Balance') },
+          ];
+          return (
           <div>
-            <h2 className="text-lg font-semibold mb-3">{t('Histórico de Movimentos', 'Transaction History')}</h2>
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+              <h2 className="text-lg font-semibold">{t('Histórico de Movimentos', 'Transaction History')}</h2>
+              <div className="flex gap-2">
+                {[
+                  { k: 'all', l: t('Todos', 'All') },
+                  { k: 'viaturas', l: t('Compra e Venda', 'Purchases & Sales') },
+                  { k: 'capital', l: t('Depósitos e Levantamentos', 'Deposits & Withdrawals') },
+                ].map(o => (
+                  <button key={o.k} onClick={() => setHistFilter(o.k)}
+                    className={`px-3 py-1.5 rounded-full text-xs border transition-colors ${
+                      histFilter === o.k
+                        ? 'bg-octane-gold text-octane-black border-octane-gold font-semibold'
+                        : 'border-octane-border text-octane-gray hover:border-octane-gold hover:text-octane-gold'
+                    }`}>
+                    {o.l}
+                  </button>
+                ))}
+              </div>
+            </div>
             <div className="bg-octane-card border border-octane-border rounded-xl overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-octane-border">
-                    {[t('Data', 'Date'), t('Tipo', 'Type'), t('Descrição', 'Description'), t('Valor', 'Amount'), t('Saldo Acumulado', 'Running Balance')].map(h => (
-                      <th key={h} className="text-left p-3 font-medium text-octane-gray text-xs uppercase tracking-wider">{h}</th>
+                    {cols.map(c => (
+                      <th key={c.col} className="text-left p-3 font-medium text-xs uppercase tracking-wider">
+                        <button onClick={() => toggleSort(c.col)}
+                          className={`hover:text-octane-gold transition-colors ${histSort.col === c.col ? 'text-octane-gold' : 'text-octane-gray'}`}>
+                          {c.label}{arrow(c.col)}
+                        </button>
+                      </th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
-                  {timeline.map((m, i) => (
+                  {histView.sorted.map((m, i) => (
                     <tr key={i} className="border-t border-octane-border">
                       <td className="p-3 text-octane-gray whitespace-nowrap">{m.date ? new Date(m.date).toLocaleDateString('pt-PT') : '-'}</td>
                       <td className="p-3">
@@ -214,11 +285,28 @@ export default function InvestorPage() {
                       </td>
                     </tr>
                   ))}
+                  {histView.count === 0 && (
+                    <tr className="border-t border-octane-border"><td colSpan={5} className="p-4 text-center text-octane-gray">{t('Sem movimentos neste filtro', 'No movements in this filter')}</td></tr>
+                  )}
                 </tbody>
+                {histView.count > 0 && (
+                  <tfoot>
+                    <tr className="border-t-2 border-octane-gold/40 bg-octane-dark font-bold">
+                      <td className="p-3 text-octane-white uppercase text-xs tracking-wider whitespace-nowrap">{t('Total', 'Total')} ({histView.count})</td>
+                      <td className="p-3"></td>
+                      <td className="p-3"></td>
+                      <td className={`p-3 whitespace-nowrap ${histView.totalAmount >= 0 ? 'text-octane-green' : 'text-octane-red'}`}>
+                        {histView.totalAmount >= 0 ? '+' : '-'}{fmt(Math.abs(histView.totalAmount))}
+                      </td>
+                      <td className={`p-3 whitespace-nowrap ${histView.finalBalance >= 0 ? 'text-octane-white' : 'text-octane-red'}`}>{fmt(histView.finalBalance)}</td>
+                    </tr>
+                  </tfoot>
+                )}
               </table>
             </div>
           </div>
-        )}
+          );
+        })()}
 
         {/* Stock Vehicles */}
         {stockVehicles.length > 0 && (
