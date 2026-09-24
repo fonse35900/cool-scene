@@ -583,8 +583,8 @@ export default function InvestorPage() {
           );
         })()}
 
-        {/* Investor Vehicles */}
-        {investorVehicles.length > 0 && (
+        {/* Investor Vehicles — shown only within the history tab */}
+        {activeTab === 'historico' && investorVehicles.length > 0 && (
           <div>
             <h2 className="text-lg font-semibold mb-3">{t('Despesas de Viaturas', 'Vehicle Expenses')}</h2>
             <div className="bg-octane-card border border-octane-border rounded-xl overflow-x-auto">
