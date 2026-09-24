@@ -36,7 +36,16 @@ export default function InvestorReportsPage() {
     }) ?? null, [report]),
     '_vehicle'
   );
-  const salesSort = useSort(report?.salesDetails, 'brand');
+  // Quick time-interval filter for the sales detail (last N days by sale date).
+  const [salesDays, setSalesDays] = useState(null);
+  const filteredSales = useMemo(() => {
+    const rows = report?.salesDetails ?? null;
+    if (!rows) return null;
+    if (!salesDays) return rows;
+    const cutoff = Date.now() - salesDays * 86400000;
+    return rows.filter(v => v.sale_date && new Date(v.sale_date).getTime() >= cutoff);
+  }, [report, salesDays]);
+  const salesSort = useSort(filteredSales, 'brand');
 
   // Per-vehicle rentability aggregates (margin, days in stock, TAN).
   const rentability = useMemo(() => {
@@ -309,7 +318,26 @@ export default function InvestorReportsPage() {
 
             {report.salesDetails.length > 0 && (
               <div className="bg-octane-card border border-octane-border rounded-xl">
-                <h2 className="font-semibold p-4 pb-1 text-octane-gold text-sm uppercase tracking-wider">{t('Detalhe de Vendas', 'Sales Detail')}</h2>
+                <div className="flex flex-wrap items-center justify-between gap-3 p-4 pb-1">
+                  <h2 className="font-semibold text-octane-gold text-sm uppercase tracking-wider">{t('Detalhe de Vendas', 'Sales Detail')}</h2>
+                  <div className="flex gap-2">
+                    {[
+                      { l: t('30 dias', '30 days'), d: 30 },
+                      { l: t('90 dias', '90 days'), d: 90 },
+                      { l: t('365 dias', '365 days'), d: 365 },
+                      { l: t('Tudo', 'All'), d: null },
+                    ].map(o => (
+                      <button key={o.l} onClick={() => setSalesDays(o.d)}
+                        className={`px-3 py-1 rounded-full text-xs border transition-colors ${
+                          salesDays === o.d
+                            ? 'bg-octane-gold text-octane-black border-octane-gold font-semibold'
+                            : 'border-octane-border text-octane-gray hover:border-octane-gold hover:text-octane-gold'
+                        }`}>
+                        {o.l}
+                      </button>
+                    ))}
+                  </div>
+                </div>
                 <p className="text-octane-gray text-xs px-4 pb-3">{t('TAN = margem % anualizada face aos dias em stock (margem % × 365 ÷ dias)', 'Nominal rate = margin % annualised over days in stock (margin % × 365 ÷ days)')}</p>
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
@@ -343,6 +371,33 @@ export default function InvestorReportsPage() {
                         </tr>
                       ))}
                     </tbody>
+                    {salesSort.sorted?.length > 0 && (() => {
+                      const rows = salesSort.sorted;
+                      const sum = (k) => rows.reduce((s, r) => s + (r[k] || 0), 0);
+                      const tPurchase = sum('purchase_price'), tCosts = sum('costs'), tSale = sum('sale_price'), tMargin = sum('margin');
+                      const tCostBase = tPurchase + tCosts;
+                      const tMarginPct = tCostBase > 0 ? tMargin / tCostBase * 100 : 0;
+                      const daysRows = rows.filter(r => r.days_in_stock != null);
+                      const avgDays = daysRows.length ? daysRows.reduce((s, r) => s + r.days_in_stock, 0) / daysRows.length : null;
+                      const tanRows = rows.filter(r => r.tan != null);
+                      const avgTan = tanRows.length ? tanRows.reduce((s, r) => s + r.tan, 0) / tanRows.length : null;
+                      return (
+                        <tfoot>
+                          <tr className="border-t-2 border-octane-gold/40 bg-octane-dark font-bold">
+                            <td className="p-3 text-octane-white uppercase text-xs tracking-wider">{t('Total','Total')} ({rows.length})</td>
+                            <td className="p-3"></td>
+                            <td className="p-3"></td>
+                            <td className="p-3 text-octane-white">€{tPurchase.toLocaleString()}</td>
+                            <td className="p-3 text-octane-orange">€{tCosts.toLocaleString()}</td>
+                            <td className="p-3 text-octane-gold">€{tSale.toLocaleString()}</td>
+                            <td className={`p-3 ${tMargin >= 0 ? 'text-octane-green' : 'text-octane-red'}`}>€{tMargin.toLocaleString()}</td>
+                            <td className={`p-3 ${tMarginPct >= 0 ? 'text-octane-green' : 'text-octane-red'}`}>{tMarginPct.toFixed(1)}%</td>
+                            <td className="p-3 text-octane-white">{avgDays != null ? `${Math.round(avgDays)} ${t('méd.','avg')}` : '-'}</td>
+                            <td className={`p-3 ${avgTan == null ? 'text-octane-gray' : avgTan >= 0 ? 'text-octane-green' : 'text-octane-red'}`}>{avgTan != null ? `${avgTan.toFixed(1)}% ${t('méd.','avg')}` : '-'}</td>
+                          </tr>
+                        </tfoot>
+                      );
+                    })()}
                   </table>
                 </div>
               </div>

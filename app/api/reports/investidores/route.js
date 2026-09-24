@@ -106,6 +106,7 @@ export async function GET(req) {
       purchase_price: v.purchase_price, sale_price: v.sale_price,
       costs: v.total_vehicle_costs, margin, margin_percent: marginPercent,
       days_in_stock: daysInStock, tan,
+      sale_date: v.sale_date || v.updated_at,
     };
   });
 
