@@ -10,13 +10,13 @@ export async function GET() {
   let users;
 
   if (user.role === 'admin') {
-    users = await db.prepare('SELECT id, name, email, role, phone, director_id, created_at FROM users').all();
+    users = await db.prepare('SELECT id, name, email, role, phone, director_id, suspended, created_at FROM users WHERE company_id = ?').all(user.company_id);
   } else if (user.role === 'director') {
     users = await db.prepare(
-      'SELECT id, name, email, role, phone, director_id, created_at FROM users WHERE (director_id = ? OR id = ?) AND role != ?'
-    ).all(user.id, user.id, 'admin');
+      'SELECT id, name, email, role, phone, director_id, suspended, created_at FROM users WHERE company_id = ? AND role != ?'
+    ).all(user.company_id, 'admin');
   } else {
-    users = [{ id: user.id, name: user.name, email: user.email, role: user.role, phone: user.phone }];
+    users = [{ id: user.id, name: user.name, email: user.email, role: user.role, phone: user.phone, suspended: user.suspended }];
   }
 
   return NextResponse.json(users);

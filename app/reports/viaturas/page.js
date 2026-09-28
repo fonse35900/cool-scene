@@ -5,8 +5,7 @@ import Navbar from '@/components/Navbar';
 import ReportsTabs from '@/components/ReportsTabs';
 import { useSort, Th, SmallTh } from '@/components/useSort';
 import DateRangeFilter from '@/components/DateRangeFilter';
-
-const roleLabel = { director: 'Diretor', comercial: 'Comercial', admin: 'Administrador', investidor: 'Investidor' };
+import { useLang } from '@/lib/LanguageContext';
 
 function fmt(n) {
   return new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(n ?? 0);
@@ -21,6 +20,8 @@ export default function VehicleReportsPage() {
   const [drillData, setDrillData] = useState(null);
   const [dateRange, setDateRange] = useState({ from: '', to: '', preset: null });
   const router = useRouter();
+  const { t } = useLang();
+  const roleLabel = { director: t('Diretor', 'Director'), comercial: t('Comercial', 'Sales'), admin: t('Administrador', 'Administrator'), investidor: t('Investidor', 'Investor') };
 
   const perUserSort = useSort(report?.perUser, 'name');
   const salesSort = useSort(report?.salesDetails, 'brand');
@@ -74,14 +75,14 @@ export default function VehicleReportsPage() {
     <div className="min-h-screen bg-octane-black">
       <Navbar user={user} />
       <div className="max-w-7xl mx-auto p-6">
-        <h1 className="text-2xl font-bold mb-6 tracking-wide">Relatórios</h1>
+        <h1 className="text-2xl font-bold mb-6 tracking-wide">{t('Relatórios', 'Reports')}</h1>
         <ReportsTabs userRole={user.role} />
 
         <DateRangeFilter value={dateRange} onChange={setDateRange} />
 
         {user.role !== 'comercial' && users.length > 0 && (
           <div className="bg-octane-card border border-octane-border p-4 rounded-xl mb-6">
-            <h2 className="text-xs text-octane-gray uppercase tracking-wider mb-3">Filtrar por utilizador</h2>
+            <h2 className="text-xs text-octane-gray uppercase tracking-wider mb-3">{t('Filtrar por utilizador', 'Filter by user')}</h2>
             <div className="flex flex-wrap gap-2">
               {users.filter(u => u.role !== 'admin' || user.role === 'admin').map(u => (
                 <button key={u.id} onClick={() => toggleUser(u.id)}
@@ -95,7 +96,7 @@ export default function VehicleReportsPage() {
               ))}
               {selectedUsers.length > 0 && (
                 <button onClick={() => setSelectedUsers([])} className="px-3 py-1.5 rounded-full text-sm text-octane-red hover:bg-octane-red/10 transition-colors">
-                  Limpar
+                  {t('Limpar', 'Clear')}
                 </button>
               )}
             </div>
@@ -106,10 +107,10 @@ export default function VehicleReportsPage() {
           <>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
               {[
-                { l: 'Total Viaturas', v: report.summary.totalVehicles },
-                { l: 'Em Stock', v: report.summary.inStock },
-                { l: 'Vendidas', v: report.summary.sold },
-                { l: 'Reservadas', v: report.summary.reserved },
+                { l: t('Total Viaturas', 'Total Vehicles'), v: report.summary.totalVehicles },
+                { l: t('Em Stock', 'In Stock'), v: report.summary.inStock },
+                { l: t('Vendidas', 'Sold'), v: report.summary.sold },
+                { l: t('Reservadas', 'Reserved'), v: report.summary.reserved },
               ].map(s => (
                 <div key={s.l} className="bg-octane-card border border-octane-border p-4 rounded-xl">
                   <p className="text-xs text-octane-gray uppercase tracking-wider mb-1">{s.l}</p>
@@ -120,10 +121,10 @@ export default function VehicleReportsPage() {
 
             <div className="grid md:grid-cols-4 gap-4 mb-6">
               {[
-                { l: 'Total Compras', v: `€${report.summary.totalPurchase.toLocaleString()}`, c: 'text-octane-white' },
-                { l: 'Total Vendas', v: `€${report.summary.totalSales.toLocaleString()}`, c: 'text-octane-gold' },
-                { l: 'Total Custos', v: `€${report.summary.totalCosts.toLocaleString()}`, c: 'text-octane-orange' },
-                { l: 'Margem Bruta', v: `€${report.summary.grossMargin.toLocaleString()}`, c: report.summary.grossMargin >= 0 ? 'text-octane-green' : 'text-octane-red' },
+                { l: t('Total Compras', 'Total Purchases'), v: `€${report.summary.totalPurchase.toLocaleString()}`, c: 'text-octane-white' },
+                { l: t('Total Vendas', 'Total Sales'), v: `€${report.summary.totalSales.toLocaleString()}`, c: 'text-octane-gold' },
+                { l: t('Total Custos', 'Total Costs'), v: `€${report.summary.totalCosts.toLocaleString()}`, c: 'text-octane-orange' },
+                { l: t('Margem Bruta', 'Gross Margin'), v: `€${report.summary.grossMargin.toLocaleString()}`, c: report.summary.grossMargin >= 0 ? 'text-octane-green' : 'text-octane-red' },
               ].map(s => (
                 <div key={s.l} className="bg-octane-card border border-octane-border p-4 rounded-xl">
                   <p className="text-xs text-octane-gray uppercase tracking-wider mb-1">{s.l}</p>
@@ -134,17 +135,17 @@ export default function VehicleReportsPage() {
 
             {user.role !== 'comercial' && report.perUser.length > 0 && (
               <div className="bg-octane-card border border-octane-border rounded-xl mb-6 overflow-x-auto">
-                <h2 className="font-semibold p-4 pb-0 text-octane-gold text-sm uppercase tracking-wider">Por Utilizador</h2>
+                <h2 className="font-semibold p-4 pb-0 text-octane-gold text-sm uppercase tracking-wider">{t('Por Utilizador', 'By User')}</h2>
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-octane-border">
-                      <Th label="Nome" col="name" sort={perUserSort.sort} toggle={perUserSort.toggle} />
-                      <Th label="Papel" col="role" sort={perUserSort.sort} toggle={perUserSort.toggle} />
-                      <Th label="Total Viaturas" col="total_vehicles" sort={perUserSort.sort} toggle={perUserSort.toggle} />
-                      <Th label="Vendidas" col="sold" sort={perUserSort.sort} toggle={perUserSort.toggle} />
-                      <Th label="Receita" col="revenue" sort={perUserSort.sort} toggle={perUserSort.toggle} />
-                      <Th label="Margem (€)" col="margin" sort={perUserSort.sort} toggle={perUserSort.toggle} />
-                      <Th label="Margem (%)" col="margin_percent" sort={perUserSort.sort} toggle={perUserSort.toggle} />
+                      <Th label={t('Nome', 'Name')} col="name" sort={perUserSort.sort} toggle={perUserSort.toggle} />
+                      <Th label={t('Papel', 'Role')} col="role" sort={perUserSort.sort} toggle={perUserSort.toggle} />
+                      <Th label={t('Total Viaturas', 'Total Vehicles')} col="total_vehicles" sort={perUserSort.sort} toggle={perUserSort.toggle} />
+                      <Th label={t('Vendidas', 'Sold')} col="sold" sort={perUserSort.sort} toggle={perUserSort.toggle} />
+                      <Th label={t('Receita', 'Revenue')} col="revenue" sort={perUserSort.sort} toggle={perUserSort.toggle} />
+                      <Th label={t('Margem (€)', 'Margin (€)')} col="margin" sort={perUserSort.sort} toggle={perUserSort.toggle} />
+                      <Th label={t('Margem (%)', 'Margin (%)')} col="margin_percent" sort={perUserSort.sort} toggle={perUserSort.toggle} />
                     </tr>
                   </thead>
                   <tbody>
@@ -172,20 +173,20 @@ export default function VehicleReportsPage() {
                                 {!drillData ? (
                                   <p className="text-octane-gray text-sm">A carregar...</p>
                                 ) : drillSort.sorted?.length === 0 ? (
-                                  <p className="text-octane-gray text-sm">Nenhuma viatura registada.</p>
+                                  <p className="text-octane-gray text-sm">{t('Nenhuma viatura registada.', 'No vehicles registered.')}</p>
                                 ) : (
                                   <table className="w-full text-sm">
                                     <thead>
                                       <tr className="border-b border-octane-border/50">
-                                        <SmallTh label="Viatura" col="_vehicle" sort={drillSort.sort} toggle={drillSort.toggle} />
-                                        <SmallTh label="Matrícula" col="license_plate" sort={drillSort.sort} toggle={drillSort.toggle} />
-                                        <SmallTh label="Estado" col="status" sort={drillSort.sort} toggle={drillSort.toggle} />
-                                        <SmallTh label="Data" col="date" sort={drillSort.sort} toggle={drillSort.toggle} />
-                                        <SmallTh label="Compra" col="purchase_price" sort={drillSort.sort} toggle={drillSort.toggle} />
-                                        <SmallTh label="Custos" col="costs" sort={drillSort.sort} toggle={drillSort.toggle} />
-                                        <SmallTh label="Venda" col="sale_price" sort={drillSort.sort} toggle={drillSort.toggle} />
-                                        <SmallTh label="Margem (€)" col="_margin" sort={drillSort.sort} toggle={drillSort.toggle} />
-                                        <SmallTh label="Margem (%)" col="_pct" sort={drillSort.sort} toggle={drillSort.toggle} />
+                                        <SmallTh label={t('Viatura', 'Vehicle')} col="_vehicle" sort={drillSort.sort} toggle={drillSort.toggle} />
+                                        <SmallTh label={t('Matrícula', 'Plate')} col="license_plate" sort={drillSort.sort} toggle={drillSort.toggle} />
+                                        <SmallTh label={t('Estado', 'Status')} col="status" sort={drillSort.sort} toggle={drillSort.toggle} />
+                                        <SmallTh label={t('Data', 'Date')} col="date" sort={drillSort.sort} toggle={drillSort.toggle} />
+                                        <SmallTh label={t('Compra', 'Purchase')} col="purchase_price" sort={drillSort.sort} toggle={drillSort.toggle} />
+                                        <SmallTh label={t('Custos', 'Costs')} col="costs" sort={drillSort.sort} toggle={drillSort.toggle} />
+                                        <SmallTh label={t('Venda', 'Sale')} col="sale_price" sort={drillSort.sort} toggle={drillSort.toggle} />
+                                        <SmallTh label={t('Margem (€)', 'Margin (€)')} col="_margin" sort={drillSort.sort} toggle={drillSort.toggle} />
+                                        <SmallTh label={t('Margem (%)', 'Margin (%)')} col="_pct" sort={drillSort.sort} toggle={drillSort.toggle} />
                                       </tr>
                                     </thead>
                                     <tbody>
@@ -197,7 +198,7 @@ export default function VehicleReportsPage() {
                                             <span className={`text-xs px-2 py-0.5 rounded font-medium ${
                                               v.status === 'vendido' ? 'bg-octane-green/10 text-octane-green' :
                                               v.status === 'reservado' ? 'bg-octane-gold/10 text-octane-gold' :
-                                              'bg-octane-gray/10 text-octane-gray'}`}>{v.status}</span>
+                                              'bg-octane-gray/10 text-octane-gray'}`}>{({ vendido: t('Vendido','Sold'), reservado: t('Reservado','Reserved'), em_stock: t('Em Stock','In Stock') })[v.status] || v.status}</span>
                                           </td>
                                           <td className="py-2 pr-3 text-octane-gray whitespace-nowrap">{v.date ? new Date(v.date).toLocaleDateString('pt-PT') : '-'}</td>
                                           <td className="py-2 pr-3 text-octane-white">{fmt(v.purchase_price)}</td>
@@ -223,18 +224,20 @@ export default function VehicleReportsPage() {
 
             {report.salesDetails.length > 0 && (
               <div className="bg-octane-card border border-octane-border rounded-xl">
-                <h2 className="font-semibold p-4 pb-0 text-octane-gold text-sm uppercase tracking-wider">Detalhe de Vendas</h2>
+                <h2 className="font-semibold p-4 pb-0 text-octane-gold text-sm uppercase tracking-wider">{t('Detalhe de Vendas', 'Sales Detail')}</h2>
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-octane-border">
-                        <Th label="Viatura" col="brand" sort={salesSort.sort} toggle={salesSort.toggle} />
-                        <Th label="Comercial" col="created_by_name" sort={salesSort.sort} toggle={salesSort.toggle} />
-                        <Th label="Preço Compra" col="purchase_price" sort={salesSort.sort} toggle={salesSort.toggle} />
-                        <Th label="Custos" col="costs" sort={salesSort.sort} toggle={salesSort.toggle} />
-                        <Th label="Preço Venda" col="sale_price" sort={salesSort.sort} toggle={salesSort.toggle} />
-                        <Th label="Margem (€)" col="margin" sort={salesSort.sort} toggle={salesSort.toggle} />
-                        <Th label="Margem (%)" col="margin_percent" sort={salesSort.sort} toggle={salesSort.toggle} />
+                        <Th label={t('Viatura', 'Vehicle')} col="brand" sort={salesSort.sort} toggle={salesSort.toggle} />
+                        <Th label={t('Comercial', 'Salesperson')} col="created_by_name" sort={salesSort.sort} toggle={salesSort.toggle} />
+                        <Th label={t('Data Compra', 'Purchase Date')} col="purchase_date" sort={salesSort.sort} toggle={salesSort.toggle} />
+                        <Th label={t('Preço Compra', 'Purchase Price')} col="purchase_price" sort={salesSort.sort} toggle={salesSort.toggle} />
+                        <Th label={t('Custos', 'Costs')} col="costs" sort={salesSort.sort} toggle={salesSort.toggle} />
+                        <Th label={t('Data Venda', 'Sale Date')} col="sale_date" sort={salesSort.sort} toggle={salesSort.toggle} />
+                        <Th label={t('Preço Venda', 'Sale Price')} col="sale_price" sort={salesSort.sort} toggle={salesSort.toggle} />
+                        <Th label={t('Margem (€)', 'Margin (€)')} col="margin" sort={salesSort.sort} toggle={salesSort.toggle} />
+                        <Th label={t('Margem (%)', 'Margin (%)')} col="margin_percent" sort={salesSort.sort} toggle={salesSort.toggle} />
                       </tr>
                     </thead>
                     <tbody>
@@ -242,8 +245,10 @@ export default function VehicleReportsPage() {
                         <tr key={v.id} className="border-t border-octane-border">
                           <td className="p-3 font-medium text-octane-white">{v.brand} {v.model} ({v.year})</td>
                           <td className="p-3 text-octane-gray">{v.created_by_name}</td>
+                          <td className="p-3 text-octane-gray whitespace-nowrap">{v.purchase_date ? new Date(v.purchase_date).toLocaleDateString('pt-PT') : '-'}</td>
                           <td className="p-3 text-octane-white">€{v.purchase_price.toLocaleString()}</td>
                           <td className="p-3 text-octane-orange">€{v.costs.toLocaleString()}</td>
+                          <td className="p-3 text-octane-gray whitespace-nowrap">{v.sale_date ? new Date(v.sale_date).toLocaleDateString('pt-PT') : '-'}</td>
                           <td className="p-3 text-octane-gold">€{v.sale_price.toLocaleString()}</td>
                           <td className={`p-3 font-medium ${v.margin >= 0 ? 'text-octane-green' : 'text-octane-red'}`}>€{v.margin.toLocaleString()}</td>
                           <td className={`p-3 font-medium ${v.margin_percent >= 0 ? 'text-octane-green' : 'text-octane-red'}`}>{v.margin_percent.toFixed(1)}%</td>

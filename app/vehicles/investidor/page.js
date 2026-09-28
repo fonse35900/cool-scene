@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import VehiclesTabs from '@/components/VehiclesTabs';
 import DateInput from '@/components/DateInput';
+import { useLang } from '@/lib/LanguageContext';
 
 const costTypeLabels = { manutencao: 'Manutenção', revisao: 'Revisão', outro: 'Outro' };
 const inputClass = "w-full bg-octane-dark border border-octane-border rounded-lg px-4 py-3 text-sm text-octane-white focus:ring-2 focus:ring-octane-gold focus:border-octane-gold focus:outline-none";
@@ -19,9 +20,11 @@ export default function InvestorVehiclesPage() {
   const [vehicleDetail, setVehicleDetail] = useState({});
   const [showCostForm, setShowCostForm] = useState(null);
   const [newCost, setNewCost] = useState({ type: 'manutencao', amount: '', description: '', date: '' });
+  const [editingCost, setEditingCost] = useState(null); // { id, vehicleId, type, amount, description, date }
   const [form, setForm] = useState({ brand: '', model: '', year: new Date().getFullYear(), license_plate: '', vin: '', color: '', mileage: '', fuel_type: 'Gasolina', notes: '', investor_id: '' });
   const [error, setError] = useState('');
   const router = useRouter();
+  const { t } = useLang();
 
   useEffect(() => {
     fetch('/api/users/me').then(r => r.ok ? r.json() : Promise.reject()).then(u => {
@@ -90,6 +93,55 @@ export default function InvestorVehiclesPage() {
     loadVehicles();
   }
 
+  async function saveCostEdit() {
+    if (!editingCost) return;
+    await fetch(`/api/vehicles/${editingCost.vehicleId}/costs/${editingCost.id}`, {
+      method: 'PUT', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: editingCost.type,
+        amount: parseFloat(editingCost.amount),
+        description: editingCost.description,
+        date: editingCost.date,
+      }),
+    });
+    setEditingCost(null);
+    loadDetail(editingCost.vehicleId);
+    loadVehicles();
+  }
+
+  async function deleteCost(vehicleId, costId) {
+    if (!confirm(t('Apagar esta despesa?', 'Delete this expense?'))) return;
+    await fetch(`/api/vehicles/${vehicleId}/costs/${costId}`, { method: 'DELETE' });
+    setEditingCost(null);
+    loadDetail(vehicleId);
+    loadVehicles();
+  }
+
+  async function handleDelete(v) {
+    if (!confirm(t(`Apagar a viatura ${v.brand} ${v.model}? Esta ação não pode ser revertida.`, `Delete the vehicle ${v.brand} ${v.model}? This action cannot be undone.`))) return;
+    const res = await fetch(`/api/vehicles/${v.id}`, { method: 'DELETE' });
+    if (res.ok) {
+      if (expanded === v.id) setExpanded(null);
+      loadVehicles();
+    } else {
+      alert((await res.json()).error);
+    }
+  }
+
+  async function toggleForSale(v) {
+    const toStock = v.vehicle_type !== 'stock';
+    const msg = toStock
+      ? t(`Colocar ${v.brand} ${v.model} à venda no stock Octane?`, `List ${v.brand} ${v.model} for sale in the Octane stock?`)
+      : t(`Retirar ${v.brand} ${v.model} do stock Octane (voltar a viatura pessoal)?`, `Remove ${v.brand} ${v.model} from the Octane stock (back to personal vehicle)?`);
+    if (!confirm(msg)) return;
+    const res = await fetch(`/api/vehicles/${v.id}`, {
+      method: 'PUT', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...v, vehicle_type: toStock ? 'stock' : 'investidor' }),
+    });
+    if (res.ok) { loadDetail(v.id); loadVehicles(); }
+    else alert((await res.json()).error);
+  }
+
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
   if (!user) return null;
@@ -98,46 +150,46 @@ export default function InvestorVehiclesPage() {
     <div className="min-h-screen bg-octane-black">
       <Navbar user={user} />
       <div className="max-w-7xl mx-auto p-6">
-        <h1 className="text-2xl font-bold mb-6 tracking-wide">Viaturas</h1>
+        <h1 className="text-2xl font-bold mb-6 tracking-wide">{t('Viaturas','Vehicles')}</h1>
         <VehiclesTabs userRole={user.role} />
 
         <div className="flex justify-between items-center mb-6">
           <div className="flex items-center gap-3">
             <select value={filterInvestor} onChange={e => setFilterInvestor(e.target.value)}
               className="bg-octane-card border border-octane-border rounded-lg px-3 py-2 text-sm text-octane-white">
-              <option value="">Todos os investidores</option>
+              <option value="">{t('Todos os investidores','All investors')}</option>
               {investors.map(inv => <option key={inv.id} value={inv.id}>{inv.name}</option>)}
             </select>
           </div>
           <button onClick={() => setShowForm(!showForm)}
             className="bg-octane-gold text-octane-black px-4 py-2 rounded-lg hover:bg-octane-gold-light text-sm font-semibold transition-colors">
-            {showForm ? 'Cancelar' : '+ Nova Viatura de Investidor'}
+            {showForm ? t('Cancelar','Cancel') : t('+ Nova Viatura de Investidor','+ New Investor Vehicle')}
           </button>
         </div>
 
         {showForm && (
           <form onSubmit={handleCreate} className="bg-octane-card border border-octane-border p-6 rounded-xl mb-6 space-y-5">
             <div className="flex items-center gap-2 mb-2">
-              <span className="bg-octane-gold/15 text-octane-gold border border-octane-gold/30 text-xs px-2 py-1 rounded-full font-medium">Viatura de Investidor</span>
-              <span className="text-octane-gray text-xs">Não entra no stock Octane</span>
+              <span className="bg-octane-gold/15 text-octane-gold border border-octane-gold/30 text-xs px-2 py-1 rounded-full font-medium">{t('Viatura de Investidor','Investor Vehicle')}</span>
+              <span className="text-octane-gray text-xs">{t('Não entra no stock Octane','Not part of Octane stock')}</span>
             </div>
             {error && <div className="bg-octane-red/10 border border-octane-red/30 text-octane-red p-3 rounded text-sm">{error}</div>}
             <div className="grid grid-cols-2 gap-4">
               <div className="col-span-2 md:col-span-1">
-                <label className={labelClass}>Investidor *</label>
+                <label className={labelClass}>{t('Investidor','Investor')} *</label>
                 <select value={form.investor_id} onChange={e => set('investor_id', e.target.value)} required className={inputClass}>
-                  <option value="">Selecionar investidor</option>
+                  <option value="">{t('Selecionar investidor','Select investor')}</option>
                   {investors.map(inv => <option key={inv.id} value={inv.id}>{inv.name}</option>)}
                 </select>
               </div>
               {[
-                { k: 'brand', l: 'Marca', required: true },
-                { k: 'model', l: 'Modelo', required: true },
-                { k: 'year', l: 'Ano', type: 'number', required: true },
-                { k: 'license_plate', l: 'Matrícula' },
+                { k: 'brand', l: t('Marca','Make'), required: true },
+                { k: 'model', l: t('Modelo','Model'), required: true },
+                { k: 'year', l: t('Ano','Year'), type: 'number', required: true },
+                { k: 'license_plate', l: t('Matrícula','Plate') },
                 { k: 'vin', l: 'VIN' },
-                { k: 'color', l: 'Cor' },
-                { k: 'mileage', l: 'Quilometragem', type: 'number' },
+                { k: 'color', l: t('Cor','Colour') },
+                { k: 'mileage', l: t('Quilometragem','Mileage'), type: 'number' },
               ].map(f => (
                 <div key={f.k}>
                   <label className={labelClass}>{f.l}</label>
@@ -146,19 +198,19 @@ export default function InvestorVehiclesPage() {
                 </div>
               ))}
               <div>
-                <label className={labelClass}>Combustível</label>
+                <label className={labelClass}>{t('Combustível','Fuel')}</label>
                 <select value={form.fuel_type} onChange={e => set('fuel_type', e.target.value)} className={inputClass}>
                   {['Gasolina', 'Gasóleo', 'Híbrido', 'Elétrico', 'GPL'].map(f => <option key={f}>{f}</option>)}
                 </select>
               </div>
             </div>
             <div>
-              <label className={labelClass}>Observações</label>
+              <label className={labelClass}>{t('Observações','Notes')}</label>
               <textarea value={form.notes} onChange={e => set('notes', e.target.value)} rows={2} className={inputClass} />
             </div>
             <div className="flex gap-3">
-              <button type="submit" className="bg-octane-gold text-octane-black px-6 py-2.5 rounded-lg hover:bg-octane-gold-light font-semibold transition-colors">Guardar</button>
-              <button type="button" onClick={() => setShowForm(false)} className="border border-octane-border text-octane-gray hover:text-octane-white px-6 py-2.5 rounded-lg transition-colors">Cancelar</button>
+              <button type="submit" className="bg-octane-gold text-octane-black px-6 py-2.5 rounded-lg hover:bg-octane-gold-light font-semibold transition-colors">{t('Guardar','Save')}</button>
+              <button type="button" onClick={() => setShowForm(false)} className="border border-octane-border text-octane-gray hover:text-octane-white px-6 py-2.5 rounded-lg transition-colors">{t('Cancelar','Cancel')}</button>
             </div>
           </form>
         )}
@@ -166,7 +218,7 @@ export default function InvestorVehiclesPage() {
         <div className="space-y-3">
           {vehicles.length === 0 && (
             <div className="bg-octane-card border border-octane-border rounded-xl p-8 text-center text-octane-gray">
-              Nenhuma viatura com investidor atribuído.
+              {t('Nenhuma viatura com investidor atribuído.','No vehicles with an investor assigned.')}
             </div>
           )}
           {vehicles.map(v => (
@@ -187,10 +239,10 @@ export default function InvestorVehiclesPage() {
                       v.status === 'reservado' ? 'bg-octane-gold/10 text-octane-gold border-octane-gold/30' :
                       'bg-octane-gray/10 text-octane-gray border-octane-gray/30'
                     }`}>
-                      Stock · {v.status === 'em_stock' ? 'Em Stock' : v.status === 'vendido' ? 'Vendido' : 'Reservado'}
+                      {t('Stock','Stock')} · {v.status === 'em_stock' ? t('Em Stock','In Stock') : v.status === 'vendido' ? t('Vendido','Sold') : t('Reservado','Reserved')}
                     </span>
                   ) : (
-                    <span className="bg-octane-orange/10 text-octane-orange border border-octane-orange/30 text-xs px-2 py-0.5 rounded-full">Viatura Pessoal</span>
+                    <span className="bg-octane-orange/10 text-octane-orange border border-octane-orange/30 text-xs px-2 py-0.5 rounded-full">{t('Viatura Pessoal','Personal Vehicle')}</span>
                   )}
                 </div>
                 <div className="flex items-center gap-6 text-sm">
@@ -202,13 +254,31 @@ export default function InvestorVehiclesPage() {
                   )}
                   {v.vehicle_type === 'stock' && v.sale_price && (
                     <div className="text-right">
-                      <p className="text-octane-gray text-xs">Venda</p>
+                      <p className="text-octane-gray text-xs">{t('Venda','Sale')}</p>
                       <p className="text-octane-gold font-semibold">€{v.sale_price.toLocaleString()}</p>
                     </div>
                   )}
                   <div className="text-right">
-                    <p className="text-octane-gray text-xs">Custos</p>
+                    <p className="text-octane-gray text-xs">{t('Custos','Costs')}</p>
                     <p className="text-octane-orange font-semibold">€{v.total_costs.toLocaleString()}</p>
+                  </div>
+                  <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
+                    <button onClick={() => toggleForSale(v)}
+                      className={`text-xs px-2.5 py-1 rounded border transition-colors ${
+                        v.vehicle_type === 'stock'
+                          ? 'border-octane-green/40 text-octane-green hover:bg-octane-green/10'
+                          : 'border-octane-gold/50 text-octane-gold hover:bg-octane-gold hover:text-octane-black'
+                      }`}>
+                      {v.vehicle_type === 'stock' ? t('✓ No stock','✓ In stock') : t('+ Colocar à venda','+ List for sale')}
+                    </button>
+                    <button onClick={() => router.push(`/vehicles/${v.id}?edit=1&from=investidor`)}
+                      className="text-xs px-2.5 py-1 rounded border border-octane-border text-octane-gray hover:border-octane-gold hover:text-octane-gold transition-colors">
+                      {t('Editar','Edit')}
+                    </button>
+                    <button onClick={() => handleDelete(v)}
+                      className="text-xs px-2.5 py-1 rounded border border-octane-red/40 text-octane-red hover:bg-octane-red/10 transition-colors">
+                      {t('Apagar','Delete')}
+                    </button>
                   </div>
                   <span className="text-octane-gray">{expanded === v.id ? '▲' : '▼'}</span>
                 </div>
@@ -218,17 +288,17 @@ export default function InvestorVehiclesPage() {
                 <div className="border-t border-octane-border p-4">
                   <div className="grid md:grid-cols-2 gap-6">
                     <div>
-                      <h3 className="text-xs text-octane-gray uppercase tracking-wider mb-3">Dados da Viatura</h3>
+                      <h3 className="text-xs text-octane-gray uppercase tracking-wider mb-3">{t('Dados da Viatura','Vehicle Details')}</h3>
                       <dl className="space-y-2 text-sm">
                         {[
-                          ['VIN', v.vin], ['Cor', v.color],
-                          ['Quilometragem', v.mileage ? `${v.mileage.toLocaleString()} km` : null],
-                          ['Combustível', v.fuel_type], ['Registado por', v.created_by_name],
+                          ['VIN', v.vin], [t('Cor','Colour'), v.color],
+                          [t('Quilometragem','Mileage'), v.mileage ? `${v.mileage.toLocaleString()} km` : null],
+                          [t('Combustível','Fuel'), v.fuel_type], [t('Registado por','Registered by'), v.created_by_name],
                           ...(v.vehicle_type === 'stock' ? [
-                            ['Preço Compra', `€${(v.purchase_price || 0).toLocaleString()}`],
-                            ...(v.sale_price ? [['Preço Venda', `€${v.sale_price.toLocaleString()}`]] : []),
+                            [t('Preço Compra','Purchase Price'), `€${(v.purchase_price || 0).toLocaleString()}`],
+                            ...(v.sale_price ? [[t('Preço Venda','Sale Price'), `€${v.sale_price.toLocaleString()}`]] : []),
                           ] : []),
-                          ['Observações', v.notes],
+                          [t('Observações','Notes'), v.notes],
                         ].filter(([, val]) => val).map(([l, val]) => (
                           <div key={l} className="flex justify-between border-b border-octane-border/30 pb-1">
                             <dt className="text-octane-gray">{l}</dt>
@@ -239,10 +309,10 @@ export default function InvestorVehiclesPage() {
                     </div>
                     <div>
                       <div className="flex justify-between items-center mb-3">
-                        <h3 className="text-xs text-octane-gray uppercase tracking-wider">Despesas</h3>
+                        <h3 className="text-xs text-octane-gray uppercase tracking-wider">{t('Despesas','Expenses')}</h3>
                         <button onClick={() => setShowCostForm(showCostForm === v.id ? null : v.id)}
                           className="text-octane-gold text-sm hover:text-octane-gold-light transition-colors">
-                          + Adicionar Despesa
+                          {t('+ Adicionar Despesa','+ Add Expense')}
                         </button>
                       </div>
 
@@ -250,29 +320,29 @@ export default function InvestorVehiclesPage() {
                         <div className="bg-octane-dark border border-octane-border p-3 rounded-lg mb-3 space-y-2">
                           <select value={newCost.type} onChange={e => setNewCost(c => ({ ...c, type: e.target.value }))}
                             className="w-full bg-octane-card border border-octane-border rounded px-3 py-2 text-sm text-octane-white">
-                            <option value="manutencao">Manutenção</option>
-                            <option value="revisao">Revisão</option>
-                            <option value="outro">Outro</option>
+                            <option value="manutencao">{t('Manutenção','Maintenance')}</option>
+                            <option value="revisao">{t('Revisão','Service')}</option>
+                            <option value="outro">{t('Outro','Other')}</option>
                           </select>
-                          <input type="number" step="0.01" placeholder="Valor (€)" value={newCost.amount}
+                          <input type="number" step="0.01" placeholder={t('Valor (€)','Amount (€)')} value={newCost.amount}
                             onChange={e => setNewCost(c => ({ ...c, amount: e.target.value }))}
                             className="w-full bg-octane-card border border-octane-border rounded px-3 py-2 text-sm text-octane-white" />
                           <div>
-                            <label className="block text-xs text-octane-gray mb-1">Data</label>
+                            <label className="block text-xs text-octane-gray mb-1">{t('Data','Date')}</label>
                             <DateInput value={newCost.date} onChange={val => setNewCost(c => ({ ...c, date: val }))}
                               className="w-full bg-octane-card border border-octane-border rounded px-3 py-2 text-sm text-octane-white" />
                           </div>
-                          <textarea placeholder="Descrição / Observações" value={newCost.description}
+                          <textarea placeholder={t('Descrição / Observações','Description / Notes')} value={newCost.description}
                             onChange={e => setNewCost(c => ({ ...c, description: e.target.value }))}
                             className="w-full bg-octane-card border border-octane-border rounded px-3 py-2 text-sm text-octane-white" rows={2} />
                           <div className="flex gap-2">
                             <button onClick={() => addCost(v.id)}
                               className="bg-octane-gold text-octane-black px-4 py-1.5 rounded text-sm font-semibold hover:bg-octane-gold-light transition-colors">
-                              Guardar
+                              {t('Guardar','Save')}
                             </button>
                             <button onClick={() => setShowCostForm(null)}
                               className="border border-octane-border text-octane-gray px-4 py-1.5 rounded text-sm hover:text-octane-white transition-colors">
-                              Cancelar
+                              {t('Cancelar','Cancel')}
                             </button>
                           </div>
                         </div>
@@ -282,12 +352,45 @@ export default function InvestorVehiclesPage() {
                         <div className="space-y-2">
                           {vehicleDetail[v.id].costs.map(c => (
                             <div key={c.id} className="border-b border-octane-border/30 pb-2 text-sm">
-                              <div className="flex justify-between">
-                                <span className="font-medium text-octane-white">{costTypeLabels[c.type]}</span>
-                                <span className="font-medium text-octane-orange">€{c.amount.toLocaleString()}</span>
-                              </div>
-                              {c.description && <p className="text-octane-gray text-xs mt-0.5">{c.description}</p>}
-                              <p className="text-octane-gray/50 text-xs">{new Date(c.date).toLocaleDateString('pt-PT')}</p>
+                              {editingCost && editingCost.id === c.id ? (
+                                <div className="space-y-2 bg-octane-card border border-octane-border p-2 rounded-lg">
+                                  <div className="grid grid-cols-2 gap-2">
+                                    <select value={editingCost.type} onChange={e => setEditingCost(ec => ({ ...ec, type: e.target.value }))}
+                                      className="w-full bg-octane-black border border-octane-border rounded px-2 py-1.5 text-sm text-octane-white">
+                                      <option value="manutencao">{t('Manutenção','Maintenance')}</option>
+                                      <option value="revisao">{t('Revisão','Service')}</option>
+                                      <option value="outro">{t('Outro','Other')}</option>
+                                    </select>
+                                    <input type="number" step="0.01" value={editingCost.amount}
+                                      onChange={e => setEditingCost(ec => ({ ...ec, amount: e.target.value }))}
+                                      className="w-full bg-octane-black border border-octane-border rounded px-2 py-1.5 text-sm text-octane-white" />
+                                  </div>
+                                  <DateInput value={(editingCost.date || '').split('T')[0]} onChange={val => setEditingCost(ec => ({ ...ec, date: val }))}
+                                    className="w-full bg-octane-black border border-octane-border rounded px-2 py-1.5 text-sm text-octane-white" />
+                                  <textarea value={editingCost.description || ''} onChange={e => setEditingCost(ec => ({ ...ec, description: e.target.value }))}
+                                    placeholder={t('Descrição / Observações','Description / Notes')}
+                                    className="w-full bg-octane-black border border-octane-border rounded px-2 py-1.5 text-sm text-octane-white" rows={2} />
+                                  <div className="flex gap-2">
+                                    <button onClick={saveCostEdit} className="bg-octane-gold text-octane-black px-3 py-1 rounded text-xs font-semibold hover:bg-octane-gold-light transition-colors">{t('Guardar','Save')}</button>
+                                    <button onClick={() => setEditingCost(null)} className="border border-octane-border text-octane-gray px-3 py-1 rounded text-xs hover:text-octane-white transition-colors">{t('Cancelar','Cancel')}</button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <>
+                                  <div className="flex justify-between items-start">
+                                    <span className="font-medium text-octane-white">{t(costTypeLabels[c.type], { manutencao:'Maintenance', revisao:'Service', outro:'Other' }[c.type])}</span>
+                                    <div className="flex items-center gap-2">
+                                      <span className="font-medium text-octane-orange">€{c.amount.toLocaleString()}</span>
+                                      <button onClick={() => setEditingCost({ id: c.id, vehicleId: v.id, type: c.type, amount: c.amount, description: c.description || '', date: c.date })}
+                                        className="text-octane-gray hover:text-octane-gold text-xs" title={t('Editar','Edit')}>✎</button>
+                                      <button onClick={() => deleteCost(v.id, c.id)}
+                                        className="text-octane-gray hover:text-octane-red text-xs" title={t('Apagar','Delete')}>✕</button>
+                                    </div>
+                                  </div>
+                                  {c.description && <p className="text-octane-gray text-xs mt-0.5">{c.description}</p>}
+                                  <p className="text-octane-gray/50 text-xs">{new Date(c.date).toLocaleDateString('pt-PT')}</p>
+                                </>
+                              )}
                             </div>
                           ))}
                           <div className="flex justify-between font-semibold text-sm pt-1">
@@ -296,7 +399,7 @@ export default function InvestorVehiclesPage() {
                           </div>
                         </div>
                       ) : (
-                        <p className="text-octane-gray text-sm">Sem despesas registadas</p>
+                        <p className="text-octane-gray text-sm">{t('Sem despesas registadas', 'No expenses recorded')}</p>
                       )}
                     </div>
                   </div>

@@ -15,16 +15,13 @@ export async function GET(req) {
   const dateCondition = (dateFrom ? ' AND v.created_at >= ?' : '') + (dateTo ? ' AND v.created_at <= ?' : '');
   const dateParams = [...(dateFrom ? [dateFrom] : []), ...(dateTo ? [dateTo + ' 23:59:59'] : [])];
 
-  let userIds;
-  if (user.role === 'director') {
-    userIds = (await db.prepare('SELECT id FROM users WHERE director_id = ? OR id = ?').all(user.id, user.id)).map(u => u.id);
-  } else {
-    userIds = (await db.prepare('SELECT id FROM users').all()).map(u => u.id);
-  }
+  // Company-scoped: all users of the current user's company
+  let userIds = (await db.prepare('SELECT id FROM users WHERE company_id = ?').all(user.company_id)).map(u => u.id);
+  if (userIds.length === 0) userIds = [-1];
 
   const placeholders = userIds.map(() => '?').join(',');
-  const investorCondition = investorId ? ' AND i.id = ?' : '';
-  const investorParams = investorId ? [investorId] : [];
+  const investorCondition = ' AND i.company_id = ?' + (investorId ? ' AND i.id = ?' : '');
+  const investorParams = [user.company_id, ...(investorId ? [investorId] : [])];
 
   const perInvestor = await db.prepare(`
     SELECT
@@ -80,15 +77,36 @@ export async function GET(req) {
     ? await db.prepare(soldQuery).all(investorId, ...userIds, ...dateParams)
     : await db.prepare(soldQuery).all(...userIds, ...dateParams);
 
+  // Days between two dates (whole days), or null if not computable.
+  const daysBetween = (start, end) => {
+    if (!start || !end) return null;
+    const a = new Date(start), b = new Date(end);
+    if (isNaN(a) || isNaN(b)) return null;
+    const d = Math.round((b - a) / 86400000);
+    return d >= 0 ? d : null;
+  };
+
   const salesDetails = soldVehicles.map(v => {
     const totalCost = v.purchase_price + v.total_vehicle_costs;
     const margin = v.sale_price - totalCost;
     const marginPercent = totalCost > 0 ? (margin / totalCost * 100) : 0;
+    // Time in stock: prefer explicit purchase/sale dates, fall back to the
+    // record timestamps (created = entered stock, updated = sold).
+    const start = v.purchase_date || v.created_at;
+    const end = v.sale_date || v.updated_at;
+    const daysInStock = daysBetween(start, end);
+    // Taxa Anual Nominal: linear annualisation of the margin% over the holding
+    // period. A car that made 10% in 73 days ≈ 50% TAN (10% × 365/73).
+    const tan = (daysInStock && daysInStock > 0 && totalCost > 0)
+      ? marginPercent * (365 / daysInStock)
+      : null;
     return {
       id: v.id, brand: v.brand, model: v.model, year: v.year,
       investor_name: v.investor_name, created_by_name: v.created_by_name,
       purchase_price: v.purchase_price, sale_price: v.sale_price,
       costs: v.total_vehicle_costs, margin, margin_percent: marginPercent,
+      days_in_stock: daysInStock, tan,
+      sale_date: v.sale_date || v.updated_at,
     };
   });
 
