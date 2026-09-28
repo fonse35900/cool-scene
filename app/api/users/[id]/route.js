@@ -9,7 +9,9 @@ function canManage(actor, target) {
   if (actor.id === target.id) return 'self';
   if (actor.role === 'admin') return 'full';
   if (actor.role === 'director') {
-    if ((target.role === 'comercial' || target.role === 'investidor') && target.director_id === actor.id) {
+    // A director manages every sales/investor account in their own company,
+    // not only the ones they personally invited.
+    if ((target.role === 'comercial' || target.role === 'investidor') && target.company_id === actor.company_id) {
       return 'full';
     }
   }
@@ -24,7 +26,7 @@ export async function PUT(req, { params }) {
   const targetId = parseInt(id);
   const db = getDb();
 
-  const target = await db.prepare('SELECT id, name, email, role, director_id FROM users WHERE id = ?').get(targetId);
+  const target = await db.prepare('SELECT id, name, email, role, director_id, company_id FROM users WHERE id = ?').get(targetId);
   if (!target) return NextResponse.json({ error: 'Utilizador não encontrado' }, { status: 404 });
 
   const perm = canManage(actor, target);
@@ -72,7 +74,7 @@ export async function DELETE(req, { params }) {
   const targetId = parseInt(id);
   const db = getDb();
 
-  const target = await db.prepare('SELECT id, name, email, role, director_id FROM users WHERE id = ?').get(targetId);
+  const target = await db.prepare('SELECT id, name, email, role, director_id, company_id FROM users WHERE id = ?').get(targetId);
   if (!target) return NextResponse.json({ error: 'Utilizador não encontrado' }, { status: 404 });
 
   const perm = canManage(actor, target);

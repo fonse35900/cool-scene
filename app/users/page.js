@@ -19,7 +19,9 @@ function canManage(actor, target) {
   if (actor.id === target.id) return 'self';
   if (actor.role === 'admin') return 'full';
   if (actor.role === 'director') {
-    if ((target.role === 'comercial' || target.role === 'investidor') && target.director_id === actor.id) return 'full';
+    // The users list is already scoped to the actor's company, so a director
+    // manages every sales/investor account shown, not only their own invites.
+    if (target.role === 'comercial' || target.role === 'investidor') return 'full';
   }
   return false;
 }
