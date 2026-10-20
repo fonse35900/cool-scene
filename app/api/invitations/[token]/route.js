@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import getDb from '@/lib/db';
 import { signToken } from '@/lib/auth';
-import { planLimits } from '@/lib/plans';
+import { planLimits, trialInfo } from '@/lib/plans';
 
 export async function GET(req, { params }) {
   const { token } = await params;
@@ -51,10 +51,13 @@ export async function POST(req, { params }) {
     joinCompanyId = inviteDirector?.company_id ?? invite.company_id ?? null;
   }
   if (joinCompanyId) {
-    const company = await db.prepare('SELECT plan FROM companies WHERE id = ?').get(joinCompanyId);
+    const company = await db.prepare('SELECT plan, trial_ends_at FROM companies WHERE id = ?').get(joinCompanyId);
+    if (trialInfo(company).expired) {
+      return NextResponse.json({ error: 'O período de avaliação da empresa terminou. Contacte o administrador.' }, { status: 403 });
+    }
     const limits = planLimits(company?.plan);
     if (Number.isFinite(limits.maxUsers)) {
-      const { c: count } = await db.prepare('SELECT COUNT(*) as c FROM users WHERE company_id = ?').get(joinCompanyId);
+      const { c: count } = await db.prepare('SELECT COUNT(*) as c FROM users WHERE company_id = ? AND is_demo = 0').get(joinCompanyId);
       if (count >= limits.maxUsers) {
         return NextResponse.json({ error: `Limite do plano ${limits.name} atingido (${limits.maxUsers} utilizadores). O gestor deve atualizar o plano.` }, { status: 403 });
       }

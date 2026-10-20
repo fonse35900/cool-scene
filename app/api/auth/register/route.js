@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs';
 import getDb from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth';
 import { recordAudit, fetchRow } from '@/lib/audit';
-import { planLimits } from '@/lib/plans';
+import { planLimits, trialInfo } from '@/lib/plans';
 
 export async function POST(req) {
   const currentUser = await getCurrentUser();
@@ -24,11 +24,15 @@ export async function POST(req) {
   const db = getDb();
   const hash = bcrypt.hashSync(password, 10);
 
-  // Enforce Free-plan user cap per company.
-  const company = await db.prepare('SELECT plan FROM companies WHERE id = ?').get(currentUser.company_id);
+  // Enforce Free-plan user cap and trial status per company.
+  const company = await db.prepare('SELECT plan, trial_ends_at FROM companies WHERE id = ?').get(currentUser.company_id);
+  const trial = trialInfo(company);
+  if (trial.expired) {
+    return NextResponse.json({ error: 'O período de avaliação terminou. Contacte o administrador para atualizar o plano.' }, { status: 403 });
+  }
   const limits = planLimits(company?.plan);
   if (Number.isFinite(limits.maxUsers)) {
-    const { c: count } = await db.prepare('SELECT COUNT(*) as c FROM users WHERE company_id = ?').get(currentUser.company_id);
+    const { c: count } = await db.prepare('SELECT COUNT(*) as c FROM users WHERE company_id = ? AND is_demo = 0').get(currentUser.company_id);
     if (count >= limits.maxUsers) {
       return NextResponse.json({ error: `Limite do plano ${limits.name} atingido (${limits.maxUsers} utilizadores). Atualize o plano para adicionar mais.` }, { status: 403 });
     }

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import getDb from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth';
+import { trialEndFromNow, TRIAL_DAYS } from '@/lib/plans';
 
 // List companies. Admin sees all; others see only their own company.
 export async function GET() {
@@ -65,19 +66,40 @@ export async function PUT(req) {
   return NextResponse.json({ success: true });
 }
 
-// Suspend / reactivate a company (admin only). A suspended company's users
-// cannot log in.
+// Suspend / reactivate a company, change its plan, or extend its trial
+// (ASMS admin only). Plan/trial changes never touch the company's data.
 export async function PATCH(req) {
   const user = await getCurrentUser();
   if (!user || user.role !== 'admin') return NextResponse.json({ error: 'Sem permissão' }, { status: 403 });
 
-  const { id, suspended } = await req.json();
+  const { id, suspended, plan, extend_trial } = await req.json();
   if (!id) return NextResponse.json({ error: 'ID obrigatório' }, { status: 400 });
-  if (Number(id) === 1) return NextResponse.json({ error: 'Não é possível suspender esta empresa' }, { status: 400 });
 
   const db = getDb();
-  await db.prepare('UPDATE companies SET suspended = ? WHERE id = ?').run(suspended ? 1 : 0, id);
-  return NextResponse.json({ success: true });
+
+  // Change plan: free -> pro/enterprise (clears the trial) or back to free.
+  if (plan !== undefined) {
+    const valid = ['free', 'pro', 'enterprise'];
+    if (!valid.includes(plan)) return NextResponse.json({ error: 'Plano inválido' }, { status: 400 });
+    // Paid plans have no trial deadline; moving to free (re)starts a trial window.
+    const trialEnds = plan === 'free' ? trialEndFromNow() : null;
+    await db.prepare('UPDATE companies SET plan = ?, trial_ends_at = ? WHERE id = ?').run(plan, trialEnds, id);
+    return NextResponse.json({ success: true });
+  }
+
+  // Extend the trial by another TRIAL_DAYS from today (special cases).
+  if (extend_trial) {
+    await db.prepare("UPDATE companies SET plan = 'free', trial_ends_at = ? WHERE id = ?").run(trialEndFromNow(TRIAL_DAYS), id);
+    return NextResponse.json({ success: true });
+  }
+
+  if (suspended !== undefined) {
+    if (Number(id) === 1) return NextResponse.json({ error: 'Não é possível suspender esta empresa' }, { status: 400 });
+    await db.prepare('UPDATE companies SET suspended = ? WHERE id = ?').run(suspended ? 1 : 0, id);
+    return NextResponse.json({ success: true });
+  }
+
+  return NextResponse.json({ error: 'Nada para alterar' }, { status: 400 });
 }
 
 // Delete a company and all of its data (admin only).
