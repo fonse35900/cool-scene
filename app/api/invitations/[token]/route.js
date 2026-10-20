@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import getDb from '@/lib/db';
 import { signToken } from '@/lib/auth';
+import { planLimits } from '@/lib/plans';
 
 export async function GET(req, { params }) {
   const { token } = await params;
@@ -42,6 +43,23 @@ export async function POST(req, { params }) {
 
   const hash = bcrypt.hashSync(password, 10);
   const role = invite.role || 'investidor';
+
+  // Determine the company this account will join and enforce the Free-plan cap.
+  let joinCompanyId = invite.company_id;
+  if (role !== 'director') {
+    const inviteDirector = await db.prepare('SELECT company_id FROM users WHERE id = ?').get(invite.director_id);
+    joinCompanyId = inviteDirector?.company_id ?? invite.company_id ?? null;
+  }
+  if (joinCompanyId) {
+    const company = await db.prepare('SELECT plan FROM companies WHERE id = ?').get(joinCompanyId);
+    const limits = planLimits(company?.plan);
+    if (Number.isFinite(limits.maxUsers)) {
+      const { c: count } = await db.prepare('SELECT COUNT(*) as c FROM users WHERE company_id = ?').get(joinCompanyId);
+      if (count >= limits.maxUsers) {
+        return NextResponse.json({ error: `Limite do plano ${limits.name} atingido (${limits.maxUsers} utilizadores). O gestor deve atualizar o plano.` }, { status: 403 });
+      }
+    }
+  }
 
   let result;
   if (role === 'director') {
