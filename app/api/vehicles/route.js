@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import getDb from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth';
 import { recordAudit, fetchRow } from '@/lib/audit';
+import { planLimits } from '@/lib/plans';
 
 export async function GET(req) {
   const user = await getCurrentUser();
@@ -65,6 +66,16 @@ export async function POST(req) {
 
   const data = await req.json();
   const db = getDb();
+
+  // Enforce Free-plan vehicle cap per company.
+  const company = await db.prepare('SELECT plan FROM companies WHERE id = ?').get(user.company_id);
+  const limits = planLimits(company?.plan);
+  if (Number.isFinite(limits.maxVehicles)) {
+    const { c: count } = await db.prepare('SELECT COUNT(*) as c FROM vehicles WHERE company_id = ?').get(user.company_id);
+    if (count >= limits.maxVehicles) {
+      return NextResponse.json({ error: `Limite do plano ${limits.name} atingido (${limits.maxVehicles} viaturas). Atualize o plano para adicionar mais.` }, { status: 403 });
+    }
+  }
 
   const vehicleType = (user.role !== 'comercial' && data.vehicle_type === 'investidor') ? 'investidor' : 'stock';
 

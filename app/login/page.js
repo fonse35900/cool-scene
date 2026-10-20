@@ -66,6 +66,10 @@ export default function LoginPage() {
             {t('Entrar', 'Sign in')}
           </button>
         </form>
+        <p className="text-center text-sm text-octane-gray mt-6">
+          {t('Ainda não tem conta?', "Don't have an account?")}{' '}
+          <a href="/register" className="text-octane-gold font-semibold hover:underline">{t('Criar conta', 'Create account')}</a>
+        </p>
       </div>
     </div>
   );
