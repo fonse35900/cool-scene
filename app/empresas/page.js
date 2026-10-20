@@ -98,6 +98,27 @@ export default function EmpresasPage() {
     return Math.ceil((new Date(c.trial_ends_at).getTime() - Date.now()) / 86400000);
   }
 
+  async function toggleUserSuspend(u) {
+    const action = u.suspended ? t('reativar', 'reactivate') : t('suspender', 'suspend');
+    if (!confirm(t(`Tem a certeza que deseja ${action} ${u.name}?`, `Are you sure you want to ${action} ${u.name}?`))) return;
+    setError('');
+    const res = await fetch(`/api/users/${u.id}`, {
+      method: 'PUT', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ suspended: u.suspended ? 0 : 1 }),
+    });
+    if (res.ok) load();
+    else setError((await res.json()).error);
+  }
+
+  async function deleteUser(u) {
+    if (!confirm(t(`Eliminar permanentemente ${u.name} (${u.email})? Esta ação não pode ser revertida.`,
+      `Permanently delete ${u.name} (${u.email})? This cannot be undone.`))) return;
+    setError('');
+    const res = await fetch(`/api/users/${u.id}`, { method: 'DELETE' });
+    if (res.ok) load();
+    else setError((await res.json()).error);
+  }
+
   async function loadDemo(c) {
     if (!confirm(t(`Carregar dados de demonstração na empresa "${c.name}"? Serão criados investidores, comerciais e viaturas de exemplo.`,
       `Load demonstration data into "${c.name}"? Sample investors, sales staff and vehicles will be created.`))) return;
@@ -219,6 +240,35 @@ export default function EmpresasPage() {
                     className="text-xs border border-octane-red/50 text-octane-red hover:bg-octane-red/10 px-3 py-1.5 rounded transition-colors">
                     {t('Eliminar', 'Delete')}
                   </button>
+                </div>
+              )}
+
+              {c.users && c.users.length > 0 && (
+                <div className="border-t border-octane-border pt-3 mb-3">
+                  <p className="text-xs text-octane-gray uppercase tracking-wider mb-2">{t('Utilizadores', 'Users')} ({c.users.length})</p>
+                  <div className="space-y-1.5">
+                    {c.users.map(u => {
+                      const roleLabel = { admin: t('Admin', 'Admin'), director: t('Diretor', 'Director'), comercial: t('Comercial', 'Sales'), investidor: t('Investidor', 'Investor') }[u.role] || u.role;
+                      return (
+                        <div key={u.id} className={`flex items-center flex-wrap gap-2 bg-octane-dark rounded-lg px-3 py-2 text-sm ${u.suspended ? 'opacity-60' : ''}`}>
+                          <span className="font-medium text-octane-white">{u.name}</span>
+                          <span className="text-octane-gray text-xs break-all">{u.email}</span>
+                          <span className="text-[10px] uppercase tracking-wider bg-octane-border/40 text-octane-gray px-2 py-0.5 rounded-full">{roleLabel}</span>
+                          {u.is_demo === 1 && <span className="text-[10px] uppercase tracking-wider text-octane-gray/70">demo</span>}
+                          {u.suspended === 1 && <span className="text-[10px] uppercase tracking-wider text-octane-red">{t('Suspenso', 'Suspended')}</span>}
+                          <span className="flex-1" />
+                          <button onClick={() => toggleUserSuspend(u)}
+                            className="text-xs border border-octane-border text-octane-gray hover:text-octane-white hover:border-octane-gray px-2.5 py-1 rounded transition-colors">
+                            {u.suspended ? t('Reativar', 'Reactivate') : t('Suspender', 'Suspend')}
+                          </button>
+                          <button onClick={() => deleteUser(u)}
+                            className="text-xs border border-octane-red/50 text-octane-red hover:bg-octane-red/10 px-2.5 py-1 rounded transition-colors">
+                            {t('Eliminar', 'Delete')}
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
 

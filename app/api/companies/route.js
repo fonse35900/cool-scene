@@ -17,6 +17,12 @@ export async function GET() {
         (SELECT email FROM users u WHERE u.company_id = c.id AND u.role = 'director' ORDER BY u.id LIMIT 1) as director_email
       FROM companies c ORDER BY c.id
     `).all();
+    // Attach the full user list per company so the admin can see and manage them.
+    for (const co of companies) {
+      co.users = await db.prepare(
+        "SELECT id, name, email, role, suspended, is_demo FROM users WHERE company_id = ? ORDER BY CASE role WHEN 'director' THEN 0 WHEN 'admin' THEN 0 WHEN 'comercial' THEN 1 ELSE 2 END, id"
+      ).all(co.id);
+    }
   } else {
     companies = await db.prepare('SELECT * FROM companies WHERE id = ?').all(user.company_id);
   }
