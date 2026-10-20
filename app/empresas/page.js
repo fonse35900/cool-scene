@@ -68,6 +68,36 @@ export default function EmpresasPage() {
     else setError((await res.json()).error);
   }
 
+  async function changePlan(c, plan) {
+    const label = { free: 'Free', pro: 'Pro', enterprise: 'Enterprise' }[plan];
+    if (!confirm(t(`Alterar "${c.name}" para o plano ${label}? Os dados são mantidos.`,
+      `Change "${c.name}" to the ${label} plan? Data is kept.`))) return;
+    setError('');
+    const res = await fetch('/api/companies', {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: c.id, plan }),
+    });
+    if (res.ok) load();
+    else setError((await res.json()).error);
+  }
+
+  async function extendTrial(c) {
+    if (!confirm(t(`Prolongar o período de avaliação de "${c.name}" por mais 14 dias?`,
+      `Extend "${c.name}" trial by another 14 days?`))) return;
+    setError('');
+    const res = await fetch('/api/companies', {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: c.id, extend_trial: true }),
+    });
+    if (res.ok) load();
+    else setError((await res.json()).error);
+  }
+
+  function trialDaysLeft(c) {
+    if (c.plan !== 'free' || !c.trial_ends_at) return null;
+    return Math.ceil((new Date(c.trial_ends_at).getTime() - Date.now()) / 86400000);
+  }
+
   async function loadDemo(c) {
     if (!confirm(t(`Carregar dados de demonstração na empresa "${c.name}"? Serão criados investidores, comerciais e viaturas de exemplo.`,
       `Load demonstration data into "${c.name}"? Sample investors, sales staff and vehicles will be created.`))) return;
@@ -129,6 +159,22 @@ export default function EmpresasPage() {
                       {t('Suspensa', 'Suspended')}
                     </span>
                   )}
+                  {c.plan && (() => {
+                    const dleft = trialDaysLeft(c);
+                    const paid = c.plan !== 'free';
+                    return (
+                      <span className={`text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border ${
+                        paid ? 'bg-octane-green/15 text-octane-green border-octane-green/30'
+                          : dleft != null && dleft <= 0 ? 'bg-octane-red/15 text-octane-red border-octane-red/30'
+                          : 'bg-octane-gold/15 text-octane-gold border-octane-gold/30'}`}>
+                        {c.plan}
+                        {!paid && dleft != null && (dleft > 0
+                          ? ` · ${dleft} ${t('dias', 'days')}`
+                          : ` · ${t('expirado', 'expired')}`)}
+                      </span>
+                    );
+                  })()}
+                  {c.domain && <span className="text-octane-gray text-xs">{c.domain}</span>}
                 </div>
                 <div className="text-xs text-octane-gray">
                   {c.director_name
@@ -138,7 +184,29 @@ export default function EmpresasPage() {
               </div>
 
               {c.id !== 1 && (
-                <div className="flex justify-end gap-2 mb-3">
+                <div className="flex justify-end flex-wrap gap-2 mb-3">
+                  {c.plan === 'free' && (
+                    <>
+                      <button onClick={() => extendTrial(c)}
+                        className="text-xs border border-octane-gold/50 text-octane-gold hover:bg-octane-gold/10 px-3 py-1.5 rounded transition-colors">
+                        {t('+14 dias trial', '+14 days trial')}
+                      </button>
+                      <button onClick={() => changePlan(c, 'pro')}
+                        className="text-xs border border-octane-green/50 text-octane-green hover:bg-octane-green/10 px-3 py-1.5 rounded transition-colors">
+                        {t('Tornar Pro', 'Upgrade to Pro')}
+                      </button>
+                      <button onClick={() => changePlan(c, 'enterprise')}
+                        className="text-xs border border-octane-green/50 text-octane-green hover:bg-octane-green/10 px-3 py-1.5 rounded transition-colors">
+                        {t('Enterprise', 'Enterprise')}
+                      </button>
+                    </>
+                  )}
+                  {c.plan !== 'free' && (
+                    <button onClick={() => changePlan(c, 'free')}
+                      className="text-xs border border-octane-border text-octane-gray hover:text-octane-white hover:border-octane-gray px-3 py-1.5 rounded transition-colors">
+                      {t('Voltar a Free (trial)', 'Back to Free (trial)')}
+                    </button>
+                  )}
                   <button onClick={() => loadDemo(c)}
                     className="text-xs border border-octane-border text-octane-gray hover:text-octane-white hover:border-octane-gray px-3 py-1.5 rounded transition-colors">
                     {t('Dados demo', 'Demo data')}

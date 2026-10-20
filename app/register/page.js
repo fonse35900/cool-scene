@@ -34,13 +34,13 @@ export default function RegisterPage() {
 
   const plans = [
     {
-      id: 'free', name: t('Free', 'Free'), price: '€0', unit: t('/ para sempre', '/ forever'),
-      tagline: t('Para um stand a começar.', 'For a single stand getting started.'),
+      id: 'free', name: t('Free', 'Free'), price: '€0', unit: t('/ 14 dias de avaliação', '/ 14-day trial'),
+      tagline: t('Para um stand a começar. Avaliação de 14 dias com dados demo.', 'For a single stand getting started. 14-day trial with demo data.'),
       features: [
-        t('1 empresa', '1 company'),
+        t('1 empresa (email da empresa)', '1 company (company email)'),
         t('Até 2 utilizadores', 'Up to 2 users'),
         t('Até 25 viaturas', 'Up to 25 vehicles'),
-        t('Dashboard, stock e vendas', 'Dashboard, stock & sales'),
+        t('Dados demo + cores KYRGA', 'Demo data + KYRGA colours'),
         t('Português e Inglês', 'Portuguese & English'),
       ],
       cta: t('Começar grátis', 'Start free'), action: 'free', highlight: false,
@@ -119,6 +119,7 @@ export default function RegisterPage() {
                 <label className="block text-xs font-medium text-octane-gray uppercase tracking-wider mb-2">Email</label>
                 <input type="email" value={form.email} onChange={e => set('email', e.target.value)} required
                   className="w-full bg-octane-card border border-octane-border rounded-lg px-4 py-3 text-octane-white focus:ring-2 focus:ring-octane-gold focus:border-octane-gold focus:outline-none" />
+                <p className="text-[11px] text-octane-gray mt-1">{t('Use o email da empresa (não são aceites gmail, outlook, etc.). O domínio identifica a empresa.', 'Use your company email (gmail, outlook, etc. are not accepted). The domain identifies the company.')}</p>
               </div>
               <div>
                 <label className="block text-xs font-medium text-octane-gray uppercase tracking-wider mb-2">Password</label>
