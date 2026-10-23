@@ -16,21 +16,12 @@ export async function GET(req) {
   let userIds;
   if (user.role === 'comercial') {
     userIds = [user.id];
-  } else if (user.role === 'director') {
-    const team = (await db.prepare('SELECT id FROM users WHERE director_id = ? OR id = ?').all(user.id, user.id))
-      .filter(u => {
-        // directors can't see admins — filter inline
-        return true; // we'll filter by role below
-      })
-      .map(u => u.id);
-    // Exclude admin users from director scope
-    const teamWithRoles = await Promise.all(team.map(id => db.prepare('SELECT id, role FROM users WHERE id = ?').get(id)));
-    const filteredTeam = teamWithRoles.filter(u => u && u.role !== 'admin').map(u => u.id);
-    userIds = selectedUsers.length ? selectedUsers.filter(id => filteredTeam.includes(id)) : filteredTeam;
   } else {
-    const all = (await db.prepare('SELECT id FROM users').all()).map(u => u.id);
-    userIds = selectedUsers.length ? selectedUsers.filter(id => all.includes(id)) : all;
+    // director / admin: all users of their company
+    const company = (await db.prepare('SELECT id FROM users WHERE company_id = ?').all(user.company_id)).map(u => u.id);
+    userIds = selectedUsers.length ? selectedUsers.filter(id => company.includes(id)) : company;
   }
+  if (userIds.length === 0) userIds = [-1];
 
   const placeholders = userIds.map(() => '?').join(',');
   const investorCondition = investorId ? ' AND v.investor_id = ?' : '';
@@ -73,6 +64,7 @@ export async function GET(req) {
     return {
       id: v.id, brand: v.brand, model: v.model, year: v.year,
       purchase_price: v.purchase_price, sale_price: v.sale_price,
+      purchase_date: v.purchase_date, sale_date: v.sale_date,
       costs: v.total_vehicle_costs, margin, margin_percent: marginPercent,
       created_by_name: v.created_by_name,
       investor_name: v.investor_name,
@@ -82,6 +74,7 @@ export async function GET(req) {
   // All vehicles for margin drill-down
   const allVehiclesDetail = (await db.prepare(`
     SELECT v.id, v.brand, v.model, v.year, v.status, v.purchase_price, v.sale_price,
+      v.purchase_date, v.sale_date,
       u.name as created_by_name, i.name as investor_name,
       COALESCE((SELECT SUM(amount) FROM vehicle_costs WHERE vehicle_id=v.id),0) as total_vehicle_costs
     FROM vehicles v JOIN users u ON v.created_by=u.id
@@ -92,6 +85,7 @@ export async function GET(req) {
     id: v.id, brand: v.brand, model: v.model, year: v.year, status: v.status,
     purchase_price: v.purchase_price,
     sale_price: v.sale_price,
+    purchase_date: v.purchase_date, sale_date: v.sale_date,
     costs: v.total_vehicle_costs,
     margin: v.status === 'vendido' && v.sale_price != null
       ? v.sale_price - v.purchase_price - v.total_vehicle_costs
@@ -138,8 +132,9 @@ export async function GET(req) {
         COALESCE((SELECT SUM(vc.amount) FROM vehicle_costs vc JOIN vehicles v2 ON vc.vehicle_id=v2.id WHERE v2.investor_id=i.id AND v2.created_by IN (${placeholders})), 0) as total_costs
       FROM investors i
       LEFT JOIN vehicles v ON v.investor_id = i.id AND v.created_by IN (${placeholders})
+      WHERE i.company_id = ?
       GROUP BY i.id ORDER BY i.name
-    `).all(...userIds, ...userIds);
+    `).all(...userIds, ...userIds, user.company_id);
   }
 
   return NextResponse.json({
